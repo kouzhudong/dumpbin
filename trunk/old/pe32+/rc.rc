@@ -1,0 +1,45 @@
+1 ICON  "i.ico"
+
+1 VERSIONINFO
+FILEVERSION 0,0,0,0
+PRODUCTVERSION 0,0,0,0
+FILEOS 0
+FILETYPE 0
+FILESUBTYPE 0
+{
+    BLOCK "StringFileInfo"
+    {
+        BLOCK "040904E4"
+        {
+            VALUE "Comments", "备注"
+                VALUE "CompanyName", "乐观集团"
+                VALUE "FileVersion", "文件版本"
+                VALUE "FileDescription", "文件描述：made by correy"  //文件描述
+                VALUE "InternalName", "内部名称"
+                VALUE "LegalCopyright", "合法版权"
+                VALUE "LegalTrademarks", "合法商标"
+                VALUE "OriginalFilename", "原始文件名"
+                VALUE "ProductName", "产品名称"
+                VALUE "ProductVersion", "产品版本"
+                VALUE "PrivateBuild", "个人用内部版本说明"
+                VALUE "SpecialBuild", "特殊内部版本说明"
+        }
+    }
+    BLOCK "VarFileInfo"
+    {
+        VALUE "Translation", 2052, 1200
+    }
+}
+
+//1 RCDATA "sys.sys"
+//
+//;1 BITMAP "1.bmp" ;尺寸是268*268
+//;2 BITMAP "2.bmp"
+
+//333 MENU
+//BEGIN
+//    POPUP "Options"
+//    BEGIN
+//        MENUITEM "刷新进程列表",                 1007
+//    END
+//END
