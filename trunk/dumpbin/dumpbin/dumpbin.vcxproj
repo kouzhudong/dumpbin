@@ -73,26 +73,26 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <RunCodeAnalysis>true</RunCodeAnalysis>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);..\lib\zydis\include</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);..\lib\zydis\x86\debug</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);..\lib\zydis\include;$(solutionDir)lib\openssl\VCWIN32\include</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);..\lib\zydis\x86\debug;..\lib\openssl\VCWIN32\lib</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <RunCodeAnalysis>true</RunCodeAnalysis>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);..\lib\zydis\include</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);..\lib\zydis\x86\release</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);..\lib\zydis\include;$(solutionDir)lib\openssl\VCWIN32\include</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);..\lib\zydis\x86\release;..\lib\openssl\VCWIN32\lib</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <RunCodeAnalysis>true</RunCodeAnalysis>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);..\lib\zydis\include</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);..\lib\zydis\x64\debug</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);..\lib\zydis\include;$(solutionDir)lib\openssl\VCWIN64A\include</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);..\lib\zydis\x64\debug;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);..\lib\zydis\x86\debug;..\lib\openssl\VCWIN64A\lib</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <RunCodeAnalysis>true</RunCodeAnalysis>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);..\lib\zydis\include</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);..\lib\zydis\x64\release</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);..\lib\zydis\include;$(solutionDir)lib\openssl\VCWIN64A\include</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);..\lib\zydis\x64\release;..\lib\openssl\VCWIN64A\lib</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -185,6 +185,7 @@
     <ClCompile Include="Import.cpp" />
     <ClCompile Include="LoadConfig.cpp" />
     <ClCompile Include="log.cpp" />
+    <ClCompile Include="openssl.cpp" />
     <ClCompile Include="PeHeader.cpp" />
     <ClCompile Include="PrintBinary.cpp" />
     <ClCompile Include="Public.cpp" />
@@ -208,6 +209,7 @@
     <ClInclude Include="Import.h" />
     <ClInclude Include="LoadConfig.h" />
     <ClInclude Include="log.h" />
+    <ClInclude Include="openssl.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="PeHeader.h" />
     <ClInclude Include="PrintBinary.h" />

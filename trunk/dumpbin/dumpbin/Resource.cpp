@@ -92,13 +92,15 @@ void PrintNameString(_In_ PIMAGE_RESOURCE_DIRECTORY ResourceDirectory,
         WCHAR * buf = (WCHAR *)HeapAlloc(GetProcessHeap(),
                                          HEAP_ZERO_MEMORY,
                                          ResourceNameString->Length + sizeof(WCHAR));
-        _ASSERTE(buf);
+        if (buf) {
+            RtlCopyMemory(buf, ResourceNameString->NameString, ResourceNameString->Length);
 
-        RtlCopyMemory(buf, ResourceNameString->NameString, ResourceNameString->Length);
+            printf("NameString:%ls.\r\n", buf);
 
-        printf("NameString:%ls.\r\n", buf);
-
-        HeapFree(GetProcessHeap(), 0, buf);
+            HeapFree(GetProcessHeap(), 0, buf);
+        } else {
+            _ASSERTE(false);
+        }
     }
 }
 

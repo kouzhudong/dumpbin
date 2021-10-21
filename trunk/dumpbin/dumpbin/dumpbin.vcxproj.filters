@@ -81,6 +81,9 @@
     <ClCompile Include="SaveFile.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="openssl.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PeHeader.h">
@@ -147,6 +150,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="SaveFile.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="openssl.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

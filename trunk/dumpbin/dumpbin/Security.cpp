@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Security.h"
 #include "Public.h"
+#include "openssl.h"
 
 
 #pragma warning(disable:6386)
@@ -186,38 +187,42 @@ void DecodeCertificate(PBYTE Certificate, DWORD Length)
         pbDecoded,
         &cbDecoded)) {
         CRYPT_CONTENT_INFO * content_info = (CRYPT_CONTENT_INFO *)pbDecoded;
-        printf("ObjId:%s\n", content_info->pszObjId);
+        if (content_info) {
+            printf("ObjId:%s\n", content_info->pszObjId);
 
-        //WCHAR szSubject[1024] = {0};//d2i_X509_NAME  +  X509_NAME_oneline
-        //DWORD cbSize = CertNameToStr(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
-        //                             &content_info->Content,
-        //                             CERT_X500_NAME_STR | CERT_NAME_STR_REVERSE_FLAG,
-        //                             szSubject,
-        //                             sizeof(szSubject));
-        //if (cbSize > 1) {//  If it returns one, the name is an empty string.
-        //    ///printf("szSubject：%ls\n", szSubject);//内容为空。
-        //} else {
-        //    _ASSERTE(false);
-        //}
+            //WCHAR szSubject[1024] = {0};//d2i_X509_NAME  +  X509_NAME_oneline
+            //DWORD cbSize = CertNameToStr(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+            //                             &content_info->Content,
+            //                             CERT_X500_NAME_STR | CERT_NAME_STR_REVERSE_FLAG,
+            //                             szSubject,
+            //                             sizeof(szSubject));
+            //if (cbSize > 1) {//  If it returns one, the name is an empty string.
+            //    ///printf("szSubject：%ls\n", szSubject);//内容为空。
+            //} else {
+            //    _ASSERTE(false);
+            //}
 
-        HCERTSTORE cert_store = NULL;
-        HCRYPTMSG cert_msg = NULL;
-        CryptQueryObject(CERT_QUERY_OBJECT_BLOB,
-                         &content_info->Content,
-                         CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED,
-                         CERT_QUERY_FORMAT_FLAG_BINARY,
-                         0,
-                         NULL,
-                         NULL,
-                         NULL,
-                         &cert_store,
-                         &cert_msg,
-                         NULL);
+            HCERTSTORE cert_store = NULL;
+            HCRYPTMSG cert_msg = NULL;
+            CryptQueryObject(CERT_QUERY_OBJECT_BLOB,
+                             &content_info->Content,
+                             CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED,
+                             CERT_QUERY_FORMAT_FLAG_BINARY,
+                             0,
+                             NULL,
+                             NULL,
+                             NULL,
+                             &cert_store,
+                             &cert_msg,
+                             NULL);
 
-        PCCERT_CONTEXT next_cert = NULL;
-        while ((next_cert = CertEnumCertificatesInStore(cert_store, next_cert)) != NULL) {
-            printf("\n");
-            PrintCertificateInfo(next_cert);            
+            PCCERT_CONTEXT next_cert = NULL;
+            while ((next_cert = CertEnumCertificatesInStore(cert_store, next_cert)) != NULL) {
+                printf("\n");
+                PrintCertificateInfo(next_cert);
+            }
+        } else {
+            _ASSERTE(false);
         }
     } else {
         _ASSERTE(false);
