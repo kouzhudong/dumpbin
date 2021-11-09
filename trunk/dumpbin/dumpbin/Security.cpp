@@ -2,6 +2,7 @@
 #include "Security.h"
 #include "Public.h"
 #include "openssl.h"
+#include "Public.h"
 
 
 #pragma warning(disable:6386)
@@ -64,11 +65,61 @@ BOOL PrintCertificateInfo(PCCERT_CONTEXT pCertContext)
     DWORD dwData;
 
     __try {
+        //可考虑用openssl的方式处理pCertContext->cbCertEncoded + pCertContext->pbCertEncoded。
+
+        _tprintf(_T("CertEncodingType:%d.\n"), pCertContext->dwCertEncodingType);
+
+        _tprintf(_T("Version:%d.\n"), pCertContext->pCertInfo->dwVersion + 1);
+
+        _tprintf(_T("ObjId:%hs.\n"), pCertContext->pCertInfo->SignatureAlgorithm.pszObjId);
+
+        _tprintf(_T("Parameters: "));
+        dwData = pCertContext->pCertInfo->SignatureAlgorithm.Parameters.cbData;
+        for (DWORD n = 0; n < dwData; n++) {
+            _tprintf(_T("%02x "), pCertContext->pCertInfo->SignatureAlgorithm.Parameters.pbData[n]);
+        }
+        _tprintf(_T("\n"));
+
         // Print Serial Number.
         _tprintf(_T("Serial Number: "));
         dwData = pCertContext->pCertInfo->SerialNumber.cbData;
         for (DWORD n = 0; n < dwData; n++) {
             _tprintf(_T("%02x "), pCertContext->pCertInfo->SerialNumber.pbData[dwData - (n + 1)]);
+        }
+        _tprintf(_T("\n"));
+
+        char NotBefore[MAX_PATH] = {0};
+        FileTimeToLocalTimeA(&pCertContext->pCertInfo->NotBefore, NotBefore);
+        printf("有效期从:%s\t", NotBefore);
+
+        char NotAfter[MAX_PATH] = {0};
+        FileTimeToLocalTimeA(&pCertContext->pCertInfo->NotAfter, NotAfter);
+        printf("到:%s\n", NotAfter);
+
+        _tprintf(_T("SubjectPublicKey Algorithm ObjId:%hs.\n"), 
+                 pCertContext->pCertInfo->SubjectPublicKeyInfo.Algorithm.pszObjId);
+
+        _tprintf(_T("SubjectPublicKey Algorithm Parameters: "));
+        dwData = pCertContext->pCertInfo->SubjectPublicKeyInfo.Algorithm.Parameters.cbData;
+        for (DWORD n = 0; n < dwData; n++) {
+            _tprintf(_T("%02x "), 
+                     pCertContext->pCertInfo->SubjectPublicKeyInfo.Algorithm.Parameters.pbData[dwData - (n + 1)]);
+        }
+        _tprintf(_T("\n"));
+
+        //pCertContext->pCertInfo->SubjectPublicKeyInfo.PublicKey.cbData
+        //pCertContext->pCertInfo->SubjectPublicKeyInfo.PublicKey.pbData
+        //pCertContext->pCertInfo->SubjectPublicKeyInfo.PublicKey.cUnusedBits
+
+        //还有IssuerUniqueId，SubjectUniqueId，cExtension等信息。
+
+        _tprintf(_T("cExtension:%d.\n"), pCertContext->pCertInfo->cExtension);
+        _tprintf(_T("Extension ObjId:%hs.\n"), pCertContext->pCertInfo->rgExtension->pszObjId);
+        _tprintf(_T("Extension fCritical:%d.\n"), pCertContext->pCertInfo->rgExtension->fCritical);
+        _tprintf(_T("Extension Value: "));
+        dwData = pCertContext->pCertInfo->rgExtension->Value.cbData;
+        for (DWORD n = 0; n < dwData; n++) {
+            _tprintf(_T("%02x "), pCertContext->pCertInfo->rgExtension->Value.pbData[n]);
         }
         _tprintf(_T("\n"));
 
@@ -138,9 +189,32 @@ BOOL PrintCertificateInfo(PCCERT_CONTEXT pCertContext)
         // Print Subject Name.
         _tprintf(_T("Subject Name: %s\n"), szName);
 
+        DWORD dwStrType = CERT_X500_NAME_STR;
+        DWORD dwCount = CertGetNameString(pCertContext,
+                                          CERT_NAME_RDN_TYPE,
+                                          0,
+                                          &dwStrType,
+                                          NULL,
+                                          0);
+        if (dwCount) {
+            LPTSTR szSubjectRDN = (LPTSTR)LocalAlloc(0, dwCount * sizeof(TCHAR));
+            dwCount = CertGetNameString(pCertContext,
+                                        CERT_NAME_RDN_TYPE,
+                                        0,
+                                        &dwStrType,
+                                        szSubjectRDN,
+                                        dwCount);
+            if (dwCount) {
+                _tprintf(_T("Certificate Subject = %s\n"), szSubjectRDN);
+            }
+
+            LocalFree(szSubjectRDN);
+        }
+
         fReturn = TRUE;
     } __finally {
-        if (szName != NULL) LocalFree(szName);
+        if (szName != NULL) 
+            LocalFree(szName);
     }
 
     return fReturn;
@@ -152,40 +226,36 @@ void DecodeCertificate(PBYTE Certificate, DWORD Length)
 功能：用CryptDecodeObjectEx解码PKCS#7 SignedData的ASN1结构。
 */
 {
-    DWORD cbDecoded = NULL;
-
     //  Get the length needed for the decoded buffer.
-    if (CryptDecodeObjectEx(
-        X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
-        PKCS_CONTENT_INFO,//X509_NAME
-        Certificate,     // the buffer to be decoded
-        Length,
-        CRYPT_DECODE_NOCOPY_FLAG,
-        NULL,
-        NULL,
-        &cbDecoded)) {
+    DWORD cbDecoded = NULL;
+    if (CryptDecodeObjectEx(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+                            PKCS_CONTENT_INFO,//X509_NAME
+                            Certificate,     // the buffer to be decoded
+                            Length,
+                            CRYPT_DECODE_NOCOPY_FLAG,
+                            NULL,
+                            NULL,
+                            &cbDecoded)) {
         //printf("The needed buffer length is %d\n", cbDecoded);
     } else {
         _ASSERTE(false);
-    }
-
-    BYTE * pbDecoded;
+    }    
 
     // Allocate memory for the decoded information.
+    BYTE * pbDecoded;
     if (!(pbDecoded = (BYTE *)malloc(cbDecoded))) {
         _ASSERTE(false);
     }
 
     // Decode the encoded buffer.
-    if (CryptDecodeObjectEx(
-        X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
-        PKCS_CONTENT_INFO,//X509_NAME
-        Certificate,     // the buffer to be decoded
-        Length,
-        CRYPT_DECODE_NOCOPY_FLAG,
-        NULL,
-        pbDecoded,
-        &cbDecoded)) {
+    if (CryptDecodeObjectEx(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+                            PKCS_CONTENT_INFO,//X509_NAME
+                            Certificate,     // the buffer to be decoded
+                            Length,
+                            CRYPT_DECODE_NOCOPY_FLAG,
+                            NULL,
+                            pbDecoded,
+                            &cbDecoded)) {
         CRYPT_CONTENT_INFO * content_info = (CRYPT_CONTENT_INFO *)pbDecoded;
         if (content_info) {
             printf("ObjId:%s\n", content_info->pszObjId);
@@ -202,8 +272,8 @@ void DecodeCertificate(PBYTE Certificate, DWORD Length)
             //    _ASSERTE(false);
             //}
 
-            HCERTSTORE cert_store = NULL;
-            HCRYPTMSG cert_msg = NULL;
+            HCERTSTORE CertStore = NULL;
+            HCRYPTMSG Msg = NULL;
             CryptQueryObject(CERT_QUERY_OBJECT_BLOB,
                              &content_info->Content,
                              CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED,
@@ -212,14 +282,14 @@ void DecodeCertificate(PBYTE Certificate, DWORD Length)
                              NULL,
                              NULL,
                              NULL,
-                             &cert_store,
-                             &cert_msg,
+                             &CertStore,
+                             &Msg,
                              NULL);
 
-            PCCERT_CONTEXT next_cert = NULL;
-            while ((next_cert = CertEnumCertificatesInStore(cert_store, next_cert)) != NULL) {
+            PCCERT_CONTEXT PrevCertContext = NULL;
+            while ((PrevCertContext = CertEnumCertificatesInStore(CertStore, PrevCertContext)) != NULL) {
                 printf("\n");
-                PrintCertificateInfo(next_cert);
+                PrintCertificateInfo(PrevCertContext);
             }
         } else {
             _ASSERTE(false);
@@ -286,35 +356,11 @@ BOOL WINAPI DigestFunction(DIGEST_HANDLE refdata, PBYTE pData, DWORD dwLength)
 }
 
 
-void printCert(PCCERT_CONTEXT pCert, int dwIndex)
-{
-    DWORD dwStrType = CERT_X500_NAME_STR;
-    DWORD dwCount = CertGetNameString(pCert,
-                                      CERT_NAME_RDN_TYPE,
-                                      0,
-                                      &dwStrType,
-                                      NULL,
-                                      0);
-    if (dwCount) {
-        LPTSTR szSubjectRDN = (LPTSTR)LocalAlloc(0, dwCount * sizeof(TCHAR));
-        dwCount = CertGetNameString(pCert,
-                                    CERT_NAME_RDN_TYPE,
-                                    0,
-                                    &dwStrType,
-                                    szSubjectRDN,
-                                    dwCount);
-        if (dwCount) {
-            _tprintf(_T("%d - Certificate Subject = %s\n"), dwIndex, szSubjectRDN);
-        }
-
-        LocalFree(szSubjectRDN);
-    }
-}
-
-
-void ShowCertificateInfo()
+void ParseCertificateInfo1()
 /*
 用系统的API解析下证书的信息，以便和自己解析的对比。
+
+这种方式没有分析PE文件的DataDirectory。
 */
 {
     int Args;
@@ -399,7 +445,7 @@ void ShowCertificateInfo()
                                                               pCertContext);
                     if (pCertContext) {
                         count++;
-                        printCert(pCertContext, count);
+                        PrintCertificateInfo(pCertContext);
                     }
                 } while (pCertContext);
 
@@ -428,6 +474,41 @@ void ShowCertificateInfo()
     }
 
     LocalFree(Arglist);
+}
+
+
+void ParseCertificateInfo2(PIMAGE_DATA_DIRECTORY DataDirectory, LPWIN_CERTIFICATE SecurityDirectory)
+/*
+
+此方式的效果类似：signtool.exe verify /pa /a /v c:\windows\notepad.exe，但比这个更强更多。
+
+从分析PE文件的DataDirectory开始，一步一步的解析。
+*/
+{
+    for (DWORD i = 0; i < DataDirectory->Size; ) {
+        SecurityDirectory = LPWIN_CERTIFICATE((PBYTE)SecurityDirectory + i);
+
+        printf("index:%d.\r\n", i + 1);
+
+        PrintSecurity(SecurityDirectory);
+
+        DWORD dwLength = SecurityDirectory->dwLength / 8;
+
+        if (SecurityDirectory->dwLength % 8) {
+            dwLength++;
+        }
+
+        i += dwLength * 8;
+    }
+}
+
+
+void ParseCertificateInfo3()
+/*
+用openssl解析PE的证书。
+*/
+{
+ 
 }
 
 
@@ -473,25 +554,20 @@ DWORD Security(_In_ PBYTE Data, _In_ DWORD Size)
 
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    ShowCertificateInfo();
+    printf("----------------------------------------------------------------------------------\n");
+    printf("解析方式一：\n");
 
-    //////////////////////////////////////////////////////////////////////////////////////////////
+    ParseCertificateInfo1();
 
-    for (DWORD i = 0; i < DataDirectory.Size; ) {
-        SecurityDirectory = LPWIN_CERTIFICATE((PBYTE)SecurityDirectory + i);
+    printf("----------------------------------------------------------------------------------\n");
+    printf("解析方式二：\n");
 
-        printf("index:%d.\r\n", i + 1);
+    ParseCertificateInfo2(&DataDirectory, SecurityDirectory);
 
-        PrintSecurity(SecurityDirectory);
+    printf("----------------------------------------------------------------------------------\n");
+    printf("解析方式三：\n");
 
-        DWORD dwLength = SecurityDirectory->dwLength / 8;
-
-        if (SecurityDirectory->dwLength % 8) {
-            dwLength++;
-        }
-
-        i += dwLength * 8;
-    }
+    ParseCertificateInfo3();
 
     //////////////////////////////////////////////////////////////////////////////////////////////
 

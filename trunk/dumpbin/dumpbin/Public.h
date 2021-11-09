@@ -43,3 +43,5 @@ void GetDataDirectory(_In_ PBYTE Data,
 BOOL IsWow64();
 
 LPWSTR UTF8ToWide(IN PCHAR utf8);
+
+void FileTimeToLocalTimeA(PFILETIME ft, char * time);
