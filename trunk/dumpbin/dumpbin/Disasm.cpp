@@ -3,11 +3,6 @@
 #include "Public.h"
 #include "log.h"
 
-#include <Zydis/Zydis.h>
-//#include ".\lib\zydis\include\Zydis\Zydis.h"
-
-#pragma comment(lib, "Zydis.lib") 
-
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 

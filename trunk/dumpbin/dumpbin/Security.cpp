@@ -96,13 +96,13 @@ BOOL PrintCertificateInfo(PCCERT_CONTEXT pCertContext)
         FileTimeToLocalTimeA(&pCertContext->pCertInfo->NotAfter, NotAfter);
         printf("µ½:%s\n", NotAfter);
 
-        _tprintf(_T("SubjectPublicKey Algorithm ObjId:%hs.\n"), 
+        _tprintf(_T("SubjectPublicKey Algorithm ObjId:%hs.\n"),
                  pCertContext->pCertInfo->SubjectPublicKeyInfo.Algorithm.pszObjId);
 
         _tprintf(_T("SubjectPublicKey Algorithm Parameters: "));
         dwData = pCertContext->pCertInfo->SubjectPublicKeyInfo.Algorithm.Parameters.cbData;
         for (DWORD n = 0; n < dwData; n++) {
-            _tprintf(_T("%02x "), 
+            _tprintf(_T("%02x "),
                      pCertContext->pCertInfo->SubjectPublicKeyInfo.Algorithm.Parameters.pbData[dwData - (n + 1)]);
         }
         _tprintf(_T("\n"));
@@ -213,7 +213,7 @@ BOOL PrintCertificateInfo(PCCERT_CONTEXT pCertContext)
 
         fReturn = TRUE;
     } __finally {
-        if (szName != NULL) 
+        if (szName != NULL)
             LocalFree(szName);
     }
 
@@ -239,7 +239,7 @@ void DecodeCertificate(PBYTE Certificate, DWORD Length)
         //printf("The needed buffer length is %d\n", cbDecoded);
     } else {
         _ASSERTE(false);
-    }    
+    }
 
     // Allocate memory for the decoded information.
     BYTE * pbDecoded;

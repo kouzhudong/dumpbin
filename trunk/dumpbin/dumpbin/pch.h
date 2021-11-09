@@ -103,11 +103,13 @@
 #include <Wininet.h>
 #pragma comment (lib,"Wininet.lib")
 
+
 #include <string>
 #include <list>
 #include <regex>
 #include <map>
 using namespace std;
+
 
 #include <openssl/crypto.h>
 #include <openssl/rsa.h>
@@ -126,5 +128,9 @@ using namespace std;
 #pragma comment(lib, "libcrypto.lib")
 
 
-//////////////////////////////////////////////////////////////////////////////////////////////////
+#include <Zydis/Zydis.h>
 
+#pragma comment(lib, "Zydis.lib") 
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
