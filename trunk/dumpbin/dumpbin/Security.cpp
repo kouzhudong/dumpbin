@@ -364,7 +364,13 @@ BOOL VerifyEmbeddedSignature(IN LPCTSTR filename, OUT wchar_t * signer_file)
         return FALSE;
     }
 
-    HANDLE hFile = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+    HANDLE hFile = CreateFileW(filename, 
+                               GENERIC_READ,
+                               FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                               NULL, 
+                               OPEN_EXISTING,
+                               0, 
+                               NULL);
     if (INVALID_HANDLE_VALUE == hFile) {
         printf("FileName:%ls, GetLastError:%#x", filename, GetLastError());
         CryptCATAdminReleaseContext(cat_admin_handle, 0);
@@ -558,8 +564,8 @@ void ParseCertificateInfo2()
 
     __try {
         hfile = CreateFile(FileName,
-                           FILE_READ_DATA | FILE_WRITE_DATA,
-                           FILE_SHARE_READ,
+                           FILE_READ_DATA,
+                           FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                            NULL,
                            OPEN_EXISTING,
                            FILE_ATTRIBUTE_NORMAL,
