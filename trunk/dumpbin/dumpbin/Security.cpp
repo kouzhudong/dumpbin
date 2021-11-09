@@ -693,21 +693,19 @@ void ParseCertificateInfo4(PIMAGE_DATA_DIRECTORY DataDirectory, LPWIN_CERTIFICAT
 用openssl解析PE的证书。
 */
 {
-    for (DWORD i = 0; i < DataDirectory->Size; ) {
-        SecurityDirectory = LPWIN_CERTIFICATE((PBYTE)SecurityDirectory + i);
+    PKCS7 * pkcs7;
+    unsigned char * CertData;
+    long CertDataLength;
 
-        printf("index:%d.\r\n", i + 1);
+    CertData = (unsigned char *)SecurityDirectory->bCertificate;
+    CertDataLength = SecurityDirectory->dwLength - FIELD_OFFSET(WIN_CERTIFICATE, bCertificate);
 
-        PrintSecurity(SecurityDirectory);
-
-        DWORD dwLength = SecurityDirectory->dwLength / 8;
-
-        if (SecurityDirectory->dwLength % 8) {
-            dwLength++;
-        }
-
-        i += dwLength * 8;
+    pkcs7 = d2i_PKCS7(NULL, (const unsigned char **)&CertData, CertDataLength);
+    if (NULL == pkcs7) {
+        return;
     }
+
+    DumpPKCS7(pkcs7);
 }
 
 
@@ -771,7 +769,7 @@ DWORD Security(_In_ PBYTE Data, _In_ DWORD Size)
     printf("----------------------------------------------------------------------------------\n");
     printf("解析方式四：\n");
 
-    ParseCertificateInfo4();
+    ParseCertificateInfo4(&DataDirectory, SecurityDirectory);
 
     //////////////////////////////////////////////////////////////////////////////////////////////
 
