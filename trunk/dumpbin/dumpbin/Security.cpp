@@ -356,7 +356,192 @@ BOOL WINAPI DigestFunction(DIGEST_HANDLE refdata, PBYTE pData, DWORD dwLength)
 }
 
 
+BOOL VerifyEmbeddedSignature(IN LPCTSTR filename, OUT wchar_t * signer_file)
+{
+    HCATADMIN cat_admin_handle = NULL;
+    if (!CryptCATAdminAcquireContext(&cat_admin_handle, NULL, 0)) {
+        printf("FileName:%ls, GetLastError:%#x", filename, GetLastError());
+        return FALSE;
+    }
+
+    HANDLE hFile = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+    if (INVALID_HANDLE_VALUE == hFile) {
+        printf("FileName:%ls, GetLastError:%#x", filename, GetLastError());
+        CryptCATAdminReleaseContext(cat_admin_handle, 0);
+        return FALSE;
+    }
+
+    DWORD hash_count = 100;
+    BYTE hash_data[100];
+    CryptCATAdminCalcHashFromFileHandle(hFile, &hash_count, hash_data, 0);
+    CloseHandle(hFile);
+
+    wstring member_tag;
+    for (DWORD dw = 0; dw < hash_count; dw++) {
+        member_tag += L"0123456789ABCDEF"[(hash_data[dw] >> 4) & 0x0f];
+        member_tag += L"0123456789ABCDEF"[hash_data[dw] & 0x0f];
+    }
+
+    WINTRUST_DATA wd = {0};
+    HCATINFO cat_admin_info = CryptCATAdminEnumCatalogFromHash(cat_admin_handle,
+                                                               hash_data,
+                                                               hash_count,
+                                                               0,
+                                                               NULL);
+    if (NULL == cat_admin_info) {
+        WINTRUST_FILE_INFO wfi = {0};
+        wfi.cbStruct = sizeof(WINTRUST_FILE_INFO);
+        wfi.pcwszFilePath = filename;
+
+        wd.cbStruct = sizeof(WINTRUST_DATA);
+        wd.dwUnionChoice = WTD_CHOICE_FILE;
+        wd.pFile = &wfi;
+        wd.dwUIChoice = WTD_UI_NONE;
+        wd.dwProvFlags = WTD_SAFER_FLAG;
+
+        lstrcpy(signer_file, filename);
+    } else {
+        CATALOG_INFO ci = {0};
+        CryptCATCatalogInfoFromContext(cat_admin_info, &ci, 0);
+
+        WINTRUST_CATALOG_INFO wci = {0};
+        wci.cbStruct = sizeof(WINTRUST_CATALOG_INFO);
+        wci.pcwszCatalogFilePath = ci.wszCatalogFile;
+        wci.pcwszMemberFilePath = filename;
+        wci.pcwszMemberTag = member_tag.c_str();
+        wci.pbCalculatedFileHash = hash_data;
+        wci.cbCalculatedFileHash = hash_count;
+
+        wd.cbStruct = sizeof(WINTRUST_DATA);
+        wd.dwUnionChoice = WTD_CHOICE_CATALOG;
+        wd.pCatalog = &wci;
+        wd.dwUIChoice = WTD_UI_NONE;
+        wd.fdwRevocationChecks = WTD_REVOKE_WHOLECHAIN;
+
+        lstrcpy(signer_file, ci.wszCatalogFile);
+    }
+
+    GUID action = WINTRUST_ACTION_GENERIC_VERIFY_V2;
+    HRESULT hr = WinVerifyTrust(NULL, &action, &wd);
+    Sleep(1);
+    BOOL retval = SUCCEEDED(hr);
+
+    if (NULL != cat_admin_info) {
+        CryptCATAdminReleaseCatalogContext(cat_admin_handle, cat_admin_info, 0);
+    }
+    CryptCATAdminReleaseContext(cat_admin_handle, 0);
+    return retval;
+}
+
+
+BOOL GetSignerInfo(IN WCHAR * FileName)
+{
+    HCERTSTORE hStore = NULL;
+    HCRYPTMSG hMsg = NULL;
+    PCCERT_CONTEXT pCertContext = NULL;
+    BOOL fResult = FALSE;
+    PCMSG_SIGNER_INFO pSignerInfo = NULL;
+
+    __try {
+        // Get message handle and store handle from the signed file.
+        DWORD dwEncoding, dwContentType, dwFormatType;
+        fResult = CryptQueryObject(CERT_QUERY_OBJECT_FILE,
+                                   FileName,
+                                   CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED_EMBED,
+                                   CERT_QUERY_FORMAT_FLAG_BINARY,
+                                   0,
+                                   &dwEncoding,
+                                   &dwContentType,
+                                   &dwFormatType,
+                                   &hStore,
+                                   &hMsg,
+                                   NULL);
+        if (!fResult) {
+            printf("FileName:%ls, GetLastError:%#x", FileName, GetLastError());
+            __leave;
+        }
+
+        // Get signer information size.
+        DWORD dwSignerInfo = NULL;
+        fResult = CryptMsgGetParam(hMsg, CMSG_SIGNER_INFO_PARAM, 0, NULL, &dwSignerInfo);
+        if (!fResult) {
+            printf("FileName:%ls, GetLastError:%#x", FileName, GetLastError());
+            __leave;
+        }
+
+        // Allocate memory for signer information.
+        pSignerInfo = (PCMSG_SIGNER_INFO)LocalAlloc(LPTR, dwSignerInfo);
+        if (!pSignerInfo) {
+            printf("FileName:%ls, GetLastError:%#x", FileName, GetLastError());
+            __leave;
+        }
+
+        // Get Signer Information.
+        fResult = CryptMsgGetParam(hMsg, CMSG_SIGNER_INFO_PARAM, 0, (PVOID)pSignerInfo, &dwSignerInfo);
+        if (!fResult) {
+            printf("FileName:%ls, GetLastError:%#x", FileName, GetLastError());
+            __leave;
+        }
+
+        // Search for the signer certificate in the temporary certificate store.
+        CERT_INFO CertInfo;
+        CertInfo.Issuer = pSignerInfo->Issuer;
+        CertInfo.SerialNumber = pSignerInfo->SerialNumber;
+        pCertContext = CertFindCertificateInStore(hStore,
+                                                  (X509_ASN_ENCODING | PKCS_7_ASN_ENCODING),
+                                                  0,
+                                                  CERT_FIND_SUBJECT_CERT,
+                                                  (PVOID)&CertInfo,
+                                                  NULL);
+        if (!pCertContext) {
+            printf("FileName:%ls, GetLastError:%#x", FileName, GetLastError());
+            fResult = FALSE;
+            __leave;
+        }
+
+        PrintCertificateInfo(pCertContext);
+
+        fResult = TRUE;
+    } __finally {
+        if (pSignerInfo != NULL)
+            LocalFree(pSignerInfo);
+
+        if (pCertContext != NULL)
+            CertFreeCertificateContext(pCertContext);
+
+        if (hStore != NULL)
+            CertCloseStore(hStore, 0);
+
+        if (hMsg != NULL)
+            CryptMsgClose(hMsg);
+    }
+
+    return fResult;
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 void ParseCertificateInfo1()
+{
+    int Args;
+    LPWSTR * Arglist = CommandLineToArgvW(GetCommandLineW(), &Args);
+    LPCWSTR FileName = Arglist[2];
+
+    wchar_t signer_file[MAX_PATH] = {0};
+    if (VerifyEmbeddedSignature(FileName, signer_file)) {
+        printf("%ls的签名信息所在的文件是:%ls\n", FileName, signer_file);
+        if (GetSignerInfo(signer_file)) {
+            printf("%ls具有合法的签名\n", FileName);
+        }
+    }
+
+    LocalFree(Arglist);
+}
+
+
+void ParseCertificateInfo2()
 /*
 用系统的API解析下证书的信息，以便和自己解析的对比。
 
@@ -477,7 +662,7 @@ void ParseCertificateInfo1()
 }
 
 
-void ParseCertificateInfo2(PIMAGE_DATA_DIRECTORY DataDirectory, LPWIN_CERTIFICATE SecurityDirectory)
+void ParseCertificateInfo3(PIMAGE_DATA_DIRECTORY DataDirectory, LPWIN_CERTIFICATE SecurityDirectory)
 /*
 
 此方式的效果类似：signtool.exe verify /pa /a /v c:\windows\notepad.exe，但比这个更强更多。
@@ -503,12 +688,26 @@ void ParseCertificateInfo2(PIMAGE_DATA_DIRECTORY DataDirectory, LPWIN_CERTIFICAT
 }
 
 
-void ParseCertificateInfo3()
+void ParseCertificateInfo4(PIMAGE_DATA_DIRECTORY DataDirectory, LPWIN_CERTIFICATE SecurityDirectory)
 /*
 用openssl解析PE的证书。
 */
 {
- 
+    for (DWORD i = 0; i < DataDirectory->Size; ) {
+        SecurityDirectory = LPWIN_CERTIFICATE((PBYTE)SecurityDirectory + i);
+
+        printf("index:%d.\r\n", i + 1);
+
+        PrintSecurity(SecurityDirectory);
+
+        DWORD dwLength = SecurityDirectory->dwLength / 8;
+
+        if (SecurityDirectory->dwLength % 8) {
+            dwLength++;
+        }
+
+        i += dwLength * 8;
+    }
 }
 
 
@@ -562,12 +761,17 @@ DWORD Security(_In_ PBYTE Data, _In_ DWORD Size)
     printf("----------------------------------------------------------------------------------\n");
     printf("解析方式二：\n");
 
-    ParseCertificateInfo2(&DataDirectory, SecurityDirectory);
+    ParseCertificateInfo2();
 
     printf("----------------------------------------------------------------------------------\n");
     printf("解析方式三：\n");
 
-    ParseCertificateInfo3();
+    ParseCertificateInfo3(&DataDirectory, SecurityDirectory);
+
+    printf("----------------------------------------------------------------------------------\n");
+    printf("解析方式四：\n");
+
+    ParseCertificateInfo4();
 
     //////////////////////////////////////////////////////////////////////////////////////////////
 
