@@ -65,7 +65,16 @@ BOOL PrintCertificateInfo(PCCERT_CONTEXT pCertContext)
     DWORD dwData;
 
     __try {
-        //可考虑用openssl的方式处理pCertContext->cbCertEncoded + pCertContext->pbCertEncoded。
+        //用openssl的方式处理pCertContext->cbCertEncoded + pCertContext->pbCertEncoded。
+        //经测试，这种办法有效可行正确。
+        if (false) {
+            const unsigned char * p = (const unsigned char *)pCertContext->pbCertEncoded;
+            X509 * x509 = d2i_X509(NULL, &p, pCertContext->cbCertEncoded);
+            DumpX509(x509);
+            X509_free(x509);
+        }
+
+        //可以考虑根据pCertContext->hCertStore获取更多的信息。
 
         _tprintf(_T("CertEncodingType:%d.\n"), pCertContext->dwCertEncodingType);
 
@@ -327,7 +336,7 @@ void PrintSecurity(LPWIN_CERTIFICATE SecurityDirectory)
 
         这里的数据可以用openssl的函数解析，如：d2i_PKCS7等。
         参考：https://github.com/ajkhoury/CertDump.git
-        */
+        */        
 
         DecodeCertificate(Certificate, SecurityDirectory->dwLength);
 
