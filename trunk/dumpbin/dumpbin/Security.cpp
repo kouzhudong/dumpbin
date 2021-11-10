@@ -116,9 +116,14 @@ BOOL PrintCertificateInfo(PCCERT_CONTEXT pCertContext)
         }
         _tprintf(_T("\n"));
 
-        //pCertContext->pCertInfo->SubjectPublicKeyInfo.PublicKey.cbData
-        //pCertContext->pCertInfo->SubjectPublicKeyInfo.PublicKey.pbData
-        //pCertContext->pCertInfo->SubjectPublicKeyInfo.PublicKey.cUnusedBits
+        _tprintf(_T("UnusedBits:%d.\n"), pCertContext->pCertInfo->SubjectPublicKeyInfo.PublicKey.cUnusedBits);
+        _tprintf(_T("SubjectPublicKeyInfo PublicKey: "));
+        dwData = pCertContext->pCertInfo->SubjectPublicKeyInfo.PublicKey.cbData;
+        for (DWORD n = 0; n < dwData; n++) {
+            _tprintf(_T("%02x "),
+                     pCertContext->pCertInfo->SubjectPublicKeyInfo.PublicKey.pbData[n]);
+        }
+        _tprintf(_T("\n"));
 
         //还有IssuerUniqueId，SubjectUniqueId，cExtension等信息。
 
