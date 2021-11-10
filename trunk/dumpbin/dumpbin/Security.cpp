@@ -76,13 +76,13 @@ BOOL PrintCertificateInfo(PCCERT_CONTEXT pCertContext)
 
         //可以考虑根据pCertContext->hCertStore获取更多的信息。
 
-        _tprintf(_T("CertEncodingType:%d.\n"), pCertContext->dwCertEncodingType);
+        _tprintf(_T("证书编码类型:%d.\n"), pCertContext->dwCertEncodingType);
 
-        _tprintf(_T("Version:%d.\n"), pCertContext->pCertInfo->dwVersion + 1);
+        _tprintf(_T("版本:%d.\n"), pCertContext->pCertInfo->dwVersion + 1);
 
         _tprintf(_T("ObjId:%hs.\n"), pCertContext->pCertInfo->SignatureAlgorithm.pszObjId);
 
-        _tprintf(_T("Parameters: "));
+        _tprintf(_T("公钥参数: "));
         dwData = pCertContext->pCertInfo->SignatureAlgorithm.Parameters.cbData;
         for (DWORD n = 0; n < dwData; n++) {
             _tprintf(_T("%02x "), pCertContext->pCertInfo->SignatureAlgorithm.Parameters.pbData[n]);
@@ -90,7 +90,7 @@ BOOL PrintCertificateInfo(PCCERT_CONTEXT pCertContext)
         _tprintf(_T("\n"));
 
         // Print Serial Number.
-        _tprintf(_T("Serial Number: "));
+        _tprintf(_T("序列号: "));
         dwData = pCertContext->pCertInfo->SerialNumber.cbData;
         for (DWORD n = 0; n < dwData; n++) {
             _tprintf(_T("%02x "), pCertContext->pCertInfo->SerialNumber.pbData[dwData - (n + 1)]);
@@ -99,7 +99,7 @@ BOOL PrintCertificateInfo(PCCERT_CONTEXT pCertContext)
 
         char NotBefore[MAX_PATH] = {0};
         FileTimeToLocalTimeA(&pCertContext->pCertInfo->NotBefore, NotBefore);
-        printf("有效期从:%s\t", NotBefore);
+        printf("有效期从:%s", NotBefore);
 
         char NotAfter[MAX_PATH] = {0};
         FileTimeToLocalTimeA(&pCertContext->pCertInfo->NotAfter, NotAfter);
@@ -117,7 +117,7 @@ BOOL PrintCertificateInfo(PCCERT_CONTEXT pCertContext)
         _tprintf(_T("\n"));
 
         _tprintf(_T("UnusedBits:%d.\n"), pCertContext->pCertInfo->SubjectPublicKeyInfo.PublicKey.cUnusedBits);
-        _tprintf(_T("SubjectPublicKeyInfo PublicKey: "));
+        _tprintf(_T("公钥: "));
         dwData = pCertContext->pCertInfo->SubjectPublicKeyInfo.PublicKey.cbData;
         for (DWORD n = 0; n < dwData; n++) {
             _tprintf(_T("%02x "),
@@ -167,7 +167,7 @@ BOOL PrintCertificateInfo(PCCERT_CONTEXT pCertContext)
         }
 
         // print Issuer name.
-        _tprintf(_T("Issuer Name: %s\n"), szName);
+        _tprintf(_T("颁发者: %s\n"), szName);
         LocalFree(szName);
         szName = NULL;
 
@@ -201,7 +201,7 @@ BOOL PrintCertificateInfo(PCCERT_CONTEXT pCertContext)
         }
 
         // Print Subject Name.
-        _tprintf(_T("Subject Name: %s\n"), szName);
+        _tprintf(_T("使用者的CN: %s\n"), szName);
 
         DWORD dwStrType = CERT_X500_NAME_STR;
         DWORD dwCount = CertGetNameString(pCertContext,
@@ -219,7 +219,7 @@ BOOL PrintCertificateInfo(PCCERT_CONTEXT pCertContext)
                                         szSubjectRDN,
                                         dwCount);
             if (dwCount) {
-                _tprintf(_T("Certificate Subject = %s\n"), szSubjectRDN);
+                _tprintf(_T("使用者：%s\n"), szSubjectRDN);
             }
 
             LocalFree(szSubjectRDN);
@@ -302,8 +302,8 @@ void DecodeCertificate(PBYTE Certificate, DWORD Length)
 
             PCCERT_CONTEXT PrevCertContext = NULL;
             while ((PrevCertContext = CertEnumCertificatesInStore(CertStore, PrevCertContext)) != NULL) {
-                printf("\n");
                 PrintCertificateInfo(PrevCertContext);
+                _tprintf(_T("\n\n\n"));
             }
         } else {
             _ASSERTE(false);
@@ -651,6 +651,7 @@ void ParseCertificateInfo2()
                     if (pCertContext) {
                         count++;
                         PrintCertificateInfo(pCertContext);
+                        _tprintf(_T("\n\n\n"));
                     }
                 } while (pCertContext);
 
