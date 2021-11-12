@@ -58,7 +58,70 @@ PCSTR GetCertRevision(_In_ WORD wRevision)
 }
 
 
-BOOL PrintCertificateInfo(PCCERT_CONTEXT pCertContext)
+void DumpCertInfo(PCERT_INFO CertInfo)
+{
+    _tprintf(_T("版本:%d.\n"), CertInfo->dwVersion + 1);
+
+    _tprintf(_T("ObjId:%hs.\n"), CertInfo->SignatureAlgorithm.pszObjId);
+
+    _tprintf(_T("公钥参数: "));
+    DWORD dwData = CertInfo->SignatureAlgorithm.Parameters.cbData;
+    for (DWORD n = 0; n < dwData; n++) {
+        _tprintf(_T("%02x "), CertInfo->SignatureAlgorithm.Parameters.pbData[n]);
+    }
+    _tprintf(_T("\n"));
+
+    // Print Serial Number.
+    _tprintf(_T("序列号: "));
+    dwData = CertInfo->SerialNumber.cbData;
+    for (DWORD n = 0; n < dwData; n++) {
+        _tprintf(_T("%02x "), CertInfo->SerialNumber.pbData[dwData - (n + 1)]);
+    }
+    _tprintf(_T("\n"));
+
+    char NotBefore[MAX_PATH] = {0};
+    FileTimeToLocalTimeA(&CertInfo->NotBefore, NotBefore);
+    printf("有效期从:%s", NotBefore);
+
+    char NotAfter[MAX_PATH] = {0};
+    FileTimeToLocalTimeA(&CertInfo->NotAfter, NotAfter);
+    printf("到:%s\n", NotAfter);
+
+    _tprintf(_T("SubjectPublicKey Algorithm ObjId:%hs.\n"),
+             CertInfo->SubjectPublicKeyInfo.Algorithm.pszObjId);
+
+    _tprintf(_T("SubjectPublicKey Algorithm Parameters: "));
+    dwData = CertInfo->SubjectPublicKeyInfo.Algorithm.Parameters.cbData;
+    for (DWORD n = 0; n < dwData; n++) {
+        _tprintf(_T("%02x "),
+                 CertInfo->SubjectPublicKeyInfo.Algorithm.Parameters.pbData[dwData - (n + 1)]);
+    }
+    _tprintf(_T("\n"));
+
+    _tprintf(_T("UnusedBits:%d.\n"), CertInfo->SubjectPublicKeyInfo.PublicKey.cUnusedBits);
+    _tprintf(_T("公钥: "));
+    dwData = CertInfo->SubjectPublicKeyInfo.PublicKey.cbData;
+    for (DWORD n = 0; n < dwData; n++) {
+        _tprintf(_T("%02x "),
+                 CertInfo->SubjectPublicKeyInfo.PublicKey.pbData[n]);
+    }
+    _tprintf(_T("\n"));
+
+    //还有IssuerUniqueId，SubjectUniqueId，cExtension等信息。
+
+    _tprintf(_T("cExtension:%d.\n"), CertInfo->cExtension);
+    _tprintf(_T("Extension ObjId:%hs.\n"), CertInfo->rgExtension->pszObjId);
+    _tprintf(_T("Extension fCritical:%d.\n"), CertInfo->rgExtension->fCritical);
+    _tprintf(_T("Extension Value: "));
+    dwData = CertInfo->rgExtension->Value.cbData;
+    for (DWORD n = 0; n < dwData; n++) {
+        _tprintf(_T("%02x "), CertInfo->rgExtension->Value.pbData[n]);
+    }
+    _tprintf(_T("\n"));
+}
+
+
+BOOL PrintCertContext(PCCERT_CONTEXT pCertContext)
 {
     BOOL fReturn = FALSE;
     LPTSTR szName = NULL;
@@ -78,64 +141,7 @@ BOOL PrintCertificateInfo(PCCERT_CONTEXT pCertContext)
 
         _tprintf(_T("证书编码类型:%d.\n"), pCertContext->dwCertEncodingType);
 
-        _tprintf(_T("版本:%d.\n"), pCertContext->pCertInfo->dwVersion + 1);
-
-        _tprintf(_T("ObjId:%hs.\n"), pCertContext->pCertInfo->SignatureAlgorithm.pszObjId);
-
-        _tprintf(_T("公钥参数: "));
-        dwData = pCertContext->pCertInfo->SignatureAlgorithm.Parameters.cbData;
-        for (DWORD n = 0; n < dwData; n++) {
-            _tprintf(_T("%02x "), pCertContext->pCertInfo->SignatureAlgorithm.Parameters.pbData[n]);
-        }
-        _tprintf(_T("\n"));
-
-        // Print Serial Number.
-        _tprintf(_T("序列号: "));
-        dwData = pCertContext->pCertInfo->SerialNumber.cbData;
-        for (DWORD n = 0; n < dwData; n++) {
-            _tprintf(_T("%02x "), pCertContext->pCertInfo->SerialNumber.pbData[dwData - (n + 1)]);
-        }
-        _tprintf(_T("\n"));
-
-        char NotBefore[MAX_PATH] = {0};
-        FileTimeToLocalTimeA(&pCertContext->pCertInfo->NotBefore, NotBefore);
-        printf("有效期从:%s", NotBefore);
-
-        char NotAfter[MAX_PATH] = {0};
-        FileTimeToLocalTimeA(&pCertContext->pCertInfo->NotAfter, NotAfter);
-        printf("到:%s\n", NotAfter);
-
-        _tprintf(_T("SubjectPublicKey Algorithm ObjId:%hs.\n"),
-                 pCertContext->pCertInfo->SubjectPublicKeyInfo.Algorithm.pszObjId);
-
-        _tprintf(_T("SubjectPublicKey Algorithm Parameters: "));
-        dwData = pCertContext->pCertInfo->SubjectPublicKeyInfo.Algorithm.Parameters.cbData;
-        for (DWORD n = 0; n < dwData; n++) {
-            _tprintf(_T("%02x "),
-                     pCertContext->pCertInfo->SubjectPublicKeyInfo.Algorithm.Parameters.pbData[dwData - (n + 1)]);
-        }
-        _tprintf(_T("\n"));
-
-        _tprintf(_T("UnusedBits:%d.\n"), pCertContext->pCertInfo->SubjectPublicKeyInfo.PublicKey.cUnusedBits);
-        _tprintf(_T("公钥: "));
-        dwData = pCertContext->pCertInfo->SubjectPublicKeyInfo.PublicKey.cbData;
-        for (DWORD n = 0; n < dwData; n++) {
-            _tprintf(_T("%02x "),
-                     pCertContext->pCertInfo->SubjectPublicKeyInfo.PublicKey.pbData[n]);
-        }
-        _tprintf(_T("\n"));
-
-        //还有IssuerUniqueId，SubjectUniqueId，cExtension等信息。
-
-        _tprintf(_T("cExtension:%d.\n"), pCertContext->pCertInfo->cExtension);
-        _tprintf(_T("Extension ObjId:%hs.\n"), pCertContext->pCertInfo->rgExtension->pszObjId);
-        _tprintf(_T("Extension fCritical:%d.\n"), pCertContext->pCertInfo->rgExtension->fCritical);
-        _tprintf(_T("Extension Value: "));
-        dwData = pCertContext->pCertInfo->rgExtension->Value.cbData;
-        for (DWORD n = 0; n < dwData; n++) {
-            _tprintf(_T("%02x "), pCertContext->pCertInfo->rgExtension->Value.pbData[n]);
-        }
-        _tprintf(_T("\n"));
+        DumpCertInfo(pCertContext->pCertInfo);        
 
         // Get Issuer name size.
         if (!(dwData = CertGetNameString(pCertContext,
@@ -302,7 +308,7 @@ void DecodeCertificate(PBYTE Certificate, DWORD Length)
 
             PCCERT_CONTEXT PrevCertContext = NULL;
             while ((PrevCertContext = CertEnumCertificatesInStore(CertStore, PrevCertContext)) != NULL) {
-                PrintCertificateInfo(PrevCertContext);
+                PrintCertContext(PrevCertContext);
                 _tprintf(_T("\n\n\n"));
             }
         } else {
@@ -326,13 +332,12 @@ void PrintSecurity(LPWIN_CERTIFICATE SecurityDirectory)
 
     switch (SecurityDirectory->wCertificateType) {
     case WIN_CERT_TYPE_X509://bCertificate 包含的是 X.509 证书
-
+        _ASSERTE(false);
         break;
     case WIN_CERT_TYPE_PKCS_SIGNED_DATA://bCertificate 包含的是 PKCS#7 SignedData 结构
     {
         //这个数据是啥结构呢？
-        //以前的经验是里面有utf8编码。
-        PBYTE Certificate = SecurityDirectory->bCertificate;
+        //以前的经验是SecurityDirectory->bCertificate里面有utf8编码。
 
         /*
         这里的数据可用CryptDecodeObjectEx解析不？
@@ -343,18 +348,23 @@ void PrintSecurity(LPWIN_CERTIFICATE SecurityDirectory)
         参考：https://github.com/ajkhoury/CertDump.git
         */        
 
-        DecodeCertificate(Certificate, SecurityDirectory->dwLength);
+        //unsigned char * CertData = (unsigned char *)SecurityDirectory->bCertificate;
+        //long CertDataLength = SecurityDirectory->dwLength - FIELD_OFFSET(WIN_CERTIFICATE, bCertificate);
+        //PKCS7 * pkcs7 = d2i_PKCS7(NULL, (const unsigned char **)&CertData, CertDataLength);
+        //DumpPKCS7(pkcs7);
+
+        DecodeCertificate(SecurityDirectory->bCertificate, SecurityDirectory->dwLength);
 
         break;
     }
     case WIN_CERT_TYPE_RESERVED_1://保留。 
-
+        _ASSERTE(false);
         break;
     case WIN_CERT_TYPE_TS_STACK_SIGNED://终端服务器协议栈证书签名
-
+        _ASSERTE(false);
         break;
     default:
-
+        _ASSERTE(false);
         break;
     }
 
@@ -519,7 +529,7 @@ BOOL GetSignerInfo(IN WCHAR * FileName)
             __leave;
         }
 
-        PrintCertificateInfo(pCertContext);
+        PrintCertContext(pCertContext);
 
         fResult = TRUE;
     } __finally {
@@ -650,7 +660,7 @@ void ParseCertificateInfo2()
                                                               pCertContext);
                     if (pCertContext) {
                         count++;
-                        PrintCertificateInfo(pCertContext);
+                        PrintCertContext(pCertContext);
                         _tprintf(_T("\n\n\n"));
                     }
                 } while (pCertContext);
@@ -714,14 +724,9 @@ void ParseCertificateInfo4(PIMAGE_DATA_DIRECTORY DataDirectory, LPWIN_CERTIFICAT
 用openssl解析PE的证书。
 */
 {
-    PKCS7 * pkcs7;
-    unsigned char * CertData;
-    long CertDataLength;
-
-    CertData = (unsigned char *)SecurityDirectory->bCertificate;
-    CertDataLength = SecurityDirectory->dwLength - FIELD_OFFSET(WIN_CERTIFICATE, bCertificate);
-
-    pkcs7 = d2i_PKCS7(NULL, (const unsigned char **)&CertData, CertDataLength);
+    unsigned char * CertData = (unsigned char *)SecurityDirectory->bCertificate;
+    long CertDataLength = SecurityDirectory->dwLength - FIELD_OFFSET(WIN_CERTIFICATE, bCertificate);
+    PKCS7 * pkcs7 = d2i_PKCS7(NULL, (const unsigned char **)&CertData, CertDataLength);
     if (NULL == pkcs7) {
         return;
     }

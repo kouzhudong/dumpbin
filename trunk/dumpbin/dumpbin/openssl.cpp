@@ -75,7 +75,7 @@ void DumpX509(X509 * x509)
         }
         name += (char *)data->data;
     }
-    printf("使用者:%s.\n", name.c_str());
+    printf("使用者:%s.\n", name.c_str());//这是UTF8编码。汉字会显示乱码，需转换。
 
     const ASN1_TIME * notBefore = X509_get0_notBefore(x509);
     struct tm tm;
