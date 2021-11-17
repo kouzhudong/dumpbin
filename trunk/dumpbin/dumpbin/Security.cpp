@@ -348,10 +348,13 @@ void PrintSecurity(LPWIN_CERTIFICATE SecurityDirectory)
         参考：https://github.com/ajkhoury/CertDump.git
         */        
 
-        //unsigned char * CertData = (unsigned char *)SecurityDirectory->bCertificate;
-        //long CertDataLength = SecurityDirectory->dwLength - FIELD_OFFSET(WIN_CERTIFICATE, bCertificate);
-        //PKCS7 * pkcs7 = d2i_PKCS7(NULL, (const unsigned char **)&CertData, CertDataLength);
-        //DumpPKCS7(pkcs7);
+        //经测试，这种办法有效可行正确。
+        if (false) {
+            unsigned char * CertData = (unsigned char *)SecurityDirectory->bCertificate;
+            long CertDataLength = SecurityDirectory->dwLength - FIELD_OFFSET(WIN_CERTIFICATE, bCertificate);
+            PKCS7 * pkcs7 = d2i_PKCS7(NULL, (const unsigned char **)&CertData, CertDataLength);
+            DumpPKCS7(pkcs7);
+        }
 
         DecodeCertificate(SecurityDirectory->bCertificate, SecurityDirectory->dwLength);
 
@@ -746,6 +749,10 @@ DWORD Security(_In_ PBYTE Data, _In_ DWORD Size)
         return ret;
     }
 
+    printf("----------------------------------------------------------------------------------\n");
+    printf("解析方式一：\n");
+    ParseCertificateInfo1();
+
     IMAGE_DATA_DIRECTORY DataDirectory = {0};
     GetDataDirectory(Data, Size, IMAGE_DIRECTORY_ENTRY_SECURITY, &DataDirectory);
 
@@ -778,23 +785,15 @@ DWORD Security(_In_ PBYTE Data, _In_ DWORD Size)
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     printf("----------------------------------------------------------------------------------\n");
-    printf("解析方式一：\n");
-
-    ParseCertificateInfo1();
-
-    printf("----------------------------------------------------------------------------------\n");
     printf("解析方式二：\n");
-
     ParseCertificateInfo2();
 
     printf("----------------------------------------------------------------------------------\n");
     printf("解析方式三：\n");
-
     ParseCertificateInfo3(&DataDirectory, SecurityDirectory);
 
     printf("----------------------------------------------------------------------------------\n");
     printf("解析方式四：\n");
-
     ParseCertificateInfo4(&DataDirectory, SecurityDirectory);
 
     //////////////////////////////////////////////////////////////////////////////////////////////
