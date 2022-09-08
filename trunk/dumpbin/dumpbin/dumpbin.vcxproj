@@ -215,9 +215,13 @@
     <ClInclude Include="PrintBinary.h" />
     <ClInclude Include="Public.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="resource1.h" />
     <ClInclude Include="SaveFile.h" />
     <ClInclude Include="Security.h" />
     <ClInclude Include="TLS.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="dumpbin.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
