@@ -140,11 +140,13 @@ void DumpX509(X509 * x509)
 
     ASN1_OCTET_STRING * skid = NULL;
     skid = (ASN1_OCTET_STRING *)X509_get_ext_d2i(x509, NID_subject_key_identifier, &crit, NULL);
-    printf("使用者密钥标识符:");
-    for (int i = 0; i < skid->length; i++) {
-        printf("%02x", skid->data[i]);
+    if (skid) {
+        printf("使用者密钥标识符:");
+        for (int i = 0; i < skid->length; i++) {
+            printf("%02x", skid->data[i]);
+        }
+        printf("\n");
     }
-    printf("\n");
 
     BASIC_CONSTRAINTS * bc;
     bc = (BASIC_CONSTRAINTS *)X509_get_ext_d2i(x509, NID_basic_constraints, NULL, NULL);
