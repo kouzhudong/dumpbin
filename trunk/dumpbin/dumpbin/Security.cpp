@@ -93,8 +93,7 @@ void DumpCertInfo(PCERT_INFO CertInfo)
     _tprintf(_T("SubjectPublicKey Algorithm Parameters: "));
     dwData = CertInfo->SubjectPublicKeyInfo.Algorithm.Parameters.cbData;
     for (DWORD n = 0; n < dwData; n++) {
-        _tprintf(_T("%02x "),
-                 CertInfo->SubjectPublicKeyInfo.Algorithm.Parameters.pbData[dwData - (n + 1)]);
+        _tprintf(_T("%02x "), CertInfo->SubjectPublicKeyInfo.Algorithm.Parameters.pbData[dwData - (n + 1)]);
     }
     _tprintf(_T("\n"));
 
@@ -102,8 +101,7 @@ void DumpCertInfo(PCERT_INFO CertInfo)
     _tprintf(_T("公钥: "));
     dwData = CertInfo->SubjectPublicKeyInfo.PublicKey.cbData;
     for (DWORD n = 0; n < dwData; n++) {
-        _tprintf(_T("%02x "),
-                 CertInfo->SubjectPublicKeyInfo.PublicKey.pbData[n]);
+        _tprintf(_T("%02x "), CertInfo->SubjectPublicKeyInfo.PublicKey.pbData[n]);
     }
     _tprintf(_T("\n"));
 
@@ -141,7 +139,7 @@ BOOL PrintCertContext(PCCERT_CONTEXT pCertContext)
 
         _tprintf(_T("证书编码类型:%d.\n"), pCertContext->dwCertEncodingType);
 
-        DumpCertInfo(pCertContext->pCertInfo);        
+        DumpCertInfo(pCertContext->pCertInfo);
 
         // Get Issuer name size.
         if (!(dwData = CertGetNameString(pCertContext,
@@ -178,12 +176,7 @@ BOOL PrintCertContext(PCCERT_CONTEXT pCertContext)
         szName = NULL;
 
         // Get Subject name size.
-        if (!(dwData = CertGetNameString(pCertContext,
-                                         CERT_NAME_SIMPLE_DISPLAY_TYPE,
-                                         0,
-                                         NULL,
-                                         NULL,
-                                         0))) {
+        if (!(dwData = CertGetNameString(pCertContext, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, NULL, NULL, 0))) {
             _tprintf(_T("CertGetNameString failed.\n"));
             __leave;
         }
@@ -210,12 +203,7 @@ BOOL PrintCertContext(PCCERT_CONTEXT pCertContext)
         _tprintf(_T("使用者的CN: %s\n"), szName);
 
         DWORD dwStrType = CERT_X500_NAME_STR;
-        DWORD dwCount = CertGetNameString(pCertContext,
-                                          CERT_NAME_RDN_TYPE,
-                                          0,
-                                          &dwStrType,
-                                          NULL,
-                                          0);
+        DWORD dwCount = CertGetNameString(pCertContext, CERT_NAME_RDN_TYPE, 0, &dwStrType, NULL, 0);
         if (dwCount) {
             LPTSTR szSubjectRDN = (LPTSTR)LocalAlloc(0, dwCount * sizeof(TCHAR));
             dwCount = CertGetNameString(pCertContext,
@@ -346,7 +334,7 @@ void PrintSecurity(LPWIN_CERTIFICATE SecurityDirectory)
 
         这里的数据可以用openssl的函数解析，如：d2i_PKCS7等。
         参考：https://github.com/ajkhoury/CertDump.git
-        */        
+        */
 
         //经测试，这种办法有效可行正确。
         if (false) {
@@ -391,12 +379,12 @@ BOOL VerifyEmbeddedSignature(IN LPCTSTR filename, OUT wchar_t * signer_file)
         return FALSE;
     }
 
-    HANDLE hFile = CreateFileW(filename, 
+    HANDLE hFile = CreateFileW(filename,
                                GENERIC_READ,
                                FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                               NULL, 
+                               NULL,
                                OPEN_EXISTING,
-                               0, 
+                               0,
                                NULL);
     if (INVALID_HANDLE_VALUE == hFile) {
         printf("FileName:%ls, GetLastError:%#x", filename, GetLastError());
@@ -765,8 +753,6 @@ DWORD Security(_In_ PBYTE Data, _In_ DWORD Size)
     printf("VirtualAddress:%#010X.\r\n", DataDirectory.VirtualAddress);
     printf("Size:%#010X.\r\n", DataDirectory.Size);
     printf("\r\n");
-
-    //////////////////////////////////////////////////////////////////////////////////////////////
 
     //ULONG size = 0;
     //PIMAGE_SECTION_HEADER FoundHeader = NULL;
