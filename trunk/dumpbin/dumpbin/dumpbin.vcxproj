@@ -138,7 +138,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <PrecompiledHeader>Create</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <CallingConvention>Cdecl</CallingConvention>
     </ClCompile>
@@ -170,6 +170,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\lib\tiny-asn1\src\tiny-asn1.c" />
     <ClCompile Include="Architecture.cpp" />
     <ClCompile Include="BaseReloc.cpp" />
     <ClCompile Include="BoundImport.cpp" />
@@ -195,6 +196,7 @@
     <ClCompile Include="TLS.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\lib\tiny-asn1\src\tiny-asn1.h" />
     <ClInclude Include="Architecture.h" />
     <ClInclude Include="BaseReloc.h" />
     <ClInclude Include="BoundImport.h" />

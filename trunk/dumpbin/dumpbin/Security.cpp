@@ -3,6 +3,7 @@
 #include "Public.h"
 #include "openssl.h"
 #include "Public.h"
+#include "..\lib\tiny-asn1\src\tiny-asn1.h"
 
 
 #pragma warning(disable:6386)
@@ -726,6 +727,102 @@ void ParseCertificateInfo4(PIMAGE_DATA_DIRECTORY DataDirectory, LPWIN_CERTIFICAT
 }
 
 
+void print_hex(const uint8_t * data, unsigned int len)
+{
+    unsigned int count = 0;
+    unsigned int blockCount = 0;
+
+    while (count < len) {
+        printf("%02x ", data[count]);
+        ++count;
+        ++blockCount;
+        if (blockCount == 4)
+            printf("  ");
+        if (blockCount == 8) {
+            printf("\n");
+            blockCount = 0;
+        }
+    }
+
+    printf("\n");
+}
+
+
+void print_asn1(const asn1_tree * list, int depth)
+{
+    printf("d=%d, Tag: %02x, len=%d\n", depth, list->type, list->length);
+    if (list->child == NULL) {
+        printf("Value:\n");
+        print_hex(list->data, list->length);
+    } else {
+        print_asn1(list->child, depth + 1);
+    }
+
+    if (list->next != NULL)
+        print_asn1(list->next, depth);
+}
+
+
+void ParseCertificateInfo5(PIMAGE_DATA_DIRECTORY DataDirectory, LPWIN_CERTIFICATE SecurityDirectory)
+/*
+用ASN解析PE的证书。
+
+仅仅测试代码。
+*/
+{
+    unsigned char * CertData = (unsigned char *)SecurityDirectory->bCertificate;
+    long CertDataLength = SecurityDirectory->dwLength - FIELD_OFFSET(WIN_CERTIFICATE, bCertificate);
+    
+    int32_t asn1_object_count = der_object_count(CertData, CertDataLength);
+    if (asn1_object_count < 0) {
+        fprintf(stderr, "ERROR: Could not calculate the number of Elements within the data.\n");
+        return;
+    }
+
+    asn1_tree * asn1_objects = (asn1_tree *)(malloc(sizeof(asn1_tree) * asn1_object_count));
+    if (asn1_objects == NULL) {
+        fprintf(stderr, "ERROR: Could not allocate the memory for the ASN.1 objects.\n");
+        return;
+    }
+
+    asn1_tree cms;
+    if (der_decode(CertData, CertDataLength, &cms, asn1_objects, asn1_object_count) < 0) {
+        fprintf(stderr, "ERROR: Could not parse the data.\n");
+        return;
+    }
+     
+    print_asn1(&cms, 0); //Dump the data
+
+    //Since we know this is CMS data, we can try to interpret it.
+    if (cms.type != ASN1_TYPE_SEQUENCE) {
+        fprintf(stderr, "ERROR: The outer type is not a SEQUENCE.\n");
+        return;
+    }
+
+    asn1_tree * content_type = cms.child;
+    if (content_type == NULL || content_type->type != ASN1_TYPE_OBJECT_IDENTIFIER) {
+        fprintf(stderr, "ERROR: No ContentType information available.\n");
+        return;
+    }
+
+    asn1_tree * encrypted_data = content_type->next->child;
+    if (encrypted_data == NULL || encrypted_data->type != ASN1_TYPE_SEQUENCE) {
+        fprintf(stderr, "ERROR: EncryptedData not availavble.\n");
+        return;
+    }
+
+    asn1_tree * cms_version = encrypted_data->child;
+    if (cms_version == NULL || cms_version->type != ASN1_TYPE_INTEGER || cms_version->length != 1) {
+        fprintf(stderr, "ERROR: CMSVersion not availavble.\n");
+        return;
+    }
+    uint8_t version = cms_version->data[0];
+    printf("CMSVersion: %d\n", version);
+
+    free(asn1_objects);
+}
+
+
 DWORD Security(_In_ PBYTE Data, _In_ DWORD Size)
 /*
 参考：\win2k\trunk\private\sdktools\imagehlp\dice.cxx的FindCertificate函数。
@@ -781,6 +878,10 @@ DWORD Security(_In_ PBYTE Data, _In_ DWORD Size)
     printf("----------------------------------------------------------------------------------\n");
     printf("解析方式四：\n");
     ParseCertificateInfo4(&DataDirectory, SecurityDirectory);
+
+    printf("----------------------------------------------------------------------------------\n");
+    printf("解析方式五：\n");
+    ParseCertificateInfo5(&DataDirectory, SecurityDirectory);
 
     //////////////////////////////////////////////////////////////////////////////////////////////
 

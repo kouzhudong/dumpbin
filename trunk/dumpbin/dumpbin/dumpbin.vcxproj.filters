@@ -84,6 +84,9 @@
     <ClCompile Include="openssl.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="..\lib\tiny-asn1\src\tiny-asn1.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PeHeader.h">
@@ -156,6 +159,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="resource1.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\tiny-asn1\src\tiny-asn1.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

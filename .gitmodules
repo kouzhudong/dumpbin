@@ -1,0 +1,3 @@
+[submodule "trunk/dumpbin/lib/tiny-asn1"]
+	path = trunk/dumpbin/lib/tiny-asn1
+	url = https://gitlab.com/mtausig/tiny-asn1.git
