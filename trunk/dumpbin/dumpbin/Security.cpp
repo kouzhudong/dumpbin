@@ -738,10 +738,10 @@ void print_hex(const uint8_t * data, unsigned int len)
         ++count;
         ++blockCount;
 
-        if (blockCount == 4)
+        if (blockCount == 8)
             printf("  ");
 
-        if (blockCount == 8) {
+        if (blockCount == 16) {
             printf("\n");
             blockCount = 0;
         }
@@ -777,7 +777,7 @@ void ParseCertificateInfo5(PIMAGE_DATA_DIRECTORY DataDirectory, LPWIN_CERTIFICAT
 {
     unsigned char * CertData = (unsigned char *)SecurityDirectory->bCertificate;
     long CertDataLength = SecurityDirectory->dwLength - FIELD_OFFSET(WIN_CERTIFICATE, bCertificate);
-    
+
     int32_t asn1_object_count = der_object_count(CertData, CertDataLength);
     if (asn1_object_count < 0) {
         fprintf(stderr, "ERROR: Could not calculate the number of Elements within the data.\n");
@@ -795,7 +795,7 @@ void ParseCertificateInfo5(PIMAGE_DATA_DIRECTORY DataDirectory, LPWIN_CERTIFICAT
         fprintf(stderr, "ERROR: Could not parse the data.\n");
         return;
     }
-     
+
     print_asn1(&cms, 0); //Dump the data
 
     //Since we know this is CMS data, we can try to interpret it.
