@@ -734,10 +734,13 @@ void print_hex(const uint8_t * data, unsigned int len)
 
     while (count < len) {
         printf("%02x ", data[count]);
+
         ++count;
         ++blockCount;
+
         if (blockCount == 4)
             printf("  ");
+
         if (blockCount == 8) {
             printf("\n");
             blockCount = 0;
@@ -751,6 +754,7 @@ void print_hex(const uint8_t * data, unsigned int len)
 void print_asn1(const asn1_tree * list, int depth)
 {
     printf("d=%d, Tag: %02x, len=%d\n", depth, list->type, list->length);
+
     if (list->child == NULL) {
         printf("Value:\n");
         print_hex(list->data, list->length);
@@ -758,8 +762,9 @@ void print_asn1(const asn1_tree * list, int depth)
         print_asn1(list->child, depth + 1);
     }
 
-    if (list->next != NULL)
+    if (list->next != NULL) {
         print_asn1(list->next, depth);
+    }
 }
 
 
