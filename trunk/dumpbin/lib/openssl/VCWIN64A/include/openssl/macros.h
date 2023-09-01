@@ -20,7 +20,7 @@
 # define OPENSSL_MSTR(x) OPENSSL_MSTR_HELPER(x)
 
 /*
- * Sometimes OPENSSSL_NO_xxx ends up with an empty file and some compilers
+ * Sometimes OPENSSL_NO_xxx ends up with an empty file and some compilers
  * don't like that.  This will hopefully silence them.
  */
 # define NON_EMPTY_TRANSLATION_UNIT static void *dummy = &dummy;
@@ -169,6 +169,7 @@
  * 'no-deprecated'.
  */
 
+# undef OPENSSL_NO_DEPRECATED_3_2
 # undef OPENSSL_NO_DEPRECATED_3_0
 # undef OPENSSL_NO_DEPRECATED_1_1_1
 # undef OPENSSL_NO_DEPRECATED_1_1_0
@@ -177,6 +178,17 @@
 # undef OPENSSL_NO_DEPRECATED_1_0_0
 # undef OPENSSL_NO_DEPRECATED_0_9_8
 
+# if OPENSSL_API_LEVEL >= 30200
+#  ifndef OPENSSL_NO_DEPRECATED
+#   define OSSL_DEPRECATEDIN_3_2                OSSL_DEPRECATED(3.2)
+#   define OSSL_DEPRECATEDIN_3_2_FOR(msg)       OSSL_DEPRECATED_FOR(3.2, msg)
+#  else
+#   define OPENSSL_NO_DEPRECATED_3_2
+#  endif
+# else
+#  define OSSL_DEPRECATEDIN_3_2
+#  define OSSL_DEPRECATEDIN_3_2_FOR(msg)
+# endif
 # if OPENSSL_API_LEVEL >= 30000
 #  ifndef OPENSSL_NO_DEPRECATED
 #   define OSSL_DEPRECATEDIN_3_0                OSSL_DEPRECATED(3.0)
@@ -298,6 +310,16 @@
  */
 #  ifndef OPENSSL_FUNC
 #   define OPENSSL_FUNC "(unknown function)"
+#  endif
+# endif
+
+# ifndef OSSL_CRYPTO_ALLOC
+#  if defined(__GNUC__)
+#   define OSSL_CRYPTO_ALLOC __attribute__((malloc))
+#  elif defined(_MSC_VER)
+#   define OSSL_CRYPTO_ALLOC __declspec(restrict)
+#  else
+#   define OSSL_CRYPTO_ALLOC
 #  endif
 # endif
 

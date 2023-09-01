@@ -21,6 +21,9 @@
 #  define HEADER_ASN1_H
 # endif
 
+# ifndef OPENSSL_NO_STDIO
+#  include <stdio.h>
+# endif
 # include <time.h>
 # include <openssl/e_os2.h>
 # include <openssl/opensslconf.h>
@@ -155,7 +158,7 @@ SKM_DEFINE_STACK_OF_INTERNAL(X509_ALGOR, X509_ALGOR, X509_ALGOR)
 
 
 
-# define ASN1_STRING_FLAG_BITS_LEFT 0x08/* Set if 0x07 has bits left value */
+# define ASN1_STRING_FLAG_BITS_LEFT 0x08 /* Set if 0x07 has bits left value */
 /*
  * This indicates that the ASN1_STRING is not a real value but just a place
  * holder for the location where indefinite length constructed data should be

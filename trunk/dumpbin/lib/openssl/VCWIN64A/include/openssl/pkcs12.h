@@ -25,6 +25,9 @@
 # include <openssl/core.h>
 # include <openssl/x509.h>
 # include <openssl/pkcs12err.h>
+# ifndef OPENSSL_NO_STDIO
+#  include <stdio.h>
+# endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,6 +44,7 @@ extern "C" {
 
 # define PKCS12_MAC_KEY_LENGTH 20
 
+/* The macro is expected to be used only internally. Kept for backwards compatibility. */
 # define PKCS12_SALT_LEN 8
 
 /* It's not clear if these are actually needed... */
@@ -218,6 +222,7 @@ ASN1_TYPE *PKCS12_get_attr_gen(const STACK_OF(X509_ATTRIBUTE) *attrs,
 char *PKCS12_get_friendlyname(PKCS12_SAFEBAG *bag);
 const STACK_OF(X509_ATTRIBUTE) *
 PKCS12_SAFEBAG_get0_attrs(const PKCS12_SAFEBAG *bag);
+void PKCS12_SAFEBAG_set0_attrs(PKCS12_SAFEBAG *bag, STACK_OF(X509_ATTRIBUTE) *attrs);
 unsigned char *PKCS12_pbe_crypt(const X509_ALGOR *algor,
                                 const char *pass, int passlen,
                                 const unsigned char *in, int inlen,
@@ -305,6 +310,7 @@ DECLARE_ASN1_ITEM(PKCS12_AUTHSAFES)
 void PKCS12_PBE_add(void);
 int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
                  STACK_OF(X509) **ca);
+typedef int PKCS12_create_cb(PKCS12_SAFEBAG *bag, void *cbarg);
 PKCS12 *PKCS12_create(const char *pass, const char *name, EVP_PKEY *pkey,
                       X509 *cert, STACK_OF(X509) *ca, int nid_key, int nid_cert,
                       int iter, int mac_iter, int keytype);
@@ -312,6 +318,11 @@ PKCS12 *PKCS12_create_ex(const char *pass, const char *name, EVP_PKEY *pkey,
                          X509 *cert, STACK_OF(X509) *ca, int nid_key, int nid_cert,
                          int iter, int mac_iter, int keytype,
                          OSSL_LIB_CTX *ctx, const char *propq);
+PKCS12 *PKCS12_create_ex2(const char *pass, const char *name, EVP_PKEY *pkey,
+                          X509 *cert, STACK_OF(X509) *ca, int nid_key, int nid_cert,
+                          int iter, int mac_iter, int keytype,
+                          OSSL_LIB_CTX *ctx, const char *propq,
+                          PKCS12_create_cb *cb, void *cbarg);
 
 PKCS12_SAFEBAG *PKCS12_add_cert(STACK_OF(PKCS12_SAFEBAG) **pbags, X509 *cert);
 PKCS12_SAFEBAG *PKCS12_add_key(STACK_OF(PKCS12_SAFEBAG) **pbags,

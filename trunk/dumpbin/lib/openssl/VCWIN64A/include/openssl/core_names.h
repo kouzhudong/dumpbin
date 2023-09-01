@@ -21,9 +21,9 @@ extern "C" {
 #define OSSL_PROV_PARAM_CORE_MODULE_FILENAME "module-filename" /* utf8_ptr */
 
 /* Well known parameter names that Providers can define */
-#define OSSL_PROV_PARAM_NAME            "name"                /* utf8_string */
-#define OSSL_PROV_PARAM_VERSION         "version"             /* utf8_string */
-#define OSSL_PROV_PARAM_BUILDINFO       "buildinfo"           /* utf8_string */
+#define OSSL_PROV_PARAM_NAME            "name"                /* utf8_ptr */
+#define OSSL_PROV_PARAM_VERSION         "version"             /* utf8_ptr */
+#define OSSL_PROV_PARAM_BUILDINFO       "buildinfo"           /* utf8_ptr */
 #define OSSL_PROV_PARAM_STATUS          "status"              /* uint */
 #define OSSL_PROV_PARAM_SECURITY_CHECKS "security-checks"     /* uint */
 
@@ -119,6 +119,11 @@ extern "C" {
 #define OSSL_CIPHER_CTS_MODE_CS1 "CS1"
 #define OSSL_CIPHER_CTS_MODE_CS2 "CS2"
 #define OSSL_CIPHER_CTS_MODE_CS3 "CS3"
+
+/* Known CIPHER names (not a complete list) */
+#define OSSL_CIPHER_NAME_AES_128_GCM_SIV      "AES-128-GCM-SIV"
+#define OSSL_CIPHER_NAME_AES_192_GCM_SIV      "AES-192-GCM-SIV"
+#define OSSL_CIPHER_NAME_AES_256_GCM_SIV      "AES-256-GCM-SIV"
 
 /* digest parameters */
 #define OSSL_DIGEST_PARAM_XOFLEN       "xoflen"        /* size_t */
@@ -217,6 +222,7 @@ extern "C" {
 #define OSSL_KDF_PARAM_PKCS12_ID    "id"        /* int */
 #define OSSL_KDF_PARAM_KBKDF_USE_L  "use-l"             /* int */
 #define OSSL_KDF_PARAM_KBKDF_USE_SEPARATOR  "use-separator"     /* int */
+#define OSSL_KDF_PARAM_KBKDF_R      "r"         /* int */
 #define OSSL_KDF_PARAM_X942_ACVPINFO        "acvp-info"
 #define OSSL_KDF_PARAM_X942_PARTYUINFO      "partyu-info"
 #define OSSL_KDF_PARAM_X942_PARTYVINFO      "partyv-info"
@@ -407,6 +413,9 @@ extern "C" {
 #define OSSL_PKEY_PARAM_RSA_MGF1_DIGEST      OSSL_PKEY_PARAM_MGF1_DIGEST
 #define OSSL_PKEY_PARAM_RSA_PSS_SALTLEN      "saltlen"
 
+/* EC, X25519 and X448 Key generation parameters */
+#define OSSL_PKEY_PARAM_DHKEM_IKM        "dhkem-ikm"
+
 /* Key generation parameters */
 #define OSSL_PKEY_PARAM_FFC_TYPE         "type"
 #define OSSL_PKEY_PARAM_FFC_PBITS        "pbits"
@@ -501,9 +510,11 @@ extern "C" {
 
 /* KEM parameters */
 #define OSSL_KEM_PARAM_OPERATION            "operation"
+#define OSSL_KEM_PARAM_IKME                 "ikme"
 
 /* OSSL_KEM_PARAM_OPERATION values */
 #define OSSL_KEM_PARAM_OPERATION_RSASVE     "RSASVE"
+#define OSSL_KEM_PARAM_OPERATION_DHKEM      "DHKEM"
 
 /* Capabilities */
 
@@ -548,6 +559,20 @@ extern "C" {
 #define OSSL_STORE_PARAM_PROPERTIES "properties"   /* utf8_string */
 /* OSSL_DECODER input type if a decoder is used by the store */
 #define OSSL_STORE_PARAM_INPUT_TYPE "input-type"   /* UTF8_STRING */
+
+
+/* Libssl record layer */
+
+#define OSSL_LIBSSL_RECORD_LAYER_PARAM_OPTIONS        "options"
+#define OSSL_LIBSSL_RECORD_LAYER_PARAM_MODE           "mode"
+#define OSSL_LIBSSL_RECORD_LAYER_PARAM_READ_AHEAD     "read_ahead"
+#define OSSL_LIBSSL_RECORD_LAYER_READ_BUFFER_LEN      "read_buffer_len"
+#define OSSL_LIBSSL_RECORD_LAYER_PARAM_USE_ETM        "use_etm"
+#define OSSL_LIBSSL_RECORD_LAYER_PARAM_STREAM_MAC     "stream_mac"
+#define OSSL_LIBSSL_RECORD_LAYER_PARAM_TLSTREE        "tlstree"
+#define OSSL_LIBSSL_RECORD_LAYER_PARAM_MAX_FRAG_LEN   "max_frag_len"
+#define OSSL_LIBSSL_RECORD_LAYER_PARAM_MAX_EARLY_DATA "max_early_data"
+#define OSSL_LIBSSL_RECORD_LAYER_PARAM_BLOCK_PADDING  "block_padding"
 
 # ifdef __cplusplus
 }

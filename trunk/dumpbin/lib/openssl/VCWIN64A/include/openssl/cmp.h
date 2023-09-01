@@ -35,7 +35,9 @@
 extern "C" {
 #  endif
 
-#  define OSSL_CMP_PVNO 2
+#  define OSSL_CMP_PVNO_2 2
+#  define OSSL_CMP_PVNO_3 3
+#  define OSSL_CMP_PVNO OSSL_CMP_PVNO_2 /* v2 is the default */
 
 /*-
  *   PKIFailureInfo ::= BIT STRING {
@@ -429,7 +431,9 @@ void *OSSL_CMP_CTX_get_transfer_cb_arg(const OSSL_CMP_CTX *ctx);
 int OSSL_CMP_CTX_set1_srvCert(OSSL_CMP_CTX *ctx, X509 *cert);
 int OSSL_CMP_CTX_set1_expected_sender(OSSL_CMP_CTX *ctx, const X509_NAME *name);
 int OSSL_CMP_CTX_set0_trustedStore(OSSL_CMP_CTX *ctx, X509_STORE *store);
+#define OSSL_CMP_CTX_set0_trusted OSSL_CMP_CTX_set0_trustedStore
 X509_STORE *OSSL_CMP_CTX_get0_trustedStore(const OSSL_CMP_CTX *ctx);
+#define OSSL_CMP_CTX_get0_trusted OSSL_CMP_CTX_get0_trustedStore
 int OSSL_CMP_CTX_set1_untrusted(OSSL_CMP_CTX *ctx, STACK_OF(X509) *certs);
 STACK_OF(X509) *OSSL_CMP_CTX_get0_untrusted(const OSSL_CMP_CTX *ctx);
 /* client authentication: */
@@ -473,6 +477,7 @@ int OSSL_CMP_CTX_get_status(const OSSL_CMP_CTX *ctx);
 OSSL_CMP_PKIFREETEXT *OSSL_CMP_CTX_get0_statusString(const OSSL_CMP_CTX *ctx);
 int OSSL_CMP_CTX_get_failInfoCode(const OSSL_CMP_CTX *ctx);
 #  define OSSL_CMP_PKISI_BUFLEN 1024
+X509 *OSSL_CMP_CTX_get0_validatedSrvCert(const OSSL_CMP_CTX *ctx);
 X509 *OSSL_CMP_CTX_get0_newCert(const OSSL_CMP_CTX *ctx);
 STACK_OF(X509) *OSSL_CMP_CTX_get1_newChain(const OSSL_CMP_CTX *ctx);
 STACK_OF(X509) *OSSL_CMP_CTX_get1_caPubs(const OSSL_CMP_CTX *ctx);
