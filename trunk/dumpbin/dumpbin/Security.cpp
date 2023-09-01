@@ -751,13 +751,127 @@ void print_hex(const uint8_t * data, unsigned int len)
 }
 
 
-void print_asn1(const asn1_tree * list, int depth)
+void dumpdata(const asn1_tree * list, int depth)
+/*
+
+基本类型
+
+讨论以下数据类型：
+
+BIT STRING
+BOOLEAN
+INTEGER
+NULL
+对象标识符
+八进制字符串
+字符串类型
+
+讨论以下字符串类型：
+
+BMPString
+IA5String
+PrintableString
+TeletexString
+UTF8String
+构造类型
+
+讨论可包含基本类型、字符串类型或其他构造类型的 ASN.1 数据类型。
+
+https://learn.microsoft.com/zh-cn/windows/win32/seccertenroll/about-asn-1-type-system
+https://learn.microsoft.com/zh-cn/windows/win32/seccertenroll/about-string-types
+https://learn.microsoft.com/zh-cn/windows/win32/seccertenroll/about-encoded-tag-bytes
+*/
 {
     printf("d=%d, Tag: %02x, len=%d\n", depth, list->type, list->length);
 
-    if (list->child == NULL) {
+    switch (list->type) {
+    //case ASN1_TYPE_BIT_STRING:
+
+    //    break;
+    //case ASN1_TYPE_OCTET_STRING:
+
+    //    break;
+    case 0x0C://UTF8String
+
+        break;
+    case ASN1_TYPE_UTF8_STRING:
+
+        break;
+    case 0x13://PrintableString
+    {
+        LPSTR pws = (LPSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (SIZE_T)list->length + 2);
+        _ASSERTE(pws);
+
+        RtlCopyMemory(pws, list->data, list->length);
+        printf("Value: %s\n", pws);
+
+        HeapFree(GetProcessHeap(), 0, pws);
+        break;
+    }
+    case 0x14://TeletexString
+
+        break;
+    case 0x16://IA5String
+    {
+        LPSTR pws = (LPSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (SIZE_T)list->length + 2);
+        _ASSERTE(pws);
+
+        RtlCopyMemory(pws, list->data, list->length);
+        printf("Value: %s\n", pws);
+
+        HeapFree(GetProcessHeap(), 0, pws);
+        break;
+    }
+    case 0x17://不知啥类型
+    {
+        LPSTR pws = (LPSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (SIZE_T)list->length + 2);
+        _ASSERTE(pws);
+
+        RtlCopyMemory(pws, list->data, list->length);
+        printf("Value: %s\n", pws);
+
+        HeapFree(GetProcessHeap(), 0, pws);
+        break;
+    }
+    case 0x18://不知啥类型
+    {
+        LPSTR pws = (LPSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (SIZE_T)list->length + 2);
+        _ASSERTE(pws);
+
+        RtlCopyMemory(pws, list->data, list->length);
+        printf("Value: %s\n", pws);
+
+        HeapFree(GetProcessHeap(), 0, pws);
+        break;
+    }
+    case ASN1_TYPE_PRINTABLE_STRING:
+
+        break;
+    case 0x1E://BMPString
+
+        break;
+    case ASN1_TYPE_T61_STRING:
+
+        break;
+    case ASN1_TYPE_IA5_STRING:
+
+        break;
+    default:
         printf("Value:\n");
         print_hex(list->data, list->length);
+        break;
+    }
+
+    printf("\n");
+}
+
+
+void print_asn1(const asn1_tree * list, int depth)
+{
+    //printf("d=%d, Tag: %02x, len=%d\n", depth, list->type, list->length);
+
+    if (list->child == NULL) {
+        dumpdata(list, depth);
     } else {
         print_asn1(list->child, depth + 1);
     }
