@@ -313,7 +313,7 @@ DWORD Debug(_In_ PBYTE Data, _In_ DWORD Size)
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
     PIMAGE_DEBUG_DIRECTORY DebugDirectory = (PIMAGE_DEBUG_DIRECTORY)
         ImageDirectoryEntryToDataEx(Data,
-                                    FALSE,//自己映射的用FALSE，操作系统加载的用TRUE。 
+                                    FALSE,//映射（MapViewOfFile）的用FALSE，原始读取(如：ReadFile)的用TRUE。 
                                     IMAGE_DIRECTORY_ENTRY_DEBUG,
                                     &size, &FoundHeader);
 

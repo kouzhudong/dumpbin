@@ -165,7 +165,7 @@ DWORD Exception(_In_ PBYTE Data, _In_ DWORD Size)
     //PRUNTIME_FUNCTION
     PIMAGE_RUNTIME_FUNCTION_ENTRY ExceptionDirectory = (PIMAGE_RUNTIME_FUNCTION_ENTRY)
         ImageDirectoryEntryToDataEx(Data,
-                                    FALSE,//自己映射的用FALSE，操作系统加载的用TRUE。 
+                                    FALSE,//映射（MapViewOfFile）的用FALSE，原始读取(如：ReadFile)的用TRUE。 
                                     IMAGE_DIRECTORY_ENTRY_EXCEPTION,
                                     &size,
                                     &FoundHeader);
