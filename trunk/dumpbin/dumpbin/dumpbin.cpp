@@ -22,6 +22,7 @@
 #include "PrintBinary.h"
 #include "Disasm.h"
 #include "SaveFile.h"
+#include "coff.h"
 
 
 VOID Usage(TCHAR * exe)
@@ -55,6 +56,8 @@ Routine Description
     printf("View IAT：\"%ls\" IAT FileFullPath\r\n", exe);
     printf("View DelayImport：\"%ls\" DelayImport FileFullPath\r\n", exe);
     printf("View ComDescriptor：\"%ls\" ComDescriptor FileFullPath\r\n", exe);
+
+    printf("View Common Object File Format (COFF) files：\"%ls\" COFF FileFullPath\r\n", exe);
 
     printf("View content：\"%ls\" PrintBinary FileFullPath Address(RVA) Length(非负的十进制)\r\n", exe);
     printf("Disassemble(Zydis引擎)：\"%ls\" Disassemble FileFullPath Address(RVA) Length(非负的十进制)\r\n", exe);
@@ -134,6 +137,8 @@ int _cdecl wmain(_In_ int argc, _In_reads_(argc) TCHAR * argv[])
             ret = DelayImport(argv[2]);
         } else if (lstrcmpi(argv[1], TEXT("ComDescriptor")) == 0) {
             ret = ComDescriptor(argv[2]);
+        } else if (lstrcmpi(argv[1], TEXT("COFF")) == 0) {
+            ret = coff(argv[2]);
         } else {
             Usage(argv[0]);
         }
