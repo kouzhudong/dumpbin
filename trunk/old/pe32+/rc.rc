@@ -12,7 +12,7 @@ FILESUBTYPE 0
         BLOCK "040904E4"
         {
             VALUE "Comments", "备注"
-                VALUE "CompanyName", "乐观集团"
+                VALUE "CompanyName", "Optimistic Studio"
                 VALUE "FileVersion", "文件版本"
                 VALUE "FileDescription", "文件描述：made by correy"  //文件描述
                 VALUE "InternalName", "内部名称"
