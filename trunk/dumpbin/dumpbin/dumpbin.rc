@@ -4,9 +4,7 @@
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
-//
 // Generated from the TEXTINCLUDE 2 resource.
-//
 #include "winres.h"
 
 /////////////////////////////////////////////////////////////////////////////
@@ -21,9 +19,7 @@ LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
-//
 // TEXTINCLUDE
-//
 
 1 TEXTINCLUDE 
 BEGIN
@@ -44,11 +40,12 @@ END
 
 #endif    // APSTUDIO_INVOKED
 
+/////////////////////////////////////////////////////////////////////////////
+
+1 ICON  "256.ico"
 
 /////////////////////////////////////////////////////////////////////////////
-//
 // Version
-//
 
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION 1,0,0,1
@@ -67,13 +64,13 @@ BEGIN
     BEGIN
         BLOCK "080404b0"
         BEGIN
-            VALUE "CompanyName", "TODO: <公司名>"
-            VALUE "FileDescription", "TODO: <文件说明>"
+            VALUE "CompanyName", "Optimistic Studio"
+            VALUE "FileDescription", "Dump Portable Executable (PE) Files Info"
             VALUE "FileVersion", "1.0.0.1"
             VALUE "InternalName", "dumpbin.exe"
             VALUE "LegalCopyright", "Copyright (C) 2022"
             VALUE "OriginalFilename", "dumpbin.exe"
-            VALUE "ProductName", "TODO: <产品名>"
+            VALUE "ProductName", "Dump Portable Executable (PE) Files Info"
             VALUE "ProductVersion", "1.0.0.1"
         END
     END
@@ -89,12 +86,6 @@ END
 
 
 #ifndef APSTUDIO_INVOKED
-/////////////////////////////////////////////////////////////////////////////
-//
 // Generated from the TEXTINCLUDE 3 resource.
-//
-
-
-/////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
 
