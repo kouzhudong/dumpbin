@@ -88,8 +88,7 @@ void DumpCertInfo(PCERT_INFO CertInfo)
     FileTimeToLocalTimeA(&CertInfo->NotAfter, NotAfter);
     printf("到:%s\n", NotAfter);
 
-    _tprintf(_T("SubjectPublicKey Algorithm ObjId:%hs.\n"),
-             CertInfo->SubjectPublicKeyInfo.Algorithm.pszObjId);
+    _tprintf(_T("SubjectPublicKey Algorithm ObjId:%hs.\n"), CertInfo->SubjectPublicKeyInfo.Algorithm.pszObjId);
 
     _tprintf(_T("SubjectPublicKey Algorithm Parameters: "));
     dwData = CertInfo->SubjectPublicKeyInfo.Algorithm.Parameters.cbData;
@@ -190,12 +189,7 @@ BOOL PrintCertContext(PCCERT_CONTEXT pCertContext)
         }
 
         // Get subject name.
-        if (!(CertGetNameString(pCertContext,
-                                CERT_NAME_SIMPLE_DISPLAY_TYPE,
-                                0,
-                                NULL,
-                                szName,
-                                dwData))) {
+        if (!(CertGetNameString(pCertContext, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, NULL, szName, dwData))) {
             _tprintf(_T("CertGetNameString failed.\n"));
             __leave;
         }
@@ -207,12 +201,7 @@ BOOL PrintCertContext(PCCERT_CONTEXT pCertContext)
         DWORD dwCount = CertGetNameString(pCertContext, CERT_NAME_RDN_TYPE, 0, &dwStrType, NULL, 0);
         if (dwCount) {
             LPTSTR szSubjectRDN = (LPTSTR)LocalAlloc(0, dwCount * sizeof(TCHAR));
-            dwCount = CertGetNameString(pCertContext,
-                                        CERT_NAME_RDN_TYPE,
-                                        0,
-                                        &dwStrType,
-                                        szSubjectRDN,
-                                        dwCount);
+            dwCount = CertGetNameString(pCertContext, CERT_NAME_RDN_TYPE, 0, &dwStrType, szSubjectRDN, dwCount);
             if (dwCount) {
                 _tprintf(_T("使用者：%s\n"), szSubjectRDN);
             }
@@ -312,9 +301,7 @@ void DecodeCertificate(PBYTE Certificate, DWORD Length)
 void PrintSecurity(LPWIN_CERTIFICATE SecurityDirectory)
 {
     printf("Length:%d.\r\n", SecurityDirectory->dwLength);
-    printf("Revision:%d(%s).\r\n",
-           SecurityDirectory->wRevision,
-           GetCertRevision(SecurityDirectory->wRevision));
+    printf("Revision:%d(%s).\r\n", SecurityDirectory->wRevision, GetCertRevision(SecurityDirectory->wRevision));
     printf("CertificateType:%d(%s).\r\n",
            SecurityDirectory->wCertificateType,
            GetCertificateType(SecurityDirectory->wCertificateType));
@@ -405,11 +392,7 @@ BOOL VerifyEmbeddedSignature(IN LPCTSTR filename, OUT wchar_t * signer_file)
     }
 
     WINTRUST_DATA wd = {0};
-    HCATINFO cat_admin_info = CryptCATAdminEnumCatalogFromHash(cat_admin_handle,
-                                                               hash_data,
-                                                               hash_count,
-                                                               0,
-                                                               NULL);
+    HCATINFO cat_admin_info = CryptCATAdminEnumCatalogFromHash(cat_admin_handle, hash_data, hash_count, 0, NULL);
     if (NULL == cat_admin_info) {
         WINTRUST_FILE_INFO wfi = {0};
         wfi.cbStruct = sizeof(WINTRUST_FILE_INFO);
@@ -510,7 +493,7 @@ BOOL GetSignerInfo(IN WCHAR * FileName)
         CertInfo.Issuer = pSignerInfo->Issuer;
         CertInfo.SerialNumber = pSignerInfo->SerialNumber;
         pCertContext = CertFindCertificateInStore(hStore,
-                                                  (X509_ASN_ENCODING | PKCS_7_ASN_ENCODING),
+                                                  X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
                                                   0,
                                                   CERT_FIND_SUBJECT_CERT,
                                                   (PVOID)&CertInfo,
@@ -594,11 +577,7 @@ void ParseCertificateInfo2()
         DWORD CertificateCount = 0;
         DWORD Indices[9] = {0};
         DWORD  IndexCount = ARRAYSIZE(Indices);
-        BOOL ret = ImageEnumerateCertificates(hfile,
-                                              CERT_SECTION_TYPE_ANY,
-                                              &CertificateCount,
-                                              Indices,
-                                              IndexCount);
+        BOOL ret = ImageEnumerateCertificates(hfile, CERT_SECTION_TYPE_ANY, &CertificateCount, Indices, IndexCount);
         if (!ret) {
             int x = GetLastError();
             __leave;
@@ -785,12 +764,12 @@ https://learn.microsoft.com/zh-cn/windows/win32/seccertenroll/about-encoded-tag-
     printf("d=%d, Tag: %02x, len=%d\n", depth, list->type, list->length);
 
     switch (list->type) {
-    //case ASN1_TYPE_BIT_STRING:
+        //case ASN1_TYPE_BIT_STRING:
 
-    //    break;
-    //case ASN1_TYPE_OCTET_STRING:
+        //    break;
+        //case ASN1_TYPE_OCTET_STRING:
 
-    //    break;
+        //    break;
     case 0x0C://UTF8String
 
         break;
