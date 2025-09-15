@@ -91,11 +91,9 @@ void on_create(HWND hWnd, WPARAM wParam, LPARAM lParam)
     所以不可以取这个控件的内容,应该把获取到的拖拽的路径保存到一个全局的变量里面.
     或者改变为不可写的编辑控件. | ES_READONLY
     */
-    /*g_h_edit_FilePath = CreateWindowEx(WS_EX_CLIENTEDGE,L"Static",0,WS_CHILD | WS_VISIBLE | SS_LEFT | WS_GROUP,
-        0,0,800,21,hWnd,0,GetModuleHandle(0),0);*/
+    /*g_h_edit_FilePath = CreateWindowEx(WS_EX_CLIENTEDGE,L"Static",0,WS_CHILD | WS_VISIBLE | SS_LEFT | WS_GROUP, 0,0,800,21,hWnd,0,GetModuleHandle(0),0);*/
         //SendMessage(h_Static,WM_SETTEXT,0,(LPARAM)L"");
-    g_h_edit_FilePath = CreateWindowEx(0, L"EDIT", 0, WS_CHILD | WS_VISIBLE | ES_READONLY | ES_AUTOHSCROLL,
-        0, 0, 800, 21, hWnd, 0, GetModuleHandle(0), 0);
+    g_h_edit_FilePath = CreateWindowEx(0, L"EDIT", 0, WS_CHILD | WS_VISIBLE | ES_READONLY | ES_AUTOHSCROLL, 0, 0, 800, 21, hWnd, 0, GetModuleHandle(0), 0);
     //SendMessage(g_h_edit_FilePath,WM_SETTEXT,0,(LPARAM)L"test");
 
     g_h_static_prompt = CreateWindowEx(WS_EX_CLIENTEDGE, L"Static", 0, WS_CHILD | WS_VISIBLE | SS_LEFT | WS_GROUP,
@@ -105,8 +103,7 @@ void on_create(HWND hWnd, WPARAM wParam, LPARAM lParam)
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     //不考虑动态的显示,这个可以为局部变量.
-    HWND h_Static_rva = CreateWindowEx(WS_EX_CLIENTEDGE, L"Static", 0, WS_CHILD | WS_VISIBLE | SS_LEFT | WS_GROUP,
-        0, 21, 40, 21, hWnd, 0, GetModuleHandle(0), 0);
+    HWND h_Static_rva = CreateWindowEx(WS_EX_CLIENTEDGE, L"Static", 0, WS_CHILD | WS_VISIBLE | SS_LEFT | WS_GROUP, 0, 21, 40, 21, hWnd, 0, GetModuleHandle(0), 0);
     SendMessage(h_Static_rva, WM_SETTEXT, 0, (LPARAM)L"RVA:");//(相对虚拟地址或虚拟地址的偏移)
 
     g_h_edit_rva = CreateWindowEx(0, L"EDIT", 0, WS_CHILD | WS_VISIBLE, 40, 21, 140, 21, hWnd, 0, GetModuleHandle(0), 0);//ES_NUMBER ES_PASSWORD
@@ -116,7 +113,7 @@ void on_create(HWND hWnd, WPARAM wParam, LPARAM lParam)
     //SetBkColor( hdc, 9999 );
 
     //不考虑动态的显示,这个可以为局部变量.
-    HWND h_static_offset = CreateWindowEx(WS_EX_CLIENTEDGE, L"Static", 0, WS_CHILD | WS_VISIBLE | SS_LEFT | WS_GROUP,
+    HWND h_static_offset = CreateWindowEx(WS_EX_CLIENTEDGE, L"Static", 0, WS_CHILD | WS_VISIBLE | SS_LEFT | WS_GROUP, 
         40 + 140, 21, 70, 21, hWnd, 0, GetModuleHandle(0), 0);
     SendMessage(h_static_offset, WM_SETTEXT, 0, (LPARAM)L"OFFSET:");
 
@@ -430,7 +427,7 @@ bool AddSectionData(wchar_t * filename)
     {
         //转换为宽字符,然后显示.
         wchar_t wszSectionName[9] = {0};
-        if (MultiByteToWideChar(CP_ACP, 0, (LPCSTR)p_image_section_header[i].Name, lstrlenA((LPCSTR)p_image_section_header[i].Name), wszSectionName, sizeof(wszSectionName)) == 0) {
+        if (MultiByteToWideChar(CP_ACP, 0, (LPCSTR)p_image_section_header[i].Name, lstrlenA((LPCSTR)p_image_section_header[i].Name), wszSectionName, _ARRAYSIZE(wszSectionName)) == 0) {
             int x = GetLastError();
             //r = false;
             break;
@@ -579,8 +576,8 @@ bool AddMoreInformation(wchar_t * filename)
 
 void On_DropFiles(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
-    wchar_t szFileName[260] = {0};
-    DragQueryFile((HDROP)wParam, 0, szFileName, sizeof(szFileName)); //只取一个文件，第二个参数可以设置为0。KmdManager.exe 就是这样实现的。
+    wchar_t szFileName[MAX_PATH] = {0};
+    DragQueryFile((HDROP)wParam, 0, szFileName, _ARRAYSIZE(szFileName)); //只取一个文件，第二个参数可以设置为0。KmdManager.exe 就是这样实现的。
 
     //UINT cFiles = DragQueryFile((HDROP)wParam, (UINT)-1, NULL, 0);//这个个数没有用.
 

@@ -109,7 +109,7 @@ bool on_import() //当点击导入表的时候的处理。
 
     //先获取文件名.
     wchar_t wszfilename[_MAX_PATH] = {0};
-    if (GetWindowText(g_h_edit_FilePath, wszfilename, sizeof(wszfilename)) == 0) {
+    if (GetWindowText(g_h_edit_FilePath, wszfilename, _ARRAYSIZE(wszfilename)) == 0) {
         int x = GetLastError();
         return false;
     }
@@ -218,7 +218,7 @@ bool on_import() //当点击导入表的时候的处理。
 
         //转换为宽字符,然后显示.
         wchar_t wszDllName[260] = {0};
-        if (MultiByteToWideChar(CP_ACP, 0, (LPCSTR)dllname, lstrlenA((LPCSTR)dllname), wszDllName, sizeof(wszDllName)) == 0) {
+        if (MultiByteToWideChar(CP_ACP, 0, (LPCSTR)dllname, lstrlenA((LPCSTR)dllname), wszDllName, _ARRAYSIZE(wszDllName)) == 0) {
             int x = GetLastError();
             break;
         }
