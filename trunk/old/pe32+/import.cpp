@@ -9,26 +9,25 @@ extern wchar_t * g_table_name[];
 extern HWND g_h_edit_FilePath;//显示文件路径用的.
 
 //导入表的DLL名字的树形控件的句柄，暂时设置最多为２６０.
-HTREEITEM h_tree_import_dllname[260] = {0}; 
+HTREEITEM h_tree_import_dllname[260] = {0};
 
-unsigned int RVATOOFFSET(IN wchar_t * filename,IN unsigned int rva)
-    /*
-    返回０表示失败，其他的是在文件中的偏移。
-    */
+unsigned int RVATOOFFSET(IN wchar_t * filename, IN unsigned int rva)
+/*
+返回０表示失败，其他的是在文件中的偏移。
+*/
 {
     unsigned int offset = 0;//返回值。
 
-    HANDLE hfile = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL); 
-    if (hfile == INVALID_HANDLE_VALUE) { 
+    HANDLE hfile = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hfile == INVALID_HANDLE_VALUE) {
         return false;
     }
 
     DWORD FileSizeHigh;
-    DWORD FileSizeLow = GetFileSize(hfile,&FileSizeHigh); 
+    DWORD FileSizeLow = GetFileSize(hfile, &FileSizeHigh);
     DWORD64 filesize = FileSizeHigh * 0x100000000 + FileSizeLow;
 
-    if (FileSizeLow == 0 && FileSizeHigh == 0)
-    {//如果文件大小为0.
+    if (FileSizeLow == 0 && FileSizeHigh == 0) {//如果文件大小为0.
         CloseHandle(hfile);
         return false;
     }
@@ -39,27 +38,25 @@ unsigned int RVATOOFFSET(IN wchar_t * filename,IN unsigned int rva)
         return false;
     }
 
-    LPVOID pmz = MapViewOfFile(hfilemap,SECTION_MAP_READ,NULL,NULL,0/*映射所有*/);//暂时不支持大于4G的文件。
-    if (pmz == NULL)
-    {
+    LPVOID pmz = MapViewOfFile(hfilemap, SECTION_MAP_READ, NULL, NULL, 0/*映射所有*/);//暂时不支持大于4G的文件。
+    if (pmz == NULL) {
         CloseHandle(hfilemap);
         CloseHandle(hfile);
         return false;
-    } 
+    }
 
-    IMAGE_DOS_HEADER * p_image_dos_header = (IMAGE_DOS_HEADER * )pmz;
+    IMAGE_DOS_HEADER * p_image_dos_header = (IMAGE_DOS_HEADER *)pmz;
     if (IMAGE_DOS_SIGNATURE != p_image_dos_header->e_magic) {
-        UnmapViewOfFile(pmz); 
+        UnmapViewOfFile(pmz);
         CloseHandle(hfilemap);
         CloseHandle(hfile);
         return false;
     }
 
     ULONG  ntSignature = (ULONG)p_image_dos_header + p_image_dos_header->e_lfanew;
-    ntSignature = * (ULONG *)ntSignature;
-    if (IMAGE_NT_SIGNATURE != ntSignature)
-    {
-        UnmapViewOfFile(pmz); 
+    ntSignature = *(ULONG *)ntSignature;
+    if (IMAGE_NT_SIGNATURE != ntSignature) {
+        UnmapViewOfFile(pmz);
         CloseHandle(hfilemap);
         CloseHandle(hfile);
         return false;
@@ -73,18 +70,17 @@ unsigned int RVATOOFFSET(IN wchar_t * filename,IN unsigned int rva)
     //其实这个结构的大小是固定的,只不过32位的和64位的不一样.但还是用规范建议的.IMAGE_FILE_HEADER的成员访问好.
     IMAGE_OPTIONAL_HEADER * p_image_optional_header = (IMAGE_OPTIONAL_HEADER *)((ULONG)p_image_file_header + sizeof(IMAGE_FILE_HEADER));
 
-    IMAGE_SECTION_HEADER  * p_image_section_header = (IMAGE_SECTION_HEADER *)((ULONG)p_image_optional_header + p_image_file_header->SizeOfOptionalHeader);//必须加(ULONG),不然出错.
+    IMAGE_SECTION_HEADER * p_image_section_header = (IMAGE_SECTION_HEADER *)((ULONG)p_image_optional_header + p_image_file_header->SizeOfOptionalHeader);//必须加(ULONG),不然出错.
 
-    for (int i = 0;i < p_image_file_header->NumberOfSections;i++) //规范规定是从1开始的.
+    for (int i = 0; i < p_image_file_header->NumberOfSections; i++) //规范规定是从1开始的.
     {
-        if (rva >= p_image_section_header[i].VirtualAddress && rva <= (p_image_section_header[i].VirtualAddress + p_image_section_header[i].Misc.VirtualSize)) 
-        {
+        if (rva >= p_image_section_header[i].VirtualAddress && rva <= (p_image_section_header[i].VirtualAddress + p_image_section_header[i].Misc.VirtualSize)) {
             offset = rva - p_image_section_header[i].VirtualAddress + p_image_section_header[i].PointerToRawData;
             break;
         }
     }
 
-    UnmapViewOfFile(pmz); 
+    UnmapViewOfFile(pmz);
     CloseHandle(hfilemap);
     CloseHandle(hfile);
 
@@ -113,23 +109,21 @@ bool on_import() //当点击导入表的时候的处理。
 
     //先获取文件名.
     wchar_t wszfilename[_MAX_PATH] = {0};
-    if (GetWindowText(g_h_edit_FilePath, wszfilename, sizeof(wszfilename)) == 0)
-    {
+    if (GetWindowText(g_h_edit_FilePath, wszfilename, sizeof(wszfilename)) == 0) {
         int x = GetLastError();
         return false;
     }
 
-    HANDLE hfile = CreateFile(wszfilename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL); 
-    if (hfile == INVALID_HANDLE_VALUE) { 
+    HANDLE hfile = CreateFile(wszfilename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hfile == INVALID_HANDLE_VALUE) {
         return false;
     }
 
     DWORD FileSizeHigh;
-    DWORD FileSizeLow = GetFileSize(hfile,&FileSizeHigh); 
+    DWORD FileSizeLow = GetFileSize(hfile, &FileSizeHigh);
     DWORD64 filesize = FileSizeHigh * 0x100000000 + FileSizeLow;
 
-    if (FileSizeLow == 0 && FileSizeHigh == 0)
-    {//如果文件大小为0.
+    if (FileSizeLow == 0 && FileSizeHigh == 0) {//如果文件大小为0.
         CloseHandle(hfile);
         return false;
     }
@@ -140,27 +134,25 @@ bool on_import() //当点击导入表的时候的处理。
         return false;
     }
 
-    LPVOID pmz = MapViewOfFile(hfilemap,SECTION_MAP_READ,NULL,NULL,0/*映射所有*/);//暂时不支持大于4G的文件。
-    if (pmz == NULL)
-    {
+    LPVOID pmz = MapViewOfFile(hfilemap, SECTION_MAP_READ, NULL, NULL, 0/*映射所有*/);//暂时不支持大于4G的文件。
+    if (pmz == NULL) {
         CloseHandle(hfilemap);
         CloseHandle(hfile);
         return false;
-    } 
+    }
 
-    IMAGE_DOS_HEADER * p_image_dos_header = (IMAGE_DOS_HEADER * )pmz;
+    IMAGE_DOS_HEADER * p_image_dos_header = (IMAGE_DOS_HEADER *)pmz;
     if (IMAGE_DOS_SIGNATURE != p_image_dos_header->e_magic) {
-        UnmapViewOfFile(pmz); 
+        UnmapViewOfFile(pmz);
         CloseHandle(hfilemap);
         CloseHandle(hfile);
         return false;
     }
 
     ULONG  ntSignature = (ULONG)p_image_dos_header + p_image_dos_header->e_lfanew;
-    ntSignature = * (ULONG *)ntSignature;
-    if (IMAGE_NT_SIGNATURE != ntSignature)
-    {
-        UnmapViewOfFile(pmz); 
+    ntSignature = *(ULONG *)ntSignature;
+    if (IMAGE_NT_SIGNATURE != ntSignature) {
+        UnmapViewOfFile(pmz);
         CloseHandle(hfilemap);
         CloseHandle(hfile);
         return false;
@@ -179,21 +171,16 @@ bool on_import() //当点击导入表的时候的处理。
 
     IMAGE_DATA_DIRECTORY * p_image_data_directory = 0;
 
-    if (g_IsPE32Ex)
-    {
+    if (g_IsPE32Ex) {
         p_image_data_directory = (IMAGE_DATA_DIRECTORY *)((ULONG)p_image_optional_header + 112 + sizeof(IMAGE_DATA_DIRECTORY));//PE32+文件.
-    }
-    else
-    {
+    } else {
         p_image_data_directory = (IMAGE_DATA_DIRECTORY *)((ULONG)p_image_optional_header + 96 + sizeof(IMAGE_DATA_DIRECTORY));
     }
 
     //先清空子节点.
-    for (int i = 0;i<260;i++)
-    {
+    for (int i = 0; i < 260; i++) {
         //如果存在就清除.
-        if (h_tree_import_dllname[i] )
-        {
+        if (h_tree_import_dllname[i]) {
             BOOL b = TreeView_DeleteItem(g_h_tree, h_tree_import_dllname[i]);
             if (!b) {
                 int x = GetLastError();
@@ -202,8 +189,8 @@ bool on_import() //当点击导入表的时候的处理。
         }
     }
 
-    BOOL bb = InvalidateRect(g_h_tree,0,0);//让改变立即显示.用上面的办法无效.
-    
+    BOOL bb = InvalidateRect(g_h_tree, 0, 0);//让改变立即显示.用上面的办法无效.
+
     /*
     得到地址，转换一下。
     得到IMAGE_IMPORT_DESCRIPTOR的地址，循环这个表，输出名字。
@@ -212,16 +199,14 @@ bool on_import() //当点击导入表的时候的处理。
     //PIMAGE_IMPORT_DESCRIPTOR piid = (PIMAGE_IMPORT_DESCRIPTOR)p_image_data_directory->VirtualAddress;
 
     //转换一下。
-    PIMAGE_IMPORT_DESCRIPTOR piid = (PIMAGE_IMPORT_DESCRIPTOR)RVATOOFFSET(wszfilename,p_image_data_directory->VirtualAddress);
+    PIMAGE_IMPORT_DESCRIPTOR piid = (PIMAGE_IMPORT_DESCRIPTOR)RVATOOFFSET(wszfilename, p_image_data_directory->VirtualAddress);
 
-    DWORD p = (DWORD) piid;
+    DWORD p = (DWORD)piid;
     p += (DWORD)pmz;
+    
+    piid = (PIMAGE_IMPORT_DESCRIPTOR)p;//导入目录表的首地址。
 
-    //导入目录表的首地址。
-    piid = (PIMAGE_IMPORT_DESCRIPTOR)p;
-
-    for (int i = 0; /*< (p_image_data_directory->VirtualAddress + p_image_data_directory->Size)*/;i++) 
-    {
+    for (int i = 0; /*< (p_image_data_directory->VirtualAddress + p_image_data_directory->Size)*/; i++) {
         if (piid[i].Name == NULL) //如果是最后一个就退出。
         {
             break;
@@ -233,22 +218,21 @@ bool on_import() //当点击导入表的时候的处理。
 
         //转换为宽字符,然后显示.
         wchar_t wszDllName[260] = {0};
-        if (MultiByteToWideChar(CP_ACP, 0,(LPCSTR)dllname,lstrlenA((LPCSTR)dllname),wszDllName,sizeof(wszDllName)) == 0) 
-        {
+        if (MultiByteToWideChar(CP_ACP, 0, (LPCSTR)dllname, lstrlenA((LPCSTR)dllname), wszDllName, sizeof(wszDllName)) == 0) {
             int x = GetLastError();
             break;
         }
 
         TV_INSERTSTRUCT tvinsert;
         tvinsert.hParent = g_htreeitem_data_directory[IMPORT];
-        tvinsert.item.mask = TVIF_TEXT+TVIF_IMAGE+TVIF_SELECTEDIMAGE;//必须加这一行,不然不显示.
+        tvinsert.item.mask = TVIF_TEXT + TVIF_IMAGE + TVIF_SELECTEDIMAGE;//必须加这一行,不然不显示.
         tvinsert.item.pszText = wszDllName;
-        h_tree_import_dllname[i]  = (HTREEITEM)SendMessage(g_h_tree,TVM_INSERTITEM,0,(LPARAM)& tvinsert);
+        h_tree_import_dllname[i] = (HTREEITEM)SendMessage(g_h_tree, TVM_INSERTITEM, 0, (LPARAM)&tvinsert);
     }
-    
-    BOOL b = InvalidateRect(g_h_tree,0,0);//让改变立即显示.用上面的办法无效.
 
-    UnmapViewOfFile(pmz); 
+    BOOL b = InvalidateRect(g_h_tree, 0, 0);//让改变立即显示.用上面的办法无效.
+
+    UnmapViewOfFile(pmz);
     CloseHandle(hfilemap);
     CloseHandle(hfile);
 
