@@ -58,6 +58,7 @@ HTREEITEM g_htreeitem_data_directory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES];//Ô¤ÏÈ·ÖÅ
 bool g_IsValidPE;//ÊÇÒ»¸öÓÐÐ§µÄPEÎÄ¼þÂð?
 bool g_IsPE32Ex;//ÊÇÒ»¸öPE32+ÎÄ¼þÂð?
 
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //´úÂë¿ªÊ¼.
 
@@ -67,20 +68,18 @@ void ErrorBox(LPTSTR lpszFunction)
     // Retrieve the system error message for the last-error code
 
     LPVOID lpMsgBuf;
-    LPVOID lpDisplayBuf;
     DWORD dw = GetLastError();
 
     FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
         NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf, 0, NULL);
 
     // Display the error message and exit the process
-    lpDisplayBuf = (LPVOID)LocalAlloc(LMEM_ZEROINIT, (lstrlen((LPCTSTR)lpMsgBuf) + lstrlen((LPCTSTR)lpszFunction) + 40) * sizeof(TCHAR));
+    LPVOID lpDisplayBuf = (LPVOID)LocalAlloc(LMEM_ZEROINIT, (lstrlen((LPCTSTR)lpMsgBuf) + lstrlen((LPCTSTR)lpszFunction) + 40) * sizeof(TCHAR));
     StringCchPrintf((LPTSTR)lpDisplayBuf, LocalSize(lpDisplayBuf), TEXT("%s failed with error %d: %s"), lpszFunction, dw, lpMsgBuf);
     MessageBox(NULL, (LPCTSTR)lpDisplayBuf, TEXT("Error"), MB_OK);
 
     LocalFree(lpMsgBuf);
     LocalFree(lpDisplayBuf);
-    //ExitProcess(dw); 
 }
 
 
@@ -130,7 +129,7 @@ void on_create(HWND hWnd, WPARAM wParam, LPARAM lParam)
         WS_CHILD | WS_VISIBLE | TVS_HASLINES | TVS_HASBUTTONS | TVS_LINESATROOT | WS_BORDER /*´ø±ß¿ò*/,
         0, 42, 170, 768 - 29 /*±êÌâµÄ¸ß¶È*/ - 21 - 21 - 102, hWnd, 0, GetModuleHandle(0), 0);
 
-    TV_INSERTSTRUCT tvinsert;
+    TV_INSERTSTRUCT tvinsert;//Ò»¸öTree¿Ø¼þ£¬Ö»ÊÊÒË´´½¨Ò»¸örootÏî£¬·ñÔòÏûÏ¢Ñ­»·µÄÐÅÏ¢µÄ´¦Àí£¬ÓÐµãÂé·³¡£
 
     tvinsert.hParent = 0;
     tvinsert.hInsertAfter = TVI_ROOT;
@@ -594,7 +593,7 @@ void On_DropFiles(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
         //ÎÄ¼þÊÇ:C:\Users\Administrator\Desktop\aasdasf,²»ÂÛÎÄ¼þ´óÐ¡ÊÇ·ñÎª0.·µ»ØÖµÊÇ0.
         MessageBox(0, szFileName, L"ÕâÊÇÒ»¸öÄ¿Â¼!,ÇëÑ¡ÔñÒ»¸öÎÄ¼þ", 0);
-        //wchar_t buffer[260] = L"ÕâÊÇÒ»¸öÄ¿Â¼,ÇëÑ¡ÔñÒ»¸öÎÄ¼þ.";
+        //wchar_t buffer[MAX_PATH] = L"ÕâÊÇÒ»¸öÄ¿Â¼,ÇëÑ¡ÔñÒ»¸öÎÄ¼þ.";
         //SendMessage(g_h_edit_FilePath,WM_SETTEXT,0,(LPARAM)buffer); 
     } else {
         int r = IsValidPE(szFileName);
@@ -608,10 +607,10 @@ void On_DropFiles(HWND hWnd, WPARAM wParam, LPARAM lParam)
             if (b) {
                 g_IsPE32Ex = true;
 
-                wchar_t buffer[260] = L"ÕâÊÇÒ»¸öpe32+ÎÄ¼þ.";
+                wchar_t buffer[MAX_PATH] = L"ÕâÊÇÒ»¸öpe32+ÎÄ¼þ.";
                 SendMessage(g_h_static_prompt, WM_SETTEXT, 0, (LPARAM)buffer);
             } else {
-                wchar_t buffer[260] = L"ÕâÊÇÒ»¸öpe32ÎÄ¼þ.";
+                wchar_t buffer[MAX_PATH] = L"ÕâÊÇÒ»¸öpe32ÎÄ¼þ.";
                 SendMessage(g_h_static_prompt, WM_SETTEXT, 0, (LPARAM)buffer);
 
                 g_IsPE32Ex = false;
@@ -621,7 +620,7 @@ void On_DropFiles(HWND hWnd, WPARAM wParam, LPARAM lParam)
             g_IsPE32Ex = false;
 
             SendMessage(g_h_edit_FilePath, WM_SETTEXT, 0, (LPARAM)0);
-            wchar_t buffer[260] = L"ÇëÍÏ×§Ò»¸öPEÎÄ¼þ¹ýÀ´!";
+            wchar_t buffer[MAX_PATH] = L"ÇëÍÏ×§Ò»¸öPEÎÄ¼þ¹ýÀ´!";
             SendMessage(g_h_static_prompt, WM_SETTEXT, 0, (LPARAM)buffer);
 
             if (r == 0) {
@@ -630,7 +629,7 @@ void On_DropFiles(HWND hWnd, WPARAM wParam, LPARAM lParam)
                 //¿ÉÒÔ¿¼ÂÇµ¯³ö¸öÏûÏ¢¡£
             }
 
-            /*wchar_t buffer[260] = L"Õâ²»ÊÇÒ»¸öpeÎÄ¼þ.";
+            /*wchar_t buffer[MAX_PATH] = L"Õâ²»ÊÇÒ»¸öpeÎÄ¼þ.";
             SendMessage(g_h_static_prompt,WM_SETTEXT,0,(LPARAM)buffer);*/
         }
 
@@ -707,8 +706,8 @@ void On_Notify_Click(HWND hWnd, WPARAM wParam, LPARAM lParam) //¿Ø¼þµÄµ¥»÷´¦Àí.
 
         TVITEM ti = {0};
         ti.mask = TVIF_HANDLE | TVIF_TEXT;
-        TCHAR buf[260] = {0};
-        ti.cchTextMax = 260;
+        TCHAR buf[MAX_PATH] = {0};
+        ti.cchTextMax = _ARRAYSIZE(buf);
         ti.pszText = buf;
         ti.hItem = hItem;
         TreeView_GetItem(lpnmh->hwndFrom, &ti);
@@ -831,7 +830,7 @@ void On_Notify_SelChanged(HWND hWnd, WPARAM wParam, LPARAM lParam)
     }
 
     TVITEM tvi;
-    TCHAR szText[260] = {0};
+    TCHAR szText[MAX_PATH] = {0};
     memset(&tvi, 0, sizeof(tvi));
     tvi.mask = TVIF_TEXT | TVIF_PARAM;
     tvi.hItem = hTreeItem;//g_h_tree;//the item handle;
