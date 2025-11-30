@@ -178,9 +178,8 @@ bool on_import() //当点击导入表的时候的处理。
     }
 
     //先清空子节点.
-    for (int i = 0; i < 260; i++) {
-        //如果存在就清除.
-        if (h_tree_import_dllname[i]) {
+    for (int i = 0; i < 260; i++) {        
+        if (h_tree_import_dllname[i]) {//如果存在就清除.
             BOOL b = TreeView_DeleteItem(g_h_tree, h_tree_import_dllname[i]);
             if (!b) {
                 int x = GetLastError();
@@ -207,8 +206,7 @@ bool on_import() //当点击导入表的时候的处理。
     piid = (PIMAGE_IMPORT_DESCRIPTOR)p;//导入目录表的首地址。
 
     for (int i = 0; /*< (p_image_data_directory->VirtualAddress + p_image_data_directory->Size)*/; i++) {
-        if (piid[i].Name == NULL) //如果是最后一个就退出。
-        {
+        if (piid[i].Name == NULL) {//如果是最后一个就退出。
             break;
         }
 
@@ -217,7 +215,7 @@ bool on_import() //当点击导入表的时候的处理。
         //MessageBoxA(0,dllname,0,0);
 
         //转换为宽字符,然后显示.
-        wchar_t wszDllName[260] = {0};
+        wchar_t wszDllName[MAX_PATH] = {0};
         if (MultiByteToWideChar(CP_ACP, 0, (LPCSTR)dllname, lstrlenA((LPCSTR)dllname), wszDllName, _ARRAYSIZE(wszDllName)) == 0) {
             int x = GetLastError();
             break;
