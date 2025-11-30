@@ -36,7 +36,7 @@
 #include <ws2tcpip.h>
 #include <fwpsu.h>
 #include <atlbase.h>
-#include <mbnapi.h>
+//#include <mbnapi.h> //不少名称被标记为 #pragma deprecated
 #include <iostream>
 #include <netfw.h>
 #include <objbase.h>
