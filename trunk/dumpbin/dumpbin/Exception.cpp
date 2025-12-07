@@ -86,8 +86,7 @@ https://docs.microsoft.com/en-us/cpp/build/exception-handling-x64?view=msvc-160&
 {
     const char * c = "";
 
-    switch (FrameRegister)
-    {
+    switch (FrameRegister) {
     case 0:
         c = "RAX";
         break;
@@ -165,10 +164,10 @@ DWORD Exception(_In_ PBYTE Data, _In_ DWORD Size)
     //PRUNTIME_FUNCTION
     PIMAGE_RUNTIME_FUNCTION_ENTRY ExceptionDirectory = (PIMAGE_RUNTIME_FUNCTION_ENTRY)
         ImageDirectoryEntryToDataEx(Data,
-                                    FALSE,//映射（MapViewOfFile）的用FALSE，原始读取(如：ReadFile)的用TRUE。 
-                                    IMAGE_DIRECTORY_ENTRY_EXCEPTION,
-                                    &size,
-                                    &FoundHeader);
+            FALSE,//映射（MapViewOfFile）的用FALSE，原始读取(如：ReadFile)的用TRUE。 
+            IMAGE_DIRECTORY_ENTRY_EXCEPTION,
+            &size,
+            &FoundHeader);
 
     PIMAGE_NT_HEADERS NtHeaders = ImageNtHeader(Data);
     _ASSERTE(NtHeaders);
@@ -186,10 +185,7 @@ DWORD Exception(_In_ PBYTE Data, _In_ DWORD Size)
         printf("EndAddress:%#010X.\r\n", ExceptionDirectory->EndAddress);
         printf("UnwindInfoAddress:%#010X.\r\n", ExceptionDirectory->UnwindInfoAddress);
 
-        PUNWIND_INFO UnwindInfoAddress = (PUNWIND_INFO)ImageRvaToVa(NtHeaders,
-                                                                    Data,
-                                                                    ExceptionDirectory->UnwindInfoAddress,
-                                                                    NULL);
+        PUNWIND_INFO UnwindInfoAddress = (PUNWIND_INFO)ImageRvaToVa(NtHeaders, Data, ExceptionDirectory->UnwindInfoAddress, NULL);
 
         printf("\tVersion:%d.\r\n", UnwindInfoAddress->Version);
         printf("\tFlags:%d, %s.\r\n", UnwindInfoAddress->Flags, GetUnwFlag(UnwindInfoAddress->Flags));
@@ -202,12 +198,12 @@ DWORD Exception(_In_ PBYTE Data, _In_ DWORD Size)
 
         for (char i = 0; i < UnwindInfoAddress->CountOfCodes; i++) {
             printf("\t\tindex:%d, CodeOffset:%d, UnwindOp:%d(%s), OpInfo:%d, FrameOffset:%d.\r\n",
-                   i + 1,
-                   temp->CodeOffset,
-                   temp->UnwindOp,
-                   GetUnwOpCodes(temp->UnwindOp),
-                   temp->OpInfo,
-                   temp->FrameOffset);
+                i + 1,
+                temp->CodeOffset,
+                temp->UnwindOp,
+                GetUnwOpCodes(temp->UnwindOp),
+                temp->OpInfo,
+                temp->FrameOffset);
 
             temp++;
         }

@@ -11,10 +11,7 @@ void PrintLoadConfig64(_In_ PIMAGE_LOAD_CONFIG_DIRECTORY64 LoadConfigDirectory64
     printf("Size:%#010X.\r\n", LoadConfigDirectory64->Size);
     CHAR TimeDateStamp[MAX_PATH] = {0};
     GetTimeDateStamp(LoadConfigDirectory64->TimeDateStamp, TimeDateStamp);
-    printf("TimeDateStamp:%d(%#010X), 时间戳：%s.\r\n",
-           LoadConfigDirectory64->TimeDateStamp,
-           LoadConfigDirectory64->TimeDateStamp,
-           TimeDateStamp);
+    printf("TimeDateStamp:%d(%#010X), 时间戳：%s.\r\n", LoadConfigDirectory64->TimeDateStamp, LoadConfigDirectory64->TimeDateStamp, TimeDateStamp);
 
     printf("Version:%d.%d.\r\n", LoadConfigDirectory64->MajorVersion, LoadConfigDirectory64->MinorVersion);
 
@@ -81,10 +78,7 @@ void PrintLoadConfig32(_In_ PIMAGE_LOAD_CONFIG_DIRECTORY32 LoadConfigDirectory32
     printf("Size:%#010X.\r\n", LoadConfigDirectory32->Size);
     CHAR TimeDateStamp[MAX_PATH] = {0};
     GetTimeDateStamp(LoadConfigDirectory32->TimeDateStamp, TimeDateStamp);
-    printf("TimeDateStamp:%d(%#010X), 时间戳：%s.\r\n",
-           LoadConfigDirectory32->TimeDateStamp,
-           LoadConfigDirectory32->TimeDateStamp,
-           TimeDateStamp);
+    printf("TimeDateStamp:%d(%#010X), 时间戳：%s.\r\n", LoadConfigDirectory32->TimeDateStamp, LoadConfigDirectory32->TimeDateStamp, TimeDateStamp);
 
     printf("Version:%d.%d.\r\n", LoadConfigDirectory32->MajorVersion, LoadConfigDirectory32->MinorVersion);
 
@@ -160,9 +154,9 @@ DWORD LoadConfig(_In_ PBYTE Data, _In_ DWORD Size)
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
     PIMAGE_LOAD_CONFIG_DIRECTORY LoadConfigDirectory = (PIMAGE_LOAD_CONFIG_DIRECTORY)
         ImageDirectoryEntryToDataEx(Data,
-                                    FALSE,//映射（MapViewOfFile）的用FALSE，原始读取(如：ReadFile)的用TRUE。 
-                                    IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG,
-                                    &size, &FoundHeader);
+            FALSE,//映射（MapViewOfFile）的用FALSE，原始读取(如：ReadFile)的用TRUE。 
+            IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG,
+            &size, &FoundHeader);
 
     PIMAGE_NT_HEADERS NtHeaders = ImageNtHeader(Data);
     _ASSERTE(NtHeaders);

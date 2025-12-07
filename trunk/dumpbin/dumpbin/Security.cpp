@@ -141,61 +141,43 @@ BOOL PrintCertContext(PCCERT_CONTEXT pCertContext)
 
         DumpCertInfo(pCertContext->pCertInfo);
 
-        // Get Issuer name size.
-        if (!(dwData = CertGetNameString(pCertContext,
-                                         CERT_NAME_SIMPLE_DISPLAY_TYPE,
-                                         CERT_NAME_ISSUER_FLAG,
-                                         NULL,
-                                         NULL,
-                                         0))) {
+        if (!(dwData = CertGetNameString(pCertContext, CERT_NAME_SIMPLE_DISPLAY_TYPE, CERT_NAME_ISSUER_FLAG, NULL, NULL, 0))) {// Get Issuer name size.
             _tprintf(_T("CertGetNameString failed.\n"));
             __leave;
         }
 
-        // Allocate memory for Issuer name.
-        szName = (LPTSTR)LocalAlloc(LPTR, dwData * sizeof(TCHAR));
+        szName = (LPTSTR)LocalAlloc(LPTR, dwData * sizeof(TCHAR));// Allocate memory for Issuer name.
         if (!szName) {
             _tprintf(_T("Unable to allocate memory for issuer name.\n"));
             __leave;
         }
 
-        // Get Issuer name.
-        if (!(CertGetNameString(pCertContext,
-                                CERT_NAME_SIMPLE_DISPLAY_TYPE,
-                                CERT_NAME_ISSUER_FLAG,
-                                NULL,
-                                szName,
-                                dwData))) {
+        if (!(CertGetNameString(pCertContext, CERT_NAME_SIMPLE_DISPLAY_TYPE, CERT_NAME_ISSUER_FLAG, NULL, szName, dwData))) {// Get Issuer name.
             _tprintf(_T("CertGetNameString failed.\n"));
             __leave;
         }
 
-        // print Issuer name.
-        _tprintf(_T("颁发者: %s\n"), szName);
+        _tprintf(_T("颁发者: %s\n"), szName);// print Issuer name.
         LocalFree(szName);
         szName = NULL;
 
-        // Get Subject name size.
-        if (!(dwData = CertGetNameString(pCertContext, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, NULL, NULL, 0))) {
+        if (!(dwData = CertGetNameString(pCertContext, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, NULL, NULL, 0))) {// Get Subject name size.
             _tprintf(_T("CertGetNameString failed.\n"));
             __leave;
         }
 
-        // Allocate memory for subject name.
-        szName = (LPTSTR)LocalAlloc(LPTR, dwData * sizeof(TCHAR));
+        szName = (LPTSTR)LocalAlloc(LPTR, dwData * sizeof(TCHAR));// Allocate memory for subject name.
         if (!szName) {
             _tprintf(_T("Unable to allocate memory for subject name.\n"));
             __leave;
         }
 
-        // Get subject name.
-        if (!(CertGetNameString(pCertContext, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, NULL, szName, dwData))) {
+        if (!(CertGetNameString(pCertContext, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, NULL, szName, dwData))) {// Get subject name.
             _tprintf(_T("CertGetNameString failed.\n"));
             __leave;
         }
 
-        // Print Subject Name.
-        _tprintf(_T("使用者的CN: %s\n"), szName);
+        _tprintf(_T("使用者的CN: %s\n"), szName);// Print Subject Name.
 
         DWORD dwStrType = CERT_X500_NAME_STR;
         DWORD dwCount = CertGetNameString(pCertContext, CERT_NAME_RDN_TYPE, 0, &dwStrType, NULL, 0);
@@ -226,14 +208,7 @@ void DecodeCertificate(PBYTE Certificate, DWORD Length)
 {
     //  Get the length needed for the decoded buffer.
     DWORD cbDecoded = NULL;
-    if (CryptDecodeObjectEx(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
-                            PKCS_CONTENT_INFO,//X509_NAME
-                            Certificate,     // the buffer to be decoded
-                            Length,
-                            CRYPT_DECODE_NOCOPY_FLAG,
-                            NULL,
-                            NULL,
-                            &cbDecoded)) {
+    if (CryptDecodeObjectEx(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, PKCS_CONTENT_INFO, Certificate, Length, CRYPT_DECODE_NOCOPY_FLAG, NULL, NULL, &cbDecoded)) {
         //printf("The needed buffer length is %d\n", cbDecoded);
     } else {
         _ASSERTE(false);
@@ -246,14 +221,7 @@ void DecodeCertificate(PBYTE Certificate, DWORD Length)
     }
 
     // Decode the encoded buffer.
-    if (CryptDecodeObjectEx(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
-                            PKCS_CONTENT_INFO,//X509_NAME
-                            Certificate,     // the buffer to be decoded
-                            Length,
-                            CRYPT_DECODE_NOCOPY_FLAG,
-                            NULL,
-                            pbDecoded,
-                            &cbDecoded)) {
+    if (CryptDecodeObjectEx(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, PKCS_CONTENT_INFO, Certificate, Length, CRYPT_DECODE_NOCOPY_FLAG, NULL, pbDecoded, &cbDecoded)) {
         CRYPT_CONTENT_INFO * content_info = (CRYPT_CONTENT_INFO *)pbDecoded;
         if (content_info) {
             printf("ObjId:%s\n", content_info->pszObjId);
@@ -273,16 +241,16 @@ void DecodeCertificate(PBYTE Certificate, DWORD Length)
             HCERTSTORE CertStore = NULL;
             HCRYPTMSG Msg = NULL;
             CryptQueryObject(CERT_QUERY_OBJECT_BLOB,
-                             &content_info->Content,
-                             CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED,
-                             CERT_QUERY_FORMAT_FLAG_BINARY,
-                             0,
-                             NULL,
-                             NULL,
-                             NULL,
-                             &CertStore,
-                             &Msg,
-                             NULL);
+                &content_info->Content,
+                CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED,
+                CERT_QUERY_FORMAT_FLAG_BINARY,
+                0,
+                NULL,
+                NULL,
+                NULL,
+                &CertStore,
+                &Msg,
+                NULL);
 
             PCCERT_CONTEXT PrevCertContext = NULL;
             while ((PrevCertContext = CertEnumCertificatesInStore(CertStore, PrevCertContext)) != NULL) {
@@ -302,9 +270,7 @@ void PrintSecurity(LPWIN_CERTIFICATE SecurityDirectory)
 {
     printf("Length:%d.\r\n", SecurityDirectory->dwLength);
     printf("Revision:%d(%s).\r\n", SecurityDirectory->wRevision, GetCertRevision(SecurityDirectory->wRevision));
-    printf("CertificateType:%d(%s).\r\n",
-           SecurityDirectory->wCertificateType,
-           GetCertificateType(SecurityDirectory->wCertificateType));
+    printf("CertificateType:%d(%s).\r\n", SecurityDirectory->wCertificateType, GetCertificateType(SecurityDirectory->wCertificateType));
 
     switch (SecurityDirectory->wCertificateType) {
     case WIN_CERT_TYPE_X509://bCertificate 包含的是 X.509 证书
@@ -367,13 +333,7 @@ BOOL VerifyEmbeddedSignature(IN LPCTSTR filename, OUT wchar_t * signer_file)
         return FALSE;
     }
 
-    HANDLE hFile = CreateFileW(filename,
-                               GENERIC_READ,
-                               FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                               NULL,
-                               OPEN_EXISTING,
-                               0,
-                               NULL);
+    HANDLE hFile = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, NULL);
     if (INVALID_HANDLE_VALUE == hFile) {
         printf("FileName:%ls, GetLastError:%#x", filename, GetLastError());
         CryptCATAdminReleaseContext(cat_admin_handle, 0);
@@ -451,38 +411,35 @@ BOOL GetSignerInfo(IN WCHAR * FileName)
         // Get message handle and store handle from the signed file.
         DWORD dwEncoding, dwContentType, dwFormatType;
         fResult = CryptQueryObject(CERT_QUERY_OBJECT_FILE,
-                                   FileName,
-                                   CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED_EMBED,
-                                   CERT_QUERY_FORMAT_FLAG_BINARY,
-                                   0,
-                                   &dwEncoding,
-                                   &dwContentType,
-                                   &dwFormatType,
-                                   &hStore,
-                                   &hMsg,
-                                   NULL);
+            FileName,
+            CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED_EMBED,
+            CERT_QUERY_FORMAT_FLAG_BINARY,
+            0,
+            &dwEncoding,
+            &dwContentType,
+            &dwFormatType,
+            &hStore,
+            &hMsg,
+            NULL);
         if (!fResult) {
             printf("FileName:%ls, GetLastError:%#x", FileName, GetLastError());
             __leave;
         }
 
-        // Get signer information size.
         DWORD dwSignerInfo = NULL;
-        fResult = CryptMsgGetParam(hMsg, CMSG_SIGNER_INFO_PARAM, 0, NULL, &dwSignerInfo);
+        fResult = CryptMsgGetParam(hMsg, CMSG_SIGNER_INFO_PARAM, 0, NULL, &dwSignerInfo);// Get signer information size.
         if (!fResult) {
             printf("FileName:%ls, GetLastError:%#x", FileName, GetLastError());
             __leave;
         }
 
-        // Allocate memory for signer information.
-        pSignerInfo = (PCMSG_SIGNER_INFO)LocalAlloc(LPTR, dwSignerInfo);
+        pSignerInfo = (PCMSG_SIGNER_INFO)LocalAlloc(LPTR, dwSignerInfo);// Allocate memory for signer information.
         if (!pSignerInfo) {
             printf("FileName:%ls, GetLastError:%#x", FileName, GetLastError());
             __leave;
         }
 
-        // Get Signer Information.
-        fResult = CryptMsgGetParam(hMsg, CMSG_SIGNER_INFO_PARAM, 0, (PVOID)pSignerInfo, &dwSignerInfo);
+        fResult = CryptMsgGetParam(hMsg, CMSG_SIGNER_INFO_PARAM, 0, (PVOID)pSignerInfo, &dwSignerInfo);// Get Signer Information.
         if (!fResult) {
             printf("FileName:%ls, GetLastError:%#x", FileName, GetLastError());
             __leave;
@@ -492,12 +449,7 @@ BOOL GetSignerInfo(IN WCHAR * FileName)
         CERT_INFO CertInfo;
         CertInfo.Issuer = pSignerInfo->Issuer;
         CertInfo.SerialNumber = pSignerInfo->SerialNumber;
-        pCertContext = CertFindCertificateInStore(hStore,
-                                                  X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
-                                                  0,
-                                                  CERT_FIND_SUBJECT_CERT,
-                                                  (PVOID)&CertInfo,
-                                                  NULL);
+        pCertContext = CertFindCertificateInStore(hStore, X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, 0, CERT_FIND_SUBJECT_CERT, (PVOID)&CertInfo, NULL);
         if (!pCertContext) {
             printf("FileName:%ls, GetLastError:%#x", FileName, GetLastError());
             fResult = FALSE;
@@ -555,20 +507,12 @@ void ParseCertificateInfo2()
 {
     int Args;
     LPWSTR * Arglist = CommandLineToArgvW(GetCommandLineW(), &Args);
-
     LPCWSTR FileName = Arglist[2];
-
     HANDLE hfile = INVALID_HANDLE_VALUE;
     LPWIN_CERTIFICATE buffer = NULL;
 
     __try {
-        hfile = CreateFile(FileName,
-                           FILE_READ_DATA,
-                           FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                           NULL,
-                           OPEN_EXISTING,
-                           FILE_ATTRIBUTE_NORMAL,
-                           NULL);
+        hfile = CreateFile(FileName, FILE_READ_DATA, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
         if (hfile == INVALID_HANDLE_VALUE) {
             int x = GetLastError();
             __leave;
@@ -606,11 +550,7 @@ void ParseCertificateInfo2()
             CRYPT_DATA_BLOB p7Data;
             p7Data.cbData = RequiredLength - sizeof(DWORD) - sizeof(WORD) - sizeof(WORD);
             p7Data.pbData = buffer->bCertificate;
-            HCERTSTORE hStore = CertOpenStore(CERT_STORE_PROV_PKCS7,
-                                              X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
-                                              NULL,
-                                              0,
-                                              &p7Data);
+            HCERTSTORE hStore = CertOpenStore(CERT_STORE_PROV_PKCS7, X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, NULL, 0, &p7Data);
             if (hStore) {
                 int count = 0;
                 char szCodeSigningOID[] = szOID_PKIX_KP_CODE_SIGNING;
@@ -624,11 +564,11 @@ void ParseCertificateInfo2()
                 PCCERT_CONTEXT  pCertContext = NULL;
                 do {
                     pCertContext = CertFindCertificateInStore(hStore,
-                                                              X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
-                                                              CERT_FIND_EXT_ONLY_ENHKEY_USAGE_FLAG,
-                                                              CERT_FIND_ENHKEY_USAGE,
-                                                              &keyUsage,
-                                                              pCertContext);
+                        X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+                        CERT_FIND_EXT_ONLY_ENHKEY_USAGE_FLAG,
+                        CERT_FIND_ENHKEY_USAGE,
+                        &keyUsage,
+                        pCertContext);
                     if (pCertContext) {
                         count++;
                         PrintCertContext(pCertContext);

@@ -137,13 +137,7 @@ DWORD Disassemble(_In_ LPCWSTR FileName, _In_ LPCWSTR AddressString, _In_ LPCWST
     }
 
     __try {
-        hFile = CreateFile(FileName,
-                           GENERIC_READ,
-                           FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                           NULL,
-                           OPEN_EXISTING,
-                           FILE_ATTRIBUTE_NORMAL,
-                           NULL);
+        hFile = CreateFile(FileName, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
         if (hFile == INVALID_HANDLE_VALUE) {
             LastError = GetLastError();
             LOGA(ERROR_LEVEL, "LastError:%#d", LastError);

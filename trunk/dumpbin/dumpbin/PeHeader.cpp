@@ -75,10 +75,7 @@ DWORD FileHeader(_In_ PBYTE Data, _In_ DWORD Size)
 
     CHAR TimeDateStamp[MAX_PATH] = {0};
     GetTimeDateStamp(FileHeader->TimeDateStamp, TimeDateStamp);
-    printf("TimeDateStamp:%d(%#010X), 编译时间：%s.\r\n",
-           FileHeader->TimeDateStamp, 
-           FileHeader->TimeDateStamp,
-           TimeDateStamp);
+    printf("TimeDateStamp:%d(%#010X), 编译时间：%s.\r\n", FileHeader->TimeDateStamp, FileHeader->TimeDateStamp, TimeDateStamp);
 
     printf("PointerToSymbolTable:%#010X.\r\n", FileHeader->PointerToSymbolTable);
     printf("NumberOfSymbols:%#010X.\r\n", FileHeader->NumberOfSymbols);
@@ -228,64 +225,64 @@ DWORD DataDirectory(_In_ PBYTE Data, _In_ DWORD Size)
     //}
 
     printf("EXPORT: \t\tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
-           data_directory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress,
-           data_directory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size);
+        data_directory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress,
+        data_directory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size);
 
     printf("IMPORT: \t\tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
-           data_directory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress,
-           data_directory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size);
+        data_directory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress,
+        data_directory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size);
 
     printf("RESOURCE: \t\tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
-           data_directory[IMAGE_DIRECTORY_ENTRY_RESOURCE].VirtualAddress,
-           data_directory[IMAGE_DIRECTORY_ENTRY_RESOURCE].Size);
+        data_directory[IMAGE_DIRECTORY_ENTRY_RESOURCE].VirtualAddress,
+        data_directory[IMAGE_DIRECTORY_ENTRY_RESOURCE].Size);
 
     printf("EXCEPTION: \t\tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
-           data_directory[IMAGE_DIRECTORY_ENTRY_EXCEPTION].VirtualAddress,
-           data_directory[IMAGE_DIRECTORY_ENTRY_EXCEPTION].Size);
+        data_directory[IMAGE_DIRECTORY_ENTRY_EXCEPTION].VirtualAddress,
+        data_directory[IMAGE_DIRECTORY_ENTRY_EXCEPTION].Size);
 
     printf("SECURITY: \t\tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
-           data_directory[IMAGE_DIRECTORY_ENTRY_SECURITY].VirtualAddress,
-           data_directory[IMAGE_DIRECTORY_ENTRY_SECURITY].Size);
+        data_directory[IMAGE_DIRECTORY_ENTRY_SECURITY].VirtualAddress,
+        data_directory[IMAGE_DIRECTORY_ENTRY_SECURITY].Size);
 
     printf("BASERELOC: \t\tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
-           data_directory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress,
-           data_directory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size);
+        data_directory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress,
+        data_directory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size);
 
     printf("DEBUG: \t\t\tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
-           data_directory[IMAGE_DIRECTORY_ENTRY_DEBUG].VirtualAddress,
-           data_directory[IMAGE_DIRECTORY_ENTRY_DEBUG].Size);
+        data_directory[IMAGE_DIRECTORY_ENTRY_DEBUG].VirtualAddress,
+        data_directory[IMAGE_DIRECTORY_ENTRY_DEBUG].Size);
 
     printf("ARCHITECTURE: \t\tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
-           data_directory[IMAGE_DIRECTORY_ENTRY_ARCHITECTURE].VirtualAddress,
-           data_directory[IMAGE_DIRECTORY_ENTRY_ARCHITECTURE].Size);
+        data_directory[IMAGE_DIRECTORY_ENTRY_ARCHITECTURE].VirtualAddress,
+        data_directory[IMAGE_DIRECTORY_ENTRY_ARCHITECTURE].Size);
 
     printf("GLOBALPTR: \t\tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
-           data_directory[IMAGE_DIRECTORY_ENTRY_GLOBALPTR].VirtualAddress,
-           data_directory[IMAGE_DIRECTORY_ENTRY_GLOBALPTR].Size);
+        data_directory[IMAGE_DIRECTORY_ENTRY_GLOBALPTR].VirtualAddress,
+        data_directory[IMAGE_DIRECTORY_ENTRY_GLOBALPTR].Size);
 
     printf("TLS: \t\t\tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
-           data_directory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress,
-           data_directory[IMAGE_DIRECTORY_ENTRY_TLS].Size);
+        data_directory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress,
+        data_directory[IMAGE_DIRECTORY_ENTRY_TLS].Size);
 
     printf("LOAD_CONFIG: \t\tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
-           data_directory[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].VirtualAddress,
-           data_directory[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].Size);
+        data_directory[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].VirtualAddress,
+        data_directory[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].Size);
 
     printf("BOUND_IMPORT: \t\tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
-           data_directory[IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT].VirtualAddress,
-           data_directory[IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT].Size);
+        data_directory[IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT].VirtualAddress,
+        data_directory[IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT].Size);
 
     printf("IAT: \t\t\tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
-           data_directory[IMAGE_DIRECTORY_ENTRY_IAT].VirtualAddress,
-           data_directory[IMAGE_DIRECTORY_ENTRY_IAT].Size);
+        data_directory[IMAGE_DIRECTORY_ENTRY_IAT].VirtualAddress,
+        data_directory[IMAGE_DIRECTORY_ENTRY_IAT].Size);
 
     printf("DELAY_IMPORT: \t\tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
-           data_directory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT].VirtualAddress,
-           data_directory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT].Size);
+        data_directory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT].VirtualAddress,
+        data_directory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT].Size);
 
     printf("COM_DESCRIPTOR: \tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
-           data_directory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress,
-           data_directory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].Size);
+        data_directory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress,
+        data_directory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].Size);
 
     return ret;
 }

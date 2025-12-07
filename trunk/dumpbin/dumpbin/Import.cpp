@@ -20,8 +20,7 @@ void PrintImport(_In_ PBYTE Data, _In_ DWORD Size, _In_ PIMAGE_IMPORT_DESCRIPTOR
     PCHAR DllName = (PCHAR)ImageRvaToVa(NtHeaders, Data, (ULONG)ImportDirectory->Name, NULL);
     printf("DllName:%s.\r\n", DllName);
 
-    PIMAGE_THUNK_DATA ThunkData = (PIMAGE_THUNK_DATA)
-        ImageRvaToVa(NtHeaders, Data, ImportDirectory->OriginalFirstThunk, NULL);
+    PIMAGE_THUNK_DATA ThunkData = (PIMAGE_THUNK_DATA)ImageRvaToVa(NtHeaders, Data, ImportDirectory->OriginalFirstThunk, NULL);
 
     if (IsPE32Ex(Data, Size)) {
         PIMAGE_THUNK_DATA64 ThunkData64 = (PIMAGE_THUNK_DATA64)ThunkData;
@@ -36,16 +35,9 @@ void PrintImport(_In_ PBYTE Data, _In_ DWORD Size, _In_ PIMAGE_IMPORT_DESCRIPTOR
             if (IMAGE_SNAP_BY_ORDINAL64(AddressOfData)) {//AddressOfData > MAXLONG64
                 printf("\tOrdinal:%d.\r\n", (WORD)IMAGE_ORDINAL64(AddressOfData));
             } else {
-                PIMAGE_IMPORT_BY_NAME ImportByName = (PIMAGE_IMPORT_BY_NAME)
-                    ImageRvaToVa(NtHeaders,
-                                 Data,
-                                 (ULONG)AddressOfData & 0xffffffff,
-                                 NULL);
+                PIMAGE_IMPORT_BY_NAME ImportByName = (PIMAGE_IMPORT_BY_NAME)ImageRvaToVa(NtHeaders, Data, (ULONG)AddressOfData & 0xffffffff, NULL);
 
-                printf("\tHint:%#06X(%04d), ApiName:%s.\r\n",
-                       ImportByName->Hint,
-                       ImportByName->Hint,
-                       ImportByName->Name);
+                printf("\tHint:%#06X(%04d), ApiName:%s.\r\n", ImportByName->Hint, ImportByName->Hint, ImportByName->Name);
             }
         }
     } else {
@@ -61,13 +53,9 @@ void PrintImport(_In_ PBYTE Data, _In_ DWORD Size, _In_ PIMAGE_IMPORT_DESCRIPTOR
             if (IMAGE_SNAP_BY_ORDINAL32(AddressOfData)) {//AddressOfData > MAXINT
                 printf("\tOrdinal:%d.\r\n", (WORD)IMAGE_ORDINAL32(AddressOfData));
             } else {
-                PIMAGE_IMPORT_BY_NAME ImportByName = (PIMAGE_IMPORT_BY_NAME)
-                    ImageRvaToVa(NtHeaders, Data, ThunkData32->u1.AddressOfData, NULL);
+                PIMAGE_IMPORT_BY_NAME ImportByName = (PIMAGE_IMPORT_BY_NAME)ImageRvaToVa(NtHeaders, Data, ThunkData32->u1.AddressOfData, NULL);
 
-                printf("\tHint:%#06X(%04d), ApiName:%s.\r\n",
-                       ImportByName->Hint,
-                       ImportByName->Hint,
-                       ImportByName->Name);
+                printf("\tHint:%#06X(%04d), ApiName:%s.\r\n", ImportByName->Hint, ImportByName->Hint, ImportByName->Name);
             }
         }
     }
@@ -96,11 +84,11 @@ DWORD Import(_In_ PBYTE Data, _In_ DWORD Size)
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
     PIMAGE_IMPORT_DESCRIPTOR ImportDirectory = (PIMAGE_IMPORT_DESCRIPTOR)
         ImageDirectoryEntryToDataEx(Data,
-                                    FALSE,//映射（MapViewOfFile）的用FALSE，原始读取(如：ReadFile)的用TRUE。 
-                                    IMAGE_DIRECTORY_ENTRY_IMPORT,
-                                    &size, &FoundHeader);
+            FALSE,//映射（MapViewOfFile）的用FALSE，原始读取(如：ReadFile)的用TRUE。 
+            IMAGE_DIRECTORY_ENTRY_IMPORT,
+            &size, &FoundHeader);
 
-    
+
 
     printf("Import Directory Information:\r\n");
 

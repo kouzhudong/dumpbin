@@ -31,17 +31,16 @@ DWORD Export(_In_ PBYTE Data, _In_ DWORD Size)
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
     PIMAGE_EXPORT_DIRECTORY ExportDirectory2 = (PIMAGE_EXPORT_DIRECTORY)
         ImageDirectoryEntryToDataEx(Data,
-                                    FALSE,//映射（MapViewOfFile）的用FALSE，原始读取(如：ReadFile)的用TRUE。 
-                                    IMAGE_DIRECTORY_ENTRY_EXPORT,
-                                    &size, &FoundHeader);
+            FALSE,//映射（MapViewOfFile）的用FALSE，原始读取(如：ReadFile)的用TRUE。 
+            IMAGE_DIRECTORY_ENTRY_EXPORT,
+            &size, &FoundHeader);
     _ASSERTE(ExportDirectory == ExportDirectory2);
     _ASSERTE(size == DataDirectory.Size);
 
     //获取的方法三：
     PIMAGE_NT_HEADERS NtHeaders = ImageNtHeader(Data);
     _ASSERTE(NtHeaders);
-    PIMAGE_EXPORT_DIRECTORY ExportDirectory3 = (PIMAGE_EXPORT_DIRECTORY)
-        ImageRvaToVa(NtHeaders, Data, DataDirectory.VirtualAddress, NULL);
+    PIMAGE_EXPORT_DIRECTORY ExportDirectory3 = (PIMAGE_EXPORT_DIRECTORY)ImageRvaToVa(NtHeaders, Data, DataDirectory.VirtualAddress, NULL);
     _ASSERTE(ExportDirectory == ExportDirectory3);
 
     //获取这个数据在哪个SECTION里。
@@ -52,10 +51,7 @@ DWORD Export(_In_ PBYTE Data, _In_ DWORD Size)
     printf("Characteristics:%#010X.\r\n", ExportDirectory->Characteristics);//保留，必须为 0。 
     CHAR TimeDateStamp[MAX_PATH] = {0};
     GetTimeDateStamp(ExportDirectory->TimeDateStamp, TimeDateStamp);
-    printf("TimeDateStamp:%d(%#010X), 时间戳：%s.\r\n",
-           ExportDirectory->TimeDateStamp,
-           ExportDirectory->TimeDateStamp,
-           TimeDateStamp);
+    printf("TimeDateStamp:%d(%#010X), 时间戳：%s.\r\n", ExportDirectory->TimeDateStamp, ExportDirectory->TimeDateStamp, TimeDateStamp);
     printf("Version:%d.%d.\r\n", ExportDirectory->MajorVersion, ExportDirectory->MinorVersion);
     printf("Name:%#010X.\r\n", ExportDirectory->Name);
     printf("Base:%#010X.\r\n", ExportDirectory->Base);
@@ -83,18 +79,9 @@ DWORD Export(_In_ PBYTE Data, _In_ DWORD Size)
         if (FunctionRVA > DataDirectory.VirtualAddress && FunctionRVA < DataDirectory.VirtualAddress + DataDirectory.Size) {
             PCHAR forwarded = (PCHAR)ImageRvaToVa(NtHeaders, Data, FunctionRVA, NULL);
 
-            printf("hint:%04d, Ordinal:%04d, FunctionRVA:%#010X, ApiName:%s, Forwarded:%s.\r\n",
-                   i + 1,
-                   Ordinal,
-                   FunctionRVA,
-                   ApiName,
-                   forwarded);
+            printf("hint:%04d, Ordinal:%04d, FunctionRVA:%#010X, ApiName:%s, Forwarded:%s.\r\n", i + 1, Ordinal, FunctionRVA, ApiName, forwarded);
         } else {
-            printf("hint:%04d, Ordinal:%04d, FunctionRVA:%#010X, ApiName:%s.\r\n",
-                   i + 1,
-                   Ordinal,
-                   FunctionRVA,
-                   ApiName);
+            printf("hint:%04d, Ordinal:%04d, FunctionRVA:%#010X, ApiName:%s.\r\n", i + 1, Ordinal, FunctionRVA, ApiName);
         }
     }
 

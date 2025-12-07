@@ -23,10 +23,7 @@ LPWSTR UTF8ToWide(IN PCHAR utf8)
 }
 
 
-void GetDataDirectory(_In_ PBYTE Data, 
-                      _In_ DWORD Size,
-                      _In_ BYTE index, 
-                      _Out_ PIMAGE_DATA_DIRECTORY DataDirectory)
+void GetDataDirectory(_In_ PBYTE Data, _In_ DWORD Size, _In_ BYTE index, _Out_ PIMAGE_DATA_DIRECTORY DataDirectory)
 {
     DataDirectory->VirtualAddress = 0;
     DataDirectory->Size = 0;
@@ -77,8 +74,7 @@ UINT Rva2Va(_In_ PBYTE Data, _In_ UINT rva)
 
     //注意：有个宏叫IMAGE_FIRST_SECTION。
 
-    for (WORD i = 0; i < FileHeader->NumberOfSections; i++)
-    {
+    for (WORD i = 0; i < FileHeader->NumberOfSections; i++) {
         if (rva >= SectionHeader[i].VirtualAddress && rva <= (SectionHeader[i].VirtualAddress + SectionHeader[i].Misc.VirtualSize)) {
             offset = rva - SectionHeader[i].VirtualAddress + SectionHeader[i].PointerToRawData;
             break;
@@ -89,10 +85,7 @@ UINT Rva2Va(_In_ PBYTE Data, _In_ UINT rva)
 }
 
 
-void GetSectionCharacteristics(_In_ DWORD Characteristics,
-                               _Out_writes_(cchDest) PCHAR String,
-                               _In_ size_t cchDest
-)
+void GetSectionCharacteristics(_In_ DWORD Characteristics, _Out_writes_(cchDest) PCHAR String, _In_ size_t cchDest)
 {
     if (Characteristics & IMAGE_SCN_SCALE_INDEX) {
         StringCchCatA(String, cchDest, "SCALE_INDEX ");
@@ -252,10 +245,7 @@ void GetSectionCharacteristics(_In_ DWORD Characteristics,
 }
 
 
-void GetDllCharacteristics(_In_ WORD Characteristics,
-                           _Out_writes_(cchDest) PCHAR String,
-                           _In_ size_t cchDest
-)
+void GetDllCharacteristics(_In_ WORD Characteristics, _Out_writes_(cchDest) PCHAR String, _In_ size_t cchDest)
 {
     if (Characteristics & IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA) {
         StringCchCatA(String, cchDest, "HIGH_ENTROPY_VA ");
@@ -388,14 +378,7 @@ void FileTimeToLocalTimeA(PFILETIME ft, char * time)
     //SystemTimeToTzSpecificLocalTime
 
     //格式：2016-07-11 17:35:54      
-    wsprintfA(time,
-              "%04d-%02d-%02d %02d:%02d:%02d",
-              st.wYear,
-              st.wMonth,
-              st.wDay,
-              st.wHour,
-              st.wMinute,
-              st.wSecond);
+    wsprintfA(time, "%04d-%02d-%02d %02d:%02d:%02d", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
 
     //size_t cb = lstrlen(time) * sizeof(wchar_t);
 }
@@ -410,10 +393,7 @@ void GetTimeDateStamp(_In_ DWORD TimeDateStamp, _Out_writes_(MAX_PATH) PCHAR Str
 }
 
 
-void GetCharacteristics(_In_ WORD Characteristics,
-                        _Out_writes_(cchDest) PCHAR String,
-                        _In_ size_t cchDest
-)
+void GetCharacteristics(_In_ WORD Characteristics, _Out_writes_(cchDest) PCHAR String, _In_ size_t cchDest)
 /*
 这个函数不能用BitTest，因为它是从零开始的，但是这个结构没有0，从1开始的。
 
@@ -607,8 +587,7 @@ BOOL IsWow64()
 #pragma warning(disable:4702)
     HMODULE ModuleHandle = GetModuleHandle(TEXT("kernel32"));
     if (NULL != ModuleHandle) {
-        LPFN_ISWOW64PROCESS fnIsWow64Process = (LPFN_ISWOW64PROCESS)GetProcAddress(ModuleHandle,
-                                                                                   "IsWow64Process");
+        LPFN_ISWOW64PROCESS fnIsWow64Process = (LPFN_ISWOW64PROCESS)GetProcAddress(ModuleHandle, "IsWow64Process");
         if (NULL != fnIsWow64Process) {
             if (!fnIsWow64Process(GetCurrentProcess(), &bIsWow64)) {
                 // handle error
@@ -731,13 +710,7 @@ DWORD MapFile(_In_ LPCWSTR FileName, _In_opt_ PeCallBack CallBack)
     }
 
     __try {
-        hFile = CreateFile(FileName,
-                           GENERIC_READ,
-                           FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                           NULL,
-                           OPEN_EXISTING,
-                           FILE_ATTRIBUTE_NORMAL,
-                           NULL);
+        hFile = CreateFile(FileName, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
         if (hFile == INVALID_HANDLE_VALUE) {
             LastError = GetLastError();
             LOGA(ERROR_LEVEL, "LastError:%#d", LastError);

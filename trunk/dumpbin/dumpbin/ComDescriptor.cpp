@@ -119,11 +119,9 @@ The format of the metadata, method IL, and other things pointed to by the IMAGE_
     //////////////////////////////////////////////////////////////////////////////////////////////////
 
     printf("cb:%#010X.\r\n", ComDescriptorDirectory->cb);
-    printf("RuntimeVersion:%d.%d.\r\n",
-           ComDescriptorDirectory->MajorRuntimeVersion, ComDescriptorDirectory->MinorRuntimeVersion);
+    printf("RuntimeVersion:%d.%d.\r\n", ComDescriptorDirectory->MajorRuntimeVersion, ComDescriptorDirectory->MinorRuntimeVersion);
 
-    printf("MetaData VirtualAddress:%#010X, Size:%#010X.\r\n",
-           ComDescriptorDirectory->MetaData.VirtualAddress, ComDescriptorDirectory->MetaData.Size);
+    printf("MetaData VirtualAddress:%#010X, Size:%#010X.\r\n", ComDescriptorDirectory->MetaData.VirtualAddress, ComDescriptorDirectory->MetaData.Size);
 
     printf("Flags:%#010X.\r\n", ComDescriptorDirectory->Flags);
 
@@ -133,11 +131,9 @@ The format of the metadata, method IL, and other things pointed to by the IMAGE_
         printf("EntryPointToken:%#010X.\r\n", ComDescriptorDirectory->EntryPointToken);
     }
 
-    printf("Resources VirtualAddress:%#010X, Size:%#010X.\r\n",
-           ComDescriptorDirectory->Resources.VirtualAddress,
-           ComDescriptorDirectory->Resources.Size);
+    printf("Resources VirtualAddress:%#010X, Size:%#010X.\r\n", ComDescriptorDirectory->Resources.VirtualAddress, ComDescriptorDirectory->Resources.Size);
 
-    printf("StrongNameSignature VirtualAddress:%#010X, Size:%#010X.\r\n",
+    printf("StrongNameSignature VirtualAddress:%#010X, Size:%#010X.\r\n", 
            ComDescriptorDirectory->StrongNameSignature.VirtualAddress,
            ComDescriptorDirectory->StrongNameSignature.Size);
 
@@ -173,36 +169,31 @@ The format of the metadata, method IL, and other things pointed to by the IMAGE_
 
     PVOID StrongNameSignatureVirtualAddress = NULL;
     if (ComDescriptorDirectory->StrongNameSignature.VirtualAddress) {
-        StrongNameSignatureVirtualAddress = 
-            ImageRvaToVa(NtHeaders, Data, ComDescriptorDirectory->StrongNameSignature.VirtualAddress, NULL);
+        StrongNameSignatureVirtualAddress = ImageRvaToVa(NtHeaders, Data, ComDescriptorDirectory->StrongNameSignature.VirtualAddress, NULL);
         StrongNameSignature(StrongNameSignatureVirtualAddress, ComDescriptorDirectory->StrongNameSignature.Size);
     }
 
     PVOID CodeManagerTableVirtualAddress = NULL;
     if (ComDescriptorDirectory->CodeManagerTable.VirtualAddress) {
-        CodeManagerTableVirtualAddress = 
-            ImageRvaToVa(NtHeaders, Data, ComDescriptorDirectory->CodeManagerTable.VirtualAddress, NULL);
+        CodeManagerTableVirtualAddress = ImageRvaToVa(NtHeaders, Data, ComDescriptorDirectory->CodeManagerTable.VirtualAddress, NULL);
         CodeManagerTable(CodeManagerTableVirtualAddress, ComDescriptorDirectory->CodeManagerTable.Size);
     }
 
     PVOID VTableFixupsVirtualAddress = NULL;
     if (ComDescriptorDirectory->VTableFixups.VirtualAddress) {
-        VTableFixupsVirtualAddress = 
-            ImageRvaToVa(NtHeaders, Data, ComDescriptorDirectory->VTableFixups.VirtualAddress, NULL);
+        VTableFixupsVirtualAddress = ImageRvaToVa(NtHeaders, Data, ComDescriptorDirectory->VTableFixups.VirtualAddress, NULL);
         VTableFixups(VTableFixupsVirtualAddress, ComDescriptorDirectory->VTableFixups.Size);
     }
 
     PVOID ExportAddressTableJumpsVirtualAddress = NULL;
     if (ComDescriptorDirectory->ExportAddressTableJumps.VirtualAddress) {
-        ExportAddressTableJumpsVirtualAddress = 
-            ImageRvaToVa(NtHeaders, Data, ComDescriptorDirectory->ExportAddressTableJumps.VirtualAddress, NULL);
+        ExportAddressTableJumpsVirtualAddress = ImageRvaToVa(NtHeaders, Data, ComDescriptorDirectory->ExportAddressTableJumps.VirtualAddress, NULL);
         ExportAddressTableJumps(ExportAddressTableJumpsVirtualAddress, ComDescriptorDirectory->ExportAddressTableJumps.Size);
     }
 
     PVOID ManagedNativeHeaderVirtualAddress = NULL;
     if (ComDescriptorDirectory->ManagedNativeHeader.VirtualAddress) {
-        ManagedNativeHeaderVirtualAddress =
-            ImageRvaToVa(NtHeaders, Data, ComDescriptorDirectory->ManagedNativeHeader.VirtualAddress, NULL);
+        ManagedNativeHeaderVirtualAddress = ImageRvaToVa(NtHeaders, Data, ComDescriptorDirectory->ManagedNativeHeader.VirtualAddress, NULL);
         ManagedNativeHeader(ManagedNativeHeaderVirtualAddress, ComDescriptorDirectory->ManagedNativeHeader.Size);
     }
 

@@ -84,10 +84,7 @@ void PrintDebug(_In_ PBYTE Data, _In_ PIMAGE_DEBUG_DIRECTORY DebugDirectory)
 
     CHAR TimeDateStamp[MAX_PATH] = {0};
     GetTimeDateStamp(DebugDirectory->TimeDateStamp, TimeDateStamp);
-    printf("TimeDateStamp:%d(%#010X), 时间戳：%s.\r\n",
-           DebugDirectory->TimeDateStamp,
-           DebugDirectory->TimeDateStamp,
-           TimeDateStamp);
+    printf("TimeDateStamp:%d(%#010X), 时间戳：%s.\r\n", DebugDirectory->TimeDateStamp, DebugDirectory->TimeDateStamp, TimeDateStamp);
 
     printf("Version:%d.%d.\r\n", DebugDirectory->MajorVersion, DebugDirectory->MinorVersion);
 
@@ -161,10 +158,7 @@ void PrintDebug(_In_ PBYTE Data, _In_ PIMAGE_DEBUG_DIRECTORY DebugDirectory)
 
         printf("Length:%d.\r\n", misc->Unicode);
 
-        printf("Reserved[3]:%#04X%#04X%#04X.\r\n",
-               misc->Reserved[0],
-               misc->Reserved[1],
-               misc->Reserved[2]);
+        printf("Reserved[3]:%#04X%#04X%#04X.\r\n", misc->Reserved[0], misc->Reserved[1], misc->Reserved[2]);
 
         printf("Data[1]:%#04X.\r\n", misc->Data[0]);//这个的数据应该有个长度指示。
 
@@ -201,16 +195,10 @@ void PrintDebug(_In_ PBYTE Data, _In_ PIMAGE_DEBUG_DIRECTORY DebugDirectory)
         PVOID temp = (PVOID)(Data + DebugDirectory->AddressOfRawData);//不可访问。
         PVOID temp2 = (PVOID)(Data + DebugDirectory->PointerToRawData);
 
-        PVOID temp3 = ImageRvaToVa(NtHeaders,
-                                   Data,
-                                   DebugDirectory->AddressOfRawData,
-                                   NULL);
+        PVOID temp3 = ImageRvaToVa(NtHeaders, Data, DebugDirectory->AddressOfRawData, NULL);
         _ASSERTE(temp3 == temp2);//竟然发现这个。
 
-        PVOID temp4 = ImageRvaToVa(NtHeaders,
-                                   Data,
-                                   DebugDirectory->PointerToRawData,
-                                   NULL);//可访问，但不知数据格式。
+        PVOID temp4 = ImageRvaToVa(NtHeaders, Data, DebugDirectory->PointerToRawData, NULL);//可访问，但不知数据格式。
 
 
         break;
@@ -227,16 +215,10 @@ void PrintDebug(_In_ PBYTE Data, _In_ PIMAGE_DEBUG_DIRECTORY DebugDirectory)
         PVOID temp = (PVOID)(Data + DebugDirectory->AddressOfRawData);//可访问。
         PVOID temp2 = (PVOID)(Data + DebugDirectory->PointerToRawData);
 
-        PVOID temp3 = ImageRvaToVa(NtHeaders,
-                                   Data,
-                                   DebugDirectory->AddressOfRawData,
-                                   NULL);
+        PVOID temp3 = ImageRvaToVa(NtHeaders, Data, DebugDirectory->AddressOfRawData, NULL);
         _ASSERTE(temp3 == temp2);//竟然发现这个。
 
-        PVOID temp4 = ImageRvaToVa(NtHeaders,
-                                   Data,
-                                   DebugDirectory->PointerToRawData,
-                                   NULL);//可访问，但不知数据格式。
+        PVOID temp4 = ImageRvaToVa(NtHeaders, Data, DebugDirectory->PointerToRawData, NULL);//可访问，但不知数据格式。
 
 
 
@@ -268,16 +250,10 @@ void PrintDebug(_In_ PBYTE Data, _In_ PIMAGE_DEBUG_DIRECTORY DebugDirectory)
         PVOID temp = (PVOID)(Data + DebugDirectory->AddressOfRawData);//可访问。
         PVOID temp2 = (PVOID)(Data + DebugDirectory->PointerToRawData);
 
-        PVOID temp3 = ImageRvaToVa(NtHeaders,
-                                   Data,
-                                   DebugDirectory->AddressOfRawData,
-                                   NULL);
+        PVOID temp3 = ImageRvaToVa(NtHeaders, Data, DebugDirectory->AddressOfRawData, NULL);
         _ASSERTE(temp3 == temp2);//竟然发现这个。
 
-        PVOID temp4 = ImageRvaToVa(NtHeaders,
-                                   Data,
-                                   DebugDirectory->PointerToRawData,
-                                   NULL);//可访问，但不知数据格式。
+        PVOID temp4 = ImageRvaToVa(NtHeaders, Data, DebugDirectory->PointerToRawData, NULL);//可访问，但不知数据格式。
 
         break;
     }
@@ -313,9 +289,9 @@ DWORD Debug(_In_ PBYTE Data, _In_ DWORD Size)
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
     PIMAGE_DEBUG_DIRECTORY DebugDirectory = (PIMAGE_DEBUG_DIRECTORY)
         ImageDirectoryEntryToDataEx(Data,
-                                    FALSE,//映射（MapViewOfFile）的用FALSE，原始读取(如：ReadFile)的用TRUE。 
-                                    IMAGE_DIRECTORY_ENTRY_DEBUG,
-                                    &size, &FoundHeader);
+            FALSE,//映射（MapViewOfFile）的用FALSE，原始读取(如：ReadFile)的用TRUE。 
+            IMAGE_DIRECTORY_ENTRY_DEBUG,
+            &size, &FoundHeader);
 
     printf("Debug Directory Information:\r\n");
 

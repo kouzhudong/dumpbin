@@ -82,16 +82,12 @@ const char * GetResourceTypeString(_In_ WORD Id)
 }
 
 
-void PrintNameString(_In_ PIMAGE_RESOURCE_DIRECTORY ResourceDirectory,
-                     _In_ PIMAGE_RESOURCE_DIRECTORY_ENTRY ResourceDirectoryEntry)
+void PrintNameString(_In_ PIMAGE_RESOURCE_DIRECTORY ResourceDirectory, _In_ PIMAGE_RESOURCE_DIRECTORY_ENTRY ResourceDirectoryEntry)
 {
     if (ResourceDirectoryEntry->NameIsString) {
-        PIMAGE_RESOURCE_DIR_STRING_U ResourceNameString = (PIMAGE_RESOURCE_DIR_STRING_U)
-            ((PCHAR)ResourceDirectory + ResourceDirectoryEntry->NameOffset);
+        auto ResourceNameString = (PIMAGE_RESOURCE_DIR_STRING_U)((PCHAR)ResourceDirectory + ResourceDirectoryEntry->NameOffset);
 
-        WCHAR * buf = (WCHAR *)HeapAlloc(GetProcessHeap(),
-                                         HEAP_ZERO_MEMORY,
-                                         ResourceNameString->Length + sizeof(WCHAR));
+        WCHAR * buf = (WCHAR *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ResourceNameString->Length + sizeof(WCHAR));
         if (buf) {
             RtlCopyMemory(buf, ResourceNameString->NameString, ResourceNameString->Length);
 
@@ -141,9 +137,9 @@ pchunter64的资源类型超出系统定义的范围(但不是RCDATA)，
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
     PIMAGE_RESOURCE_DIRECTORY ResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)
         ImageDirectoryEntryToDataEx(Data,
-                                    FALSE,//映射（MapViewOfFile）的用FALSE，原始读取(如：ReadFile)的用TRUE。 
-                                    IMAGE_DIRECTORY_ENTRY_RESOURCE,
-                                    &size, &FoundHeader);
+            FALSE,//映射（MapViewOfFile）的用FALSE，原始读取(如：ReadFile)的用TRUE。 
+            IMAGE_DIRECTORY_ENTRY_RESOURCE,
+            &size, &FoundHeader);
     if (FoundHeader) {
         printf("SectionName:%s.\r\n", FoundHeader->Name);
     }
@@ -152,10 +148,7 @@ pchunter64的资源类型超出系统定义的范围(但不是RCDATA)，
 
     CHAR TimeDateStamp[MAX_PATH] = {0};
     GetTimeDateStamp(ResourceDirectory->TimeDateStamp, TimeDateStamp);
-    printf("TimeDateStamp:%d(%#010X), 时间戳：%s.\r\n",
-           ResourceDirectory->TimeDateStamp,
-           ResourceDirectory->TimeDateStamp,
-           TimeDateStamp);
+    printf("TimeDateStamp:%d(%#010X), 时间戳：%s.\r\n", ResourceDirectory->TimeDateStamp, ResourceDirectory->TimeDateStamp, TimeDateStamp);
 
     printf("Version:%d.%d.\r\n", ResourceDirectory->MajorVersion, ResourceDirectory->MinorVersion);
     printf("NumberOfNamedEntries:%#06X.\r\n", ResourceDirectory->NumberOfNamedEntries);
@@ -167,8 +160,7 @@ pchunter64的资源类型超出系统定义的范围(但不是RCDATA)，
 
     WORD NumberOfEntries = ResourceDirectory->NumberOfNamedEntries + ResourceDirectory->NumberOfIdEntries;
 
-    PIMAGE_RESOURCE_DIRECTORY_ENTRY ResourceDirectoryEntry = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)
-        ((PCHAR)ResourceDirectory + sizeof(IMAGE_RESOURCE_DIRECTORY));
+    auto ResourceDirectoryEntry = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)((PCHAR)ResourceDirectory + sizeof(IMAGE_RESOURCE_DIRECTORY));
 
     PIMAGE_NT_HEADERS NtHeaders = ImageNtHeader(Data);
     _ASSERTE(NtHeaders);
@@ -178,28 +170,21 @@ pchunter64的资源类型超出系统定义的范围(但不是RCDATA)，
 
     for (int i = 0; i < NumberOfEntries; i++) {//一级处理：处理资源类型
         if (ResourceDirectoryEntry->DataIsDirectory) {//递归处理。
-            PIMAGE_RESOURCE_DIRECTORY ResourceDirectory2 = (PIMAGE_RESOURCE_DIRECTORY)
-                ((PCHAR)ResourceDirectory + ResourceDirectoryEntry->OffsetToDirectory);
-            WORD NumberOfEntries2 = ResourceDirectory2->NumberOfNamedEntries +
-                ResourceDirectory2->NumberOfIdEntries;
-            PIMAGE_RESOURCE_DIRECTORY_ENTRY ResourceDirectoryEntry2 = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)
-                ((PCHAR)ResourceDirectory2 + sizeof(IMAGE_RESOURCE_DIRECTORY));
+            auto ResourceDirectory2 = (PIMAGE_RESOURCE_DIRECTORY)((PCHAR)ResourceDirectory + ResourceDirectoryEntry->OffsetToDirectory);
+            WORD NumberOfEntries2 = ResourceDirectory2->NumberOfNamedEntries + ResourceDirectory2->NumberOfIdEntries;
+            auto ResourceDirectoryEntry2 = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)((PCHAR)ResourceDirectory2 + sizeof(IMAGE_RESOURCE_DIRECTORY));
 
             for (int j = 0; j < NumberOfEntries2; j++) {//二级处理：处理资源名称 
                 if (ResourceDirectoryEntry2->DataIsDirectory) {//递归处理。
-                    PIMAGE_RESOURCE_DIRECTORY ResourceDirectory3 = (PIMAGE_RESOURCE_DIRECTORY)
-                        ((PCHAR)ResourceDirectory + ResourceDirectoryEntry2->OffsetToDirectory);
-                    WORD NumberOfEntries3 = ResourceDirectory3->NumberOfNamedEntries +
-                        ResourceDirectory3->NumberOfIdEntries;
-                    PIMAGE_RESOURCE_DIRECTORY_ENTRY ResourceDirectoryEntry3 = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)
-                        ((PCHAR)ResourceDirectory3 + sizeof(IMAGE_RESOURCE_DIRECTORY));
+                    auto ResourceDirectory3 = (PIMAGE_RESOURCE_DIRECTORY)((PCHAR)ResourceDirectory + ResourceDirectoryEntry2->OffsetToDirectory);
+                    WORD NumberOfEntries3 = ResourceDirectory3->NumberOfNamedEntries + ResourceDirectory3->NumberOfIdEntries;
+                    auto ResourceDirectoryEntry3 = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)((PCHAR)ResourceDirectory3 + sizeof(IMAGE_RESOURCE_DIRECTORY));
 
                     for (int k = 0; k < NumberOfEntries3; k++) {//三级处理：处理资源语言
                         if (ResourceDirectoryEntry3->DataIsDirectory) {
                             _ASSERTE(false);
                         } else {
-                            PIMAGE_RESOURCE_DATA_ENTRY DataEntry = (PIMAGE_RESOURCE_DATA_ENTRY)
-                                ((PCHAR)ResourceDirectory + ResourceDirectoryEntry3->OffsetToData);
+                            auto DataEntry = (PIMAGE_RESOURCE_DATA_ENTRY)((PCHAR)ResourceDirectory + ResourceDirectoryEntry3->OffsetToData);
 
                             PCHAR OffsetToData = (PCHAR)ImageRvaToVa(NtHeaders, Data, DataEntry->OffsetToData, NULL);
 
@@ -208,12 +193,12 @@ pchunter64的资源类型超出系统定义的范围(但不是RCDATA)，
                             PrintNameString(ResourceDirectory, ResourceDirectoryEntry3);
 
                             printf("类型：%12s, 名称：%#06X, 语言：%#06X, OffsetToData:%#010X, Size:%#010X(%d).\r\n",
-                                   GetResourceTypeString(ResourceDirectoryEntry->Id),
-                                   ResourceDirectoryEntry2->Id,
-                                   ResourceDirectoryEntry3->Id,
-                                   DataEntry->OffsetToData,
-                                   DataEntry->Size,
-                                   DataEntry->Size);
+                                GetResourceTypeString(ResourceDirectoryEntry->Id),
+                                ResourceDirectoryEntry2->Id,
+                                ResourceDirectoryEntry3->Id,
+                                DataEntry->OffsetToData,
+                                DataEntry->Size,
+                                DataEntry->Size);
 
                             //printf("这是个叶子。\r\n");
                         }

@@ -21,18 +21,14 @@ void PrintOneDelayImport(_In_ PBYTE Data, _In_ DWORD Size, _In_ PIMAGE_DELAYLOAD
 
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    HMODULE * ModuleHandle = (HMODULE *)ImageRvaToVa(NtHeaders,
-                                                     Data,
-                                                     DelayImportDirectory->ModuleHandleRVA,
-                                                     NULL);
+    HMODULE * ModuleHandle = (HMODULE *)ImageRvaToVa(NtHeaders, Data, DelayImportDirectory->ModuleHandleRVA, NULL);
     //Data + DelayImportDirectory->ModuleHandleRVA,这个倒有内容。
 
     printf("ModuleHandleRVA:%#010X, %p.\r\n", DelayImportDirectory->ModuleHandleRVA, ModuleHandle);
 
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    PIMAGE_THUNK_DATA ImportAddressTable = (PIMAGE_THUNK_DATA)
-        ImageRvaToVa(NtHeaders, Data, DelayImportDirectory->ImportAddressTableRVA, NULL);
+    PIMAGE_THUNK_DATA ImportAddressTable = (PIMAGE_THUNK_DATA)ImageRvaToVa(NtHeaders, Data, DelayImportDirectory->ImportAddressTableRVA, NULL);
 
     printf("ImportAddressTableRVA:%#010X, %p.\r\n", DelayImportDirectory->ImportAddressTableRVA, ImportAddressTable);
 
@@ -49,14 +45,9 @@ void PrintOneDelayImport(_In_ PBYTE Data, _In_ DWORD Size, _In_ PIMAGE_DELAYLOAD
             if (IMAGE_SNAP_BY_ORDINAL64(AddressOfData)) {//AddressOfData > MAXLONG64
                 printf("\tOrdinal:%d.\r\n", (WORD)IMAGE_ORDINAL64(AddressOfData));
             } else {
-                PIMAGE_IMPORT_BY_NAME ImportByName = (PIMAGE_IMPORT_BY_NAME)
-                    ImageRvaToVa(NtHeaders, Data, (ULONG)AddressOfData & 0xffffffff, NULL);
-
+                PIMAGE_IMPORT_BY_NAME ImportByName = (PIMAGE_IMPORT_BY_NAME)ImageRvaToVa(NtHeaders, Data, (ULONG)AddressOfData & 0xffffffff, NULL);
                 if (ImportByName) {
-                    printf("\tHint:%#06X(%04d), ApiName:%s.\r\n",
-                           ImportByName->Hint,
-                           ImportByName->Hint,
-                           ImportByName->Name);
+                    printf("\tHint:%#06X(%04d), ApiName:%s.\r\n", ImportByName->Hint, ImportByName->Hint, ImportByName->Name);
                 }
             }
         }
@@ -73,14 +64,9 @@ void PrintOneDelayImport(_In_ PBYTE Data, _In_ DWORD Size, _In_ PIMAGE_DELAYLOAD
             if (IMAGE_SNAP_BY_ORDINAL32(AddressOfData)) {//AddressOfData > MAXINT
                 printf("\tOrdinal:%d.\r\n", (WORD)IMAGE_ORDINAL32(AddressOfData));
             } else {
-                PIMAGE_IMPORT_BY_NAME ImportByName = (PIMAGE_IMPORT_BY_NAME)
-                    ImageRvaToVa(NtHeaders, Data, ThunkData32->u1.AddressOfData, NULL);
-
+                PIMAGE_IMPORT_BY_NAME ImportByName = (PIMAGE_IMPORT_BY_NAME)ImageRvaToVa(NtHeaders, Data, ThunkData32->u1.AddressOfData, NULL);
                 if (ImportByName) {
-                    printf("\tHint:%#06X(%04d), ApiName:%s.\r\n",
-                           ImportByName->Hint,
-                           ImportByName->Hint,
-                           ImportByName->Name);
+                    printf("\tHint:%#06X(%04d), ApiName:%s.\r\n", ImportByName->Hint, ImportByName->Hint, ImportByName->Name);
                 }
             }
         }
@@ -88,40 +74,30 @@ void PrintOneDelayImport(_In_ PBYTE Data, _In_ DWORD Size, _In_ PIMAGE_DELAYLOAD
 
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    PIMAGE_IMPORT_BY_NAME ImportNameTable = (PIMAGE_IMPORT_BY_NAME)
-        ImageRvaToVa(NtHeaders, Data, DelayImportDirectory->ImportNameTableRVA, NULL);
+    PIMAGE_IMPORT_BY_NAME ImportNameTable = (PIMAGE_IMPORT_BY_NAME)ImageRvaToVa(NtHeaders, Data, DelayImportDirectory->ImportNameTableRVA, NULL);
 
     printf("ImportNameTableRVA:%#010X, %p.\r\n", DelayImportDirectory->ImportNameTableRVA, ImportNameTable);
 
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     //区分32和64.
-    PIMAGE_THUNK_DATA BoundImportAddressTable = (PIMAGE_THUNK_DATA)
-        ImageRvaToVa(NtHeaders, Data, DelayImportDirectory->BoundImportAddressTableRVA, NULL);
+    PIMAGE_THUNK_DATA BoundImportAddressTable = (PIMAGE_THUNK_DATA)ImageRvaToVa(NtHeaders, Data, DelayImportDirectory->BoundImportAddressTableRVA, NULL);
     //Data + DelayImportDirectory->BoundImportAddressTableRVA,这个倒有内容。
 
-    printf("BoundImportAddressTableRVA:%#010X, %p.\r\n",
-           DelayImportDirectory->BoundImportAddressTableRVA,
-           BoundImportAddressTable);
+    printf("BoundImportAddressTableRVA:%#010X, %p.\r\n", DelayImportDirectory->BoundImportAddressTableRVA, BoundImportAddressTable);
 
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     //区分32和64.
-    PIMAGE_THUNK_DATA UnloadInformationTable = (PIMAGE_THUNK_DATA)
-        ImageRvaToVa(NtHeaders, Data, DelayImportDirectory->UnloadInformationTableRVA, NULL);
+    PIMAGE_THUNK_DATA UnloadInformationTable = (PIMAGE_THUNK_DATA)ImageRvaToVa(NtHeaders, Data, DelayImportDirectory->UnloadInformationTableRVA, NULL);
 
-    printf("UnloadInformationTableRVA:%#010X, %p.\r\n",
-           DelayImportDirectory->UnloadInformationTableRVA,
-           UnloadInformationTable);
+    printf("UnloadInformationTableRVA:%#010X, %p.\r\n", DelayImportDirectory->UnloadInformationTableRVA, UnloadInformationTable);
 
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     CHAR TimeDateStamp[MAX_PATH] = {0};
     GetTimeDateStamp(DelayImportDirectory->TimeDateStamp, TimeDateStamp);
-    printf("TimeDateStamp:%d(%#010X), 时间戳：%s.\r\n",
-           DelayImportDirectory->TimeDateStamp,
-           DelayImportDirectory->TimeDateStamp,
-           TimeDateStamp);
+    printf("TimeDateStamp:%d(%#010X), 时间戳：%s.\r\n", DelayImportDirectory->TimeDateStamp, DelayImportDirectory->TimeDateStamp, TimeDateStamp);
 
     printf("\r\n");
 }
@@ -147,9 +123,9 @@ DWORD DelayImport(_In_ PBYTE Data, _In_ DWORD Size)
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
     PIMAGE_DELAYLOAD_DESCRIPTOR DelayImportDirectory = (PIMAGE_DELAYLOAD_DESCRIPTOR)
         ImageDirectoryEntryToDataEx(Data,
-                                    FALSE,//映射（MapViewOfFile）的用FALSE，原始读取(如：ReadFile)的用TRUE。 
-                                    IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT,
-                                    &size, &FoundHeader);
+            FALSE,//映射（MapViewOfFile）的用FALSE，原始读取(如：ReadFile)的用TRUE。 
+            IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT,
+            &size, &FoundHeader);
 
     printf("Delay Import Directory Information:\r\n");
     printf("VirtualAddress:%#010X.\r\n", DataDirectory.VirtualAddress);

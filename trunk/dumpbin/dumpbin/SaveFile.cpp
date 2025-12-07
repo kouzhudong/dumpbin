@@ -5,12 +5,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-DWORD SaveFile(_In_ PBYTE Data,
-               _In_ DWORD Size,
-               _In_ DWORD Address,
-               _In_ DWORD Length,
-               _In_ LPCWSTR NewFileName
-)
+DWORD SaveFile(_In_ PBYTE Data, _In_ DWORD Size, _In_ DWORD Address, _In_ DWORD Length, _In_ LPCWSTR NewFileName)
 /*
 Address应该叫Offset.
 */
@@ -31,13 +26,7 @@ Address应该叫Offset.
 
     //反正是在异常处理里的，都不检查了。
 
-    HANDLE hFile = CreateFile(NewFileName,
-                               FILE_ALL_ACCESS,
-                               FILE_SHARE_DELETE | FILE_SHARE_WRITE | FILE_SHARE_READ,
-                               NULL,
-                               CREATE_NEW,
-                               FILE_ATTRIBUTE_NORMAL,
-                               NULL);
+    HANDLE hFile = CreateFile(NewFileName, FILE_ALL_ACCESS, FILE_SHARE_DELETE | FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
     if (INVALID_HANDLE_VALUE == hFile) {
         DWORD LastError = GetLastError();
         LOGA(ERROR_LEVEL, "LastError:%#d, NewFileName:%ls", LastError, NewFileName);
@@ -59,10 +48,7 @@ Address应该叫Offset.
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-DWORD SaveFile(_In_ LPCWSTR FileName, 
-               _In_ LPCWSTR AddressString, 
-               _In_ LPCWSTR LengthString,
-               _In_ LPCWSTR NewFileName)
+DWORD SaveFile(_In_ LPCWSTR FileName, _In_ LPCWSTR AddressString, _In_ LPCWSTR LengthString, _In_ LPCWSTR NewFileName)
 {
     DWORD Address = _wtoi(AddressString);
     DWORD Length = _wtoi(LengthString);
@@ -80,13 +66,7 @@ DWORD SaveFile(_In_ LPCWSTR FileName,
     }
 
     __try {
-        hFile = CreateFile(FileName,
-                           GENERIC_READ,
-                           FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                           NULL,
-                           OPEN_EXISTING,
-                           FILE_ATTRIBUTE_NORMAL,
-                           NULL);
+        hFile = CreateFile(FileName, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
         if (hFile == INVALID_HANDLE_VALUE) {
             LastError = GetLastError();
             LOGA(ERROR_LEVEL, "LastError:%#d", LastError);
