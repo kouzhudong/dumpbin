@@ -1,8 +1,6 @@
 #include "pch.h"
 #include "log.h"
 
-#pragma warning(disable:26812)
-
 
 /*
 和LOG_LEVEL对应，不能少。

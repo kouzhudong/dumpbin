@@ -5,9 +5,7 @@
 #include "Public.h"
 #include "..\lib\tiny-asn1\src\tiny-asn1.h"
 
-
-#pragma warning(disable:6386)
-#pragma warning(disable:6387)
+using namespace std;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -227,7 +225,7 @@ void DecodeCertificate(PBYTE Certificate, DWORD Length)
             printf("ObjId:%s\n", content_info->pszObjId);
 
             //WCHAR szSubject[1024] = {0};//d2i_X509_NAME  +  X509_NAME_oneline
-            //DWORD cbSize = CertNameToStr(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+            //DWORD cbSize = CertNameToStr(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, 
             //                             &content_info->Content,
             //                             CERT_X500_NAME_STR | CERT_NAME_STR_REVERSE_FLAG,
             //                             szSubject,
@@ -587,7 +585,7 @@ void ParseCertificateInfo2()
             }
 
             DIGEST_HANDLE DigestHandle = NULL;
-            ret = ImageGetDigestStream(hfile, i, DigestFunction, DigestHandle);
+            ret = ImageGetDigestStream(hfile, i, DigestFunction, &DigestHandle);        
             if (!ret) {
                 int x = GetLastError();
             }

@@ -3,8 +3,6 @@
 //#define _WIN32_WINNT 0x0501
 //#define _WINSOCK_DEPRECATED_NO_WARNINGS
 
-#pragma warning(disable:28251)
-
 #include <Winsock2.h>
 #include <windows.h>
 #include <strsafe.h>
@@ -108,7 +106,6 @@
 #include <list>
 #include <regex>
 #include <map>
-using namespace std;
 
 
 #include <openssl/crypto.h>

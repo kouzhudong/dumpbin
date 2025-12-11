@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "openssl.h"
 
+using namespace std;
 
 #pragma warning(disable:4996)
 
@@ -80,23 +81,11 @@ void DumpX509(X509 * x509)
     const ASN1_TIME * notBefore = X509_get0_notBefore(x509);
     struct tm tm;
     int ret = ASN1_TIME_to_tm(notBefore, &tm);
-    printf("有效期从：%04d年%02d月%02d日 %02d:%02d:%02d.\n", 
-           tm.tm_year + 1900,
-           tm.tm_mon + 1,
-           tm.tm_mday,
-           tm.tm_hour,
-           tm.tm_min,
-           tm.tm_sec);
+    printf("有效期从：%04d年%02d月%02d日 %02d:%02d:%02d.\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
 
     const ASN1_TIME * notAfter = X509_get0_notAfter(x509);
     ret = ASN1_TIME_to_tm(notAfter, &tm);
-    printf("到：%04d年%02d月%02d日 %02d:%02d:%02d.\n",
-           tm.tm_year + 1900,
-           tm.tm_mon + 1,
-           tm.tm_mday,
-           tm.tm_hour,
-           tm.tm_min,
-           tm.tm_sec);
+    printf("到：%04d年%02d月%02d日 %02d:%02d:%02d.\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
 
     //////////////////////////////////////////////////////////////////////////////////////////////
 
