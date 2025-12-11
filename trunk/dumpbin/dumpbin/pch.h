@@ -121,6 +121,7 @@
 #include <openssl/asn1.h>
 #include <openssl/pkcs7.h>
 #include <openssl/bio.h>
+#include <openssl/core_names.h>
 
 #pragma comment(lib, "libcrypto.lib")
 

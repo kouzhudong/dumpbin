@@ -2,9 +2,6 @@
 #include "openssl.h"
 
 
-#pragma warning(disable:4996)
-
-
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -230,18 +227,23 @@ void DumpX509(X509 * x509)
     }
     printf("\n");
 
-    RSA * rsa = EVP_PKEY_get1_RSA(pubkey);
-    char * Modulus = BN_bn2hex(RSA_get0_n(rsa));
-    char * Exponent = BN_bn2hex(RSA_get0_e(rsa));
+    BIGNUM * n = NULL, * e = NULL;  // 根据需要取
+    EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_N, &n);
+    EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_E, &e);
 
-    printf("Modulus:%s\n", Modulus);
-    printf("Exponent:%s\n", Exponent);
+    printf("Modulus:%s\n", BN_bn2hex(n));
+    printf("Exponent:%s\n", BN_bn2hex(e));
 
     //printf("公钥长度:%d bits\n", RSA_size(rsa) * 8);
 
-    OPENSSL_free(Modulus);
-    OPENSSL_free(Exponent);
-    RSA_free(rsa);
+    //废弃的用法：#pragma warning(disable:4996)
+    //RSA * rsa = EVP_PKEY_get1_RSA(pubkey);
+    //char * Modulus = BN_bn2hex(RSA_get0_n(rsa));
+    //char * Exponent = BN_bn2hex(RSA_get0_e(rsa));
+    ////...
+    //OPENSSL_free(Modulus);
+    //OPENSSL_free(Exponent);
+    //RSA_free(rsa);
 }
 
 
