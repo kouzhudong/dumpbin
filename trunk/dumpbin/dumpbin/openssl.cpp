@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "openssl.h"
 
-using namespace std;
 
 #pragma warning(disable:4996)
 
@@ -54,7 +53,7 @@ void DumpX509(X509 * x509)
 
     X509_NAME * issuer_name = X509_get_issuer_name(x509);
     int issuer_count = X509_NAME_entry_count(issuer_name);
-    string name;
+    std::string name;
     for (int i = 0; i < issuer_count; i++) {
         X509_NAME_ENTRY * entry = X509_NAME_get_entry(issuer_name, i);
         ASN1_STRING * data = X509_NAME_ENTRY_get_data(entry);

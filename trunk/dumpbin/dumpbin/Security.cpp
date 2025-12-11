@@ -2,10 +2,7 @@
 #include "Security.h"
 #include "Public.h"
 #include "openssl.h"
-#include "Public.h"
 #include "..\lib\tiny-asn1\src\tiny-asn1.h"
-
-using namespace std;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -343,7 +340,7 @@ BOOL VerifyEmbeddedSignature(IN LPCTSTR filename, OUT wchar_t * signer_file)
     CryptCATAdminCalcHashFromFileHandle(hFile, &hash_count, hash_data, 0);
     CloseHandle(hFile);
 
-    wstring member_tag;
+    std::wstring member_tag;
     for (DWORD dw = 0; dw < hash_count; dw++) {
         member_tag += L"0123456789ABCDEF"[(hash_data[dw] >> 4) & 0x0f];
         member_tag += L"0123456789ABCDEF"[hash_data[dw] & 0x0f];
