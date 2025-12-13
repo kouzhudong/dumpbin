@@ -96,7 +96,7 @@ bool MapFileForReading(wchar_t * filename, FileMappingInfo & info) {
 
     DWORD FileSizeHigh;
     DWORD FileSizeLow = GetFileSize(info.hfile, &FileSizeHigh);
-    info.filesize = ((DWORD64)FileSizeHigh << 32) | FileSizeLow;
+    info.filesize = ((DWORD64)FileSizeHigh << 32) | (DWORD64)FileSizeLow;
 
     if (info.filesize == 0) {
         return false;

@@ -91,10 +91,11 @@ void GetSectionCharacteristics(_In_ DWORD Characteristics, _Out_writes_(cchDest)
     PCHAR ptr = String;
     size_t remaining = cchDest;
 
+    // Macro uses compile-time string length for literals
     #define APPEND_IF_SET(flag, text) \
-        if ((Characteristics & flag) && remaining > 0) { \
-            size_t len = strlen(text); \
-            if (len < remaining) { \
+        if (Characteristics & flag) { \
+            const size_t len = sizeof(text) - 1; \
+            if (len < remaining - 1) { \
                 memcpy(ptr, text, len); \
                 ptr += len; \
                 remaining -= len; \
@@ -155,10 +156,11 @@ void GetDllCharacteristics(_In_ WORD Characteristics, _Out_writes_(cchDest) PCHA
     PCHAR ptr = String;
     size_t remaining = cchDest;
 
+    // Macro uses compile-time string length for literals
     #define APPEND_IF_SET(flag, text) \
-        if ((Characteristics & flag) && remaining > 0) { \
-            size_t len = strlen(text); \
-            if (len < remaining) { \
+        if (Characteristics & flag) { \
+            const size_t len = sizeof(text) - 1; \
+            if (len < remaining - 1) { \
                 memcpy(ptr, text, len); \
                 ptr += len; \
                 remaining -= len; \
@@ -293,10 +295,11 @@ void GetCharacteristics(_In_ WORD Characteristics, _Out_writes_(cchDest) PCHAR S
     PCHAR ptr = String;
     size_t remaining = cchDest;
 
+    // Macro uses compile-time string length for literals
     #define APPEND_IF_SET(flag, text) \
-        if ((Characteristics & flag) && remaining > 0) { \
-            size_t len = strlen(text); \
-            if (len < remaining) { \
+        if (Characteristics & flag) { \
+            const size_t len = sizeof(text) - 1; \
+            if (len < remaining - 1) { \
                 memcpy(ptr, text, len); \
                 ptr += len; \
                 remaining -= len; \
