@@ -8,7 +8,7 @@
 
 LPWSTR UTF8ToWide(IN PCHAR utf8)
 /*
-µÃµ½µÄÄÚ´æÓÐµ÷ÓÃÕßÊÍ·Å¡£
+ï¿½Ãµï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½Ðµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í·Å¡ï¿½
 */
 {
     int cchWideChar = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, 0, 0);
@@ -61,18 +61,18 @@ void GetDataDirectory(_In_ PBYTE Data, _In_ DWORD Size, _In_ BYTE index, _Out_ P
 
 UINT Rva2Va(_In_ PBYTE Data, _In_ UINT rva)
 /*
-·µ»Ø0±íÊ¾Ê§°Ü£¬ÆäËûµÄÊÇÔÚÎÄ¼þÖÐµÄÆ«ÒÆ¡£
+ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¾Ê§ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½Ðµï¿½Æ«ï¿½Æ¡ï¿½
 */
 {
-    UINT offset = 0;//·µ»ØÖµ¡£
+    UINT offset = 0;//ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½
 
     PIMAGE_NT_HEADERS NtHeader = ImageNtHeader(Data);
     _ASSERTE(NtHeader);
     PIMAGE_FILE_HEADER FileHeader = (PIMAGE_FILE_HEADER)&NtHeader->FileHeader;
     PIMAGE_OPTIONAL_HEADER OptionalHeader = (PIMAGE_OPTIONAL_HEADER)&NtHeader->OptionalHeader;
-    PIMAGE_SECTION_HEADER SectionHeader = (PIMAGE_SECTION_HEADER)((PBYTE)OptionalHeader + FileHeader->SizeOfOptionalHeader);//±ØÐë¼Ó(ULONG),²»È»³ö´í.
+    PIMAGE_SECTION_HEADER SectionHeader = (PIMAGE_SECTION_HEADER)((PBYTE)OptionalHeader + FileHeader->SizeOfOptionalHeader);//ï¿½ï¿½ï¿½ï¿½ï¿½(ULONG),ï¿½ï¿½È»ï¿½ï¿½ï¿½ï¿½.
 
-    //×¢Òâ£ºÓÐ¸öºê½ÐIMAGE_FIRST_SECTION¡£
+    //×¢ï¿½â£ºï¿½Ð¸ï¿½ï¿½ï¿½ï¿½IMAGE_FIRST_SECTIONï¿½ï¿½
 
     for (WORD i = 0; i < FileHeader->NumberOfSections; i++) {
         if (rva >= SectionHeader[i].VirtualAddress && rva <= (SectionHeader[i].VirtualAddress + SectionHeader[i].Misc.VirtualSize)) {
@@ -85,210 +85,104 @@ UINT Rva2Va(_In_ PBYTE Data, _In_ UINT rva)
 }
 
 
+// Performance optimization: Build string more efficiently by tracking position
 void GetSectionCharacteristics(_In_ DWORD Characteristics, _Out_writes_(cchDest) PCHAR String, _In_ size_t cchDest)
 {
-    if (Characteristics & IMAGE_SCN_SCALE_INDEX) {
-        StringCchCatA(String, cchDest, "SCALE_INDEX ");
-    }
+    PCHAR ptr = String;
+    size_t remaining = cchDest;
 
-    if (Characteristics & IMAGE_SCN_TYPE_NO_PAD) {
-        StringCchCatA(String, cchDest, "TYPE_NO_PAD ");
-    }
+    // Macro uses compile-time string length for literals
+    #define APPEND_IF_SET(flag, text) \
+        if (Characteristics & flag) { \
+            const size_t len = sizeof(text) - 1; \
+            if (len + 1 <= remaining) { \
+                memcpy(ptr, text, len); \
+                ptr += len; \
+                remaining -= len; \
+            } \
+        }
 
-    if (Characteristics & IMAGE_SCN_CNT_CODE) {
-        StringCchCatA(String, cchDest, "CNT_CODE ");
-    }
-
-    if (Characteristics & IMAGE_SCN_CNT_INITIALIZED_DATA) {
-        StringCchCatA(String, cchDest, "INITIALIZED_DATA ");
-    }
-
-    if (Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA) {
-        StringCchCatA(String, cchDest, "CNT_UNINITIALIZED_DATA ");
-    }
-
-    if (Characteristics & IMAGE_SCN_LNK_OTHER) {
-        StringCchCatA(String, cchDest, "LNK_OTHER ");
-    }
-
-    if (Characteristics & IMAGE_SCN_LNK_INFO) {
-        StringCchCatA(String, cchDest, "LNK_INFO ");
-    }
-
-    if (Characteristics & IMAGE_SCN_LNK_REMOVE) {
-        StringCchCatA(String, cchDest, "LNK_REMOVE ");
-    }
-
-    if (Characteristics & IMAGE_SCN_LNK_COMDAT) {
-        StringCchCatA(String, cchDest, "LNK_COMDAT ");
-    }
-
-    if (Characteristics & IMAGE_SCN_NO_DEFER_SPEC_EXC) {
-        StringCchCatA(String, cchDest, "NO_DEFER_SPEC_EXC ");
-    }
-
-    if (Characteristics & IMAGE_SCN_GPREL) {
-        StringCchCatA(String, cchDest, "GPREL ");
-    }
-
-    if (Characteristics & IMAGE_SCN_MEM_FARDATA) {
-        StringCchCatA(String, cchDest, "MEM_FARDATA ");
-    }
-
-    if (Characteristics & IMAGE_SCN_MEM_PURGEABLE) {
-        StringCchCatA(String, cchDest, "MEM_PURGEABLE ");
-    }
-
-    if (Characteristics & IMAGE_SCN_MEM_16BIT) {
-        StringCchCatA(String, cchDest, "MEM_16BIT ");
-    }
-
-    if (Characteristics & IMAGE_SCN_MEM_LOCKED) {
-        StringCchCatA(String, cchDest, "MEM_LOCKED ");
-    }
-
-    if (Characteristics & IMAGE_SCN_MEM_PRELOAD) {
-        StringCchCatA(String, cchDest, "MEM_PRELOAD ");
-    }
-
-    if (Characteristics & IMAGE_SCN_ALIGN_1BYTES) {
-        StringCchCatA(String, cchDest, "ALIGN_1BYTES ");
-    }
-
-    if (Characteristics & IMAGE_SCN_ALIGN_2BYTES) {
-        StringCchCatA(String, cchDest, "ALIGN_2BYTES ");
-    }
-
-    if (Characteristics & IMAGE_SCN_ALIGN_4BYTES) {
-        StringCchCatA(String, cchDest, "ALIGN_4BYTES ");
-    }
-
-    if (Characteristics & IMAGE_SCN_ALIGN_8BYTES) {
-        StringCchCatA(String, cchDest, "ALIGN_8BYTES ");
-    }
-
-    if (Characteristics & IMAGE_SCN_ALIGN_16BYTES) {
-        StringCchCatA(String, cchDest, "ALIGN_16BYTES ");
-    }
-
-    if (Characteristics & IMAGE_SCN_ALIGN_32BYTES) {
-        StringCchCatA(String, cchDest, "ALIGN_32BYTES ");
-    }
-
-    if (Characteristics & IMAGE_SCN_ALIGN_64BYTES) {
-        StringCchCatA(String, cchDest, "ALIGN_64BYTES ");
-    }
-
-    if (Characteristics & IMAGE_SCN_ALIGN_128BYTES) {
-        StringCchCatA(String, cchDest, "ALIGN_128BYTES ");
-    }
-
-    if (Characteristics & IMAGE_SCN_ALIGN_256BYTES) {
-        StringCchCatA(String, cchDest, "ALIGN_256BYTES ");
-    }
-
-    if (Characteristics & IMAGE_SCN_ALIGN_512BYTES) {
-        StringCchCatA(String, cchDest, "ALIGN_512BYTES ");
-    }
-
-    if (Characteristics & IMAGE_SCN_ALIGN_1024BYTES) {
-        StringCchCatA(String, cchDest, "ALIGN_1024BYTES ");
-    }
-
-    if (Characteristics & IMAGE_SCN_ALIGN_2048BYTES) {
-        StringCchCatA(String, cchDest, "ALIGN_2048BYTES ");
-    }
-
-    if (Characteristics & IMAGE_SCN_ALIGN_4096BYTES) {
-        StringCchCatA(String, cchDest, "ALIGN_4096BYTES ");
-    }
-
-    if (Characteristics & IMAGE_SCN_ALIGN_8192BYTES) {
-        StringCchCatA(String, cchDest, "ALIGN_8192BYTES ");
-    }
-
-    if (Characteristics & IMAGE_SCN_ALIGN_MASK) {
-        StringCchCatA(String, cchDest, "ALIGN_MASK ");
-    }
-
-    if (Characteristics & IMAGE_SCN_LNK_NRELOC_OVFL) {
-        StringCchCatA(String, cchDest, "LNK_NRELOC_OVFL ");
-    }
-
-    if (Characteristics & IMAGE_SCN_MEM_DISCARDABLE) {
-        StringCchCatA(String, cchDest, "MEM_DISCARDABLE ");
-    }
-
-    if (Characteristics & IMAGE_SCN_MEM_NOT_CACHED) {
-        StringCchCatA(String, cchDest, "MEM_NOT_CACHED ");
-    }
-
-    if (Characteristics & IMAGE_SCN_MEM_NOT_PAGED) {
-        StringCchCatA(String, cchDest, "MEM_NOT_PAGED ");
-    }
-
-    if (Characteristics & IMAGE_SCN_MEM_SHARED) {
-        StringCchCatA(String, cchDest, "MEM_SHARED ");
-    }
-
-    if (Characteristics & IMAGE_SCN_MEM_EXECUTE) {
-        StringCchCatA(String, cchDest, "MEM_EXECUTE ");
-    }
-
-    if (Characteristics & IMAGE_SCN_MEM_READ) {
-        StringCchCatA(String, cchDest, "MEM_READ ");
-    }
-
-    if (Characteristics & IMAGE_SCN_MEM_WRITE) {
-        StringCchCatA(String, cchDest, "MEM_WRITE ");
+    APPEND_IF_SET(IMAGE_SCN_SCALE_INDEX, "SCALE_INDEX ")
+    APPEND_IF_SET(IMAGE_SCN_TYPE_NO_PAD, "TYPE_NO_PAD ")
+    APPEND_IF_SET(IMAGE_SCN_CNT_CODE, "CNT_CODE ")
+    APPEND_IF_SET(IMAGE_SCN_CNT_INITIALIZED_DATA, "INITIALIZED_DATA ")
+    APPEND_IF_SET(IMAGE_SCN_CNT_UNINITIALIZED_DATA, "CNT_UNINITIALIZED_DATA ")
+    APPEND_IF_SET(IMAGE_SCN_LNK_OTHER, "LNK_OTHER ")
+    APPEND_IF_SET(IMAGE_SCN_LNK_INFO, "LNK_INFO ")
+    APPEND_IF_SET(IMAGE_SCN_LNK_REMOVE, "LNK_REMOVE ")
+    APPEND_IF_SET(IMAGE_SCN_LNK_COMDAT, "LNK_COMDAT ")
+    APPEND_IF_SET(IMAGE_SCN_NO_DEFER_SPEC_EXC, "NO_DEFER_SPEC_EXC ")
+    APPEND_IF_SET(IMAGE_SCN_GPREL, "GPREL ")
+    APPEND_IF_SET(IMAGE_SCN_MEM_FARDATA, "MEM_FARDATA ")
+    APPEND_IF_SET(IMAGE_SCN_MEM_PURGEABLE, "MEM_PURGEABLE ")
+    APPEND_IF_SET(IMAGE_SCN_MEM_16BIT, "MEM_16BIT ")
+    APPEND_IF_SET(IMAGE_SCN_MEM_LOCKED, "MEM_LOCKED ")
+    APPEND_IF_SET(IMAGE_SCN_MEM_PRELOAD, "MEM_PRELOAD ")
+    APPEND_IF_SET(IMAGE_SCN_ALIGN_1BYTES, "ALIGN_1BYTES ")
+    APPEND_IF_SET(IMAGE_SCN_ALIGN_2BYTES, "ALIGN_2BYTES ")
+    APPEND_IF_SET(IMAGE_SCN_ALIGN_4BYTES, "ALIGN_4BYTES ")
+    APPEND_IF_SET(IMAGE_SCN_ALIGN_8BYTES, "ALIGN_8BYTES ")
+    APPEND_IF_SET(IMAGE_SCN_ALIGN_16BYTES, "ALIGN_16BYTES ")
+    APPEND_IF_SET(IMAGE_SCN_ALIGN_32BYTES, "ALIGN_32BYTES ")
+    APPEND_IF_SET(IMAGE_SCN_ALIGN_64BYTES, "ALIGN_64BYTES ")
+    APPEND_IF_SET(IMAGE_SCN_ALIGN_128BYTES, "ALIGN_128BYTES ")
+    APPEND_IF_SET(IMAGE_SCN_ALIGN_256BYTES, "ALIGN_256BYTES ")
+    APPEND_IF_SET(IMAGE_SCN_ALIGN_512BYTES, "ALIGN_512BYTES ")
+    APPEND_IF_SET(IMAGE_SCN_ALIGN_1024BYTES, "ALIGN_1024BYTES ")
+    APPEND_IF_SET(IMAGE_SCN_ALIGN_2048BYTES, "ALIGN_2048BYTES ")
+    APPEND_IF_SET(IMAGE_SCN_ALIGN_4096BYTES, "ALIGN_4096BYTES ")
+    APPEND_IF_SET(IMAGE_SCN_ALIGN_8192BYTES, "ALIGN_8192BYTES ")
+    APPEND_IF_SET(IMAGE_SCN_ALIGN_MASK, "ALIGN_MASK ")
+    APPEND_IF_SET(IMAGE_SCN_LNK_NRELOC_OVFL, "LNK_NRELOC_OVFL ")
+    APPEND_IF_SET(IMAGE_SCN_MEM_DISCARDABLE, "MEM_DISCARDABLE ")
+    APPEND_IF_SET(IMAGE_SCN_MEM_NOT_CACHED, "MEM_NOT_CACHED ")
+    APPEND_IF_SET(IMAGE_SCN_MEM_NOT_PAGED, "MEM_NOT_PAGED ")
+    APPEND_IF_SET(IMAGE_SCN_MEM_SHARED, "MEM_SHARED ")
+    APPEND_IF_SET(IMAGE_SCN_MEM_EXECUTE, "MEM_EXECUTE ")
+    APPEND_IF_SET(IMAGE_SCN_MEM_READ, "MEM_READ ")
+    APPEND_IF_SET(IMAGE_SCN_MEM_WRITE, "MEM_WRITE ")
+    
+    #undef APPEND_IF_SET
+    
+    if (remaining > 0) {
+        *ptr = '\0';
     }
 }
 
 
+// Performance optimization: Build string more efficiently by tracking position
 void GetDllCharacteristics(_In_ WORD Characteristics, _Out_writes_(cchDest) PCHAR String, _In_ size_t cchDest)
 {
-    if (Characteristics & IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA) {
-        StringCchCatA(String, cchDest, "HIGH_ENTROPY_VA ");
-    }
+    PCHAR ptr = String;
+    size_t remaining = cchDest;
 
-    if (Characteristics & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE) {
-        StringCchCatA(String, cchDest, "DYNAMIC_BASE ");
-    }
+    // Macro uses compile-time string length for literals
+    #define APPEND_IF_SET(flag, text) \
+        if (Characteristics & flag) { \
+            const size_t len = sizeof(text) - 1; \
+            if (len + 1 <= remaining) { \
+                memcpy(ptr, text, len); \
+                ptr += len; \
+                remaining -= len; \
+            } \
+        }
 
-    if (Characteristics & IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY) {
-        StringCchCatA(String, cchDest, "FORCE_INTEGRITY ");
-    }
-
-    if (Characteristics & IMAGE_DLLCHARACTERISTICS_NX_COMPAT) {
-        StringCchCatA(String, cchDest, "NX_COMPAT ");
-    }
-
-    if (Characteristics & IMAGE_DLLCHARACTERISTICS_NO_ISOLATION) {
-        StringCchCatA(String, cchDest, "NO_ISOLATION ");
-    }
-
-    if (Characteristics & IMAGE_DLLCHARACTERISTICS_NO_SEH) {
-        StringCchCatA(String, cchDest, "NO_SEH ");
-    }
-
-    if (Characteristics & IMAGE_DLLCHARACTERISTICS_NO_BIND) {
-        StringCchCatA(String, cchDest, "NO_BIND ");
-    }
-
-    if (Characteristics & IMAGE_DLLCHARACTERISTICS_APPCONTAINER) {
-        StringCchCatA(String, cchDest, "APPCONTAINER ");
-    }
-
-    if (Characteristics & IMAGE_DLLCHARACTERISTICS_WDM_DRIVER) {
-        StringCchCatA(String, cchDest, "WDM_DRIVER ");
-    }
-
-    if (Characteristics & IMAGE_DLLCHARACTERISTICS_GUARD_CF) {
-        StringCchCatA(String, cchDest, "GUARD_CF ");
-    }
-
-    if (Characteristics & IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE) {
-        StringCchCatA(String, cchDest, "TERMINAL_SERVER_AWARE ");
+    APPEND_IF_SET(IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA, "HIGH_ENTROPY_VA ")
+    APPEND_IF_SET(IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE, "DYNAMIC_BASE ")
+    APPEND_IF_SET(IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY, "FORCE_INTEGRITY ")
+    APPEND_IF_SET(IMAGE_DLLCHARACTERISTICS_NX_COMPAT, "NX_COMPAT ")
+    APPEND_IF_SET(IMAGE_DLLCHARACTERISTICS_NO_ISOLATION, "NO_ISOLATION ")
+    APPEND_IF_SET(IMAGE_DLLCHARACTERISTICS_NO_SEH, "NO_SEH ")
+    APPEND_IF_SET(IMAGE_DLLCHARACTERISTICS_NO_BIND, "NO_BIND ")
+    APPEND_IF_SET(IMAGE_DLLCHARACTERISTICS_APPCONTAINER, "APPCONTAINER ")
+    APPEND_IF_SET(IMAGE_DLLCHARACTERISTICS_WDM_DRIVER, "WDM_DRIVER ")
+    APPEND_IF_SET(IMAGE_DLLCHARACTERISTICS_GUARD_CF, "GUARD_CF ")
+    APPEND_IF_SET(IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE, "TERMINAL_SERVER_AWARE ")
+    
+    #undef APPEND_IF_SET
+    
+    if (remaining > 0) {
+        *ptr = '\0';
     }
 }
 
@@ -345,7 +239,7 @@ PCSTR GetSubsystem(_In_ WORD Subsystem)
         break;
     default:
         LOGA(ERROR_LEVEL, "SUBSYSTEM:%#X", Subsystem);
-        SubsystemString = "Î´¶¨Òå";
+        SubsystemString = "Î´ï¿½ï¿½ï¿½ï¿½";
         break;
     }
 
@@ -363,7 +257,7 @@ void TimeStampToFileTime(INT64 timeStamp, FILETIME & fileTime)
 
 void FileTimeToLocalTimeA(PFILETIME ft, char * time)
 /*
-°ÑFileTime×ª»»Îª±¾µØÊ±¼ä´òÓ¡¡£
+ï¿½ï¿½FileTime×ªï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½Ó¡ï¿½ï¿½
 */
 {
     FILETIME lft;
@@ -377,7 +271,7 @@ void FileTimeToLocalTimeA(PFILETIME ft, char * time)
 
     //SystemTimeToTzSpecificLocalTime
 
-    //¸ñÊ½£º2016-07-11 17:35:54      
+    //ï¿½ï¿½Ê½ï¿½ï¿½2016-07-11 17:35:54      
     wsprintfA(time, "%04d-%02d-%02d %02d:%02d:%02d", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
 
     //size_t cb = lstrlen(time) * sizeof(wchar_t);
@@ -393,75 +287,45 @@ void GetTimeDateStamp(_In_ DWORD TimeDateStamp, _Out_writes_(MAX_PATH) PCHAR Str
 }
 
 
+// Performance optimization: Build string more efficiently by tracking position
 void GetCharacteristics(_In_ WORD Characteristics, _Out_writes_(cchDest) PCHAR String, _In_ size_t cchDest)
-/*
-Õâ¸öº¯Êý²»ÄÜÓÃBitTest£¬ÒòÎªËüÊÇ´ÓÁã¿ªÊ¼µÄ£¬µ«ÊÇÕâ¸ö½á¹¹Ã»ÓÐ0£¬´Ó1¿ªÊ¼µÄ¡£
-
-BitTestµÄµÚ¶þ¸öÊý±ØÐëÊÇ´óÓÚÁãµÄ£¬²»ÄÜÊÇ¸ºÊý¡£
-_bittest64ÐèÒª_AMD64_¡£
-*/
 {
     _ASSERTE(String);
-    //String[0] = 0;
+    
+    PCHAR ptr = String;
+    size_t remaining = cchDest;
 
-    if (Characteristics & IMAGE_FILE_RELOCS_STRIPPED) {
-        StringCchCatA(String, cchDest, "RELOCS_STRIPPED ");
-    }
+    // Macro uses compile-time string length for literals
+    #define APPEND_IF_SET(flag, text) \
+        if (Characteristics & flag) { \
+            const size_t len = sizeof(text) - 1; \
+            if (len + 1 <= remaining) { \
+                memcpy(ptr, text, len); \
+                ptr += len; \
+                remaining -= len; \
+            } \
+        }
 
-    if (Characteristics & IMAGE_FILE_EXECUTABLE_IMAGE) {
-        StringCchCatA(String, cchDest, "EXECUTABLE_IMAGE ");
-    }
-
-    if (Characteristics & IMAGE_FILE_LINE_NUMS_STRIPPED) {
-        StringCchCatA(String, cchDest, "LINE_NUMS_STRIPPED ");
-    }
-
-    if (Characteristics & IMAGE_FILE_LOCAL_SYMS_STRIPPED) {
-        StringCchCatA(String, cchDest, "LOCAL_SYMS_STRIPPED ");
-    }
-
-    if (Characteristics & IMAGE_FILE_AGGRESIVE_WS_TRIM) {
-        StringCchCatA(String, cchDest, "AGGRESIVE_WS_TRIM ");
-    }
-
-    if (Characteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE) {
-        StringCchCatA(String, cchDest, "LARGE_ADDRESS_AWARE ");
-    }
-
-    if (Characteristics & IMAGE_FILE_BYTES_REVERSED_LO) {
-        StringCchCatA(String, cchDest, "BYTES_REVERSED_LO ");
-    }
-
-    if (Characteristics & IMAGE_FILE_32BIT_MACHINE) {
-        StringCchCatA(String, cchDest, "32BIT_MACHINE ");
-    }
-
-    if (Characteristics & IMAGE_FILE_DEBUG_STRIPPED) {
-        StringCchCatA(String, cchDest, "DEBUG_STRIPPED ");
-    }
-
-    if (Characteristics & IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP) {
-        StringCchCatA(String, cchDest, "REMOVABLE_RUN_FROM_SWAP ");
-    }
-
-    if (Characteristics & IMAGE_FILE_NET_RUN_FROM_SWAP) {
-        StringCchCatA(String, cchDest, "NET_RUN_FROM_SWAP ");
-    }
-
-    if (Characteristics & IMAGE_FILE_SYSTEM) {
-        StringCchCatA(String, cchDest, "SYSTEM ");
-    }
-
-    if (Characteristics & IMAGE_FILE_DLL) {
-        StringCchCatA(String, cchDest, "DLL ");
-    }
-
-    if (Characteristics & IMAGE_FILE_UP_SYSTEM_ONLY) {
-        StringCchCatA(String, cchDest, "UP_SYSTEM_ONLY ");
-    }
-
-    if (Characteristics & IMAGE_FILE_BYTES_REVERSED_HI) {
-        StringCchCatA(String, cchDest, "BYTES_REVERSED_HI ");
+    APPEND_IF_SET(IMAGE_FILE_RELOCS_STRIPPED, "RELOCS_STRIPPED ")
+    APPEND_IF_SET(IMAGE_FILE_EXECUTABLE_IMAGE, "EXECUTABLE_IMAGE ")
+    APPEND_IF_SET(IMAGE_FILE_LINE_NUMS_STRIPPED, "LINE_NUMS_STRIPPED ")
+    APPEND_IF_SET(IMAGE_FILE_LOCAL_SYMS_STRIPPED, "LOCAL_SYMS_STRIPPED ")
+    APPEND_IF_SET(IMAGE_FILE_AGGRESIVE_WS_TRIM, "AGGRESIVE_WS_TRIM ")
+    APPEND_IF_SET(IMAGE_FILE_LARGE_ADDRESS_AWARE, "LARGE_ADDRESS_AWARE ")
+    APPEND_IF_SET(IMAGE_FILE_BYTES_REVERSED_LO, "BYTES_REVERSED_LO ")
+    APPEND_IF_SET(IMAGE_FILE_32BIT_MACHINE, "32BIT_MACHINE ")
+    APPEND_IF_SET(IMAGE_FILE_DEBUG_STRIPPED, "DEBUG_STRIPPED ")
+    APPEND_IF_SET(IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP, "REMOVABLE_RUN_FROM_SWAP ")
+    APPEND_IF_SET(IMAGE_FILE_NET_RUN_FROM_SWAP, "NET_RUN_FROM_SWAP ")
+    APPEND_IF_SET(IMAGE_FILE_SYSTEM, "SYSTEM ")
+    APPEND_IF_SET(IMAGE_FILE_DLL, "DLL ")
+    APPEND_IF_SET(IMAGE_FILE_UP_SYSTEM_ONLY, "UP_SYSTEM_ONLY ")
+    APPEND_IF_SET(IMAGE_FILE_BYTES_REVERSED_HI, "BYTES_REVERSED_HI ")
+    
+    #undef APPEND_IF_SET
+    
+    if (remaining > 0) {
+        *ptr = '\0';
     }
 }
 
@@ -472,7 +336,7 @@ PCSTR GetMachine(_In_ WORD Machine)
 
     switch (Machine) {
     case IMAGE_FILE_MACHINE_UNKNOWN:
-        MachineString = "ÊÊÓÃÓÚÈÎºÎÀàÐÍ´¦ÀíÆ÷";
+        MachineString = "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îºï¿½ï¿½ï¿½ï¿½Í´ï¿½ï¿½ï¿½ï¿½ï¿½";
         break;
     case IMAGE_FILE_MACHINE_TARGET_HOST:
         MachineString = "Useful for indicating we want to interact with the host and not a WoW guest";
@@ -613,10 +477,10 @@ bool IsValidPE(_In_ PBYTE Data, _In_ DWORD Size)
         PIMAGE_NT_HEADERS NtHeader = ImageNtHeader(Data);
         switch (NtHeader->Signature) {
         case IMAGE_OS2_SIGNATURE:
-            LOGA(ERROR_LEVEL, "¹§Ï²Äã:·¢ÏÖÒ»¸öNEÎÄ¼þ!");
+            LOGA(ERROR_LEVEL, "ï¿½ï¿½Ï²ï¿½ï¿½:ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½NEï¿½Ä¼ï¿½!");
             break;
         case IMAGE_OS2_SIGNATURE_LE://IMAGE_VXD_SIGNATURE
-            LOGA(ERROR_LEVEL, "¹§Ï²Äã:·¢ÏÖÒ»¸öLEÎÄ¼þ!");
+            LOGA(ERROR_LEVEL, "ï¿½ï¿½Ï²ï¿½ï¿½:ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½LEï¿½Ä¼ï¿½!");
             break;
         case IMAGE_NT_SIGNATURE:
             ret = true;
@@ -632,13 +496,13 @@ bool IsValidPE(_In_ PBYTE Data, _In_ DWORD Size)
         ntSignature = *(ULONG *)ntSignature;
 
         if (IMAGE_OS2_SIGNATURE == other) {
-            LOGA(ERROR_LEVEL, "¹§Ï²Äã:·¢ÏÖÒ»¸öNEÎÄ¼þ!");
+            LOGA(ERROR_LEVEL, "ï¿½ï¿½Ï²ï¿½ï¿½:ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½NEï¿½Ä¼ï¿½!");
             __leave;
         }
 
         if (IMAGE_OS2_SIGNATURE_LE == other) //IMAGE_VXD_SIGNATURE
         {
-            LOGA(ERROR_LEVEL, "¹§Ï²Äã:·¢ÏÖÒ»¸öLEÎÄ¼þ!");
+            LOGA(ERROR_LEVEL, "ï¿½ï¿½Ï²ï¿½ï¿½:ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½LEï¿½Ä¼ï¿½!");
             __leave;
         }
 
@@ -671,18 +535,18 @@ bool IsPE32Ex(_In_ PBYTE Data, _In_ DWORD Size)
         _ASSERTE(NtHeader);
 
         /*
-        ¶ÔÓÚ¿ÉÑ¡Í·µÄ±ê×¼Óò(ÅÅ³ý×îºóÒ»¸öBaseOfData)À´Ëµ£¬ÊÇ32Î»µÄ¿ÉÑ¡Í·ºÍ64Î»µÄ¿ÉÑ¡Í·ÎÞËùÎ½£¬ÒòÎªÆ«ÒÆ¶¼ÊÇÒ»ÑùµÄ¡£
+        ï¿½ï¿½ï¿½Ú¿ï¿½Ñ¡Í·ï¿½Ä±ï¿½×¼ï¿½ï¿½(ï¿½Å³ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½BaseOfData)ï¿½ï¿½Ëµï¿½ï¿½ï¿½ï¿½32Î»ï¿½Ä¿ï¿½Ñ¡Í·ï¿½ï¿½64Î»ï¿½Ä¿ï¿½Ñ¡Í·ï¿½ï¿½ï¿½ï¿½Î½ï¿½ï¿½ï¿½ï¿½ÎªÆ«ï¿½Æ¶ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Ä¡ï¿½
         */
         PIMAGE_OPTIONAL_HEADER OptionalHeader = (PIMAGE_OPTIONAL_HEADER)&NtHeader->OptionalHeader;
         switch (OptionalHeader->Magic) {
         case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
-            //ÕâÊÇÒ»¸öÆÕÍ¨µÄPEÎÄ¼þ
+            //ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½PEï¿½Ä¼ï¿½
             break;
         case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
-            ret = true;//ÕâÊÇÒ»¸öµÄPE32+ÎÄ¼þ
+            ret = true;//ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½PE32+ï¿½Ä¼ï¿½
             break;
         case IMAGE_ROM_OPTIONAL_HDR_MAGIC:
-            LOGA(ERROR_LEVEL, "¹§Ï²Äã:·¢ÏÖÒ»¸öROMÓ³Ïñ!");
+            LOGA(ERROR_LEVEL, "ï¿½ï¿½Ï²ï¿½ï¿½:ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ROMÓ³ï¿½ï¿½!");
             break;
         default:
             LOGA(ERROR_LEVEL, "Magic:%#X!", OptionalHeader->Magic);
@@ -704,7 +568,7 @@ DWORD MapFile(_In_ LPCWSTR FileName, _In_opt_ PeCallBack CallBack)
     HANDLE hMapFile = NULL;
     PBYTE FileContent = NULL;
 
-    if (IsWow64()) {//ÔÚwow64ÏÂ¹Ø±ÕÎÄ¼þÖØ¶¨Ïò¡£
+    if (IsWow64()) {//ï¿½ï¿½wow64ï¿½Â¹Ø±ï¿½ï¿½Ä¼ï¿½ï¿½Ø¶ï¿½ï¿½ï¿½
         BOOLEAN bRet = Wow64EnableWow64FsRedirection(FALSE);
         _ASSERTE(bRet);
     }
@@ -726,19 +590,19 @@ DWORD MapFile(_In_ LPCWSTR FileName, _In_opt_ PeCallBack CallBack)
             __leave;
         }
 
-        if (0 == FileSize.QuadPart) {//Èç¹ûÎÄ¼þ´óÐ¡Îª0.
+        if (0 == FileSize.QuadPart) {//ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½Ð¡Îª0.
             LastError = ERROR_EMPTY;
             LOGA(ERROR_LEVEL, "LastError:%#d", LastError);
             __leave;
         }
 
-        if (FileSize.HighPart) {//ÔÝÊ±²»Ö§³Ö´óÓÚ4GµÄÎÄ¼þ¡£
+        if (FileSize.HighPart) {//ï¿½ï¿½Ê±ï¿½ï¿½Ö§ï¿½Ö´ï¿½ï¿½ï¿½4Gï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½
             LastError = ERROR_EMPTY;
             LOGA(ERROR_LEVEL, "LastError:%#d", LastError);
             __leave;
         }
 
-        hMapFile = CreateFileMapping(hFile, NULL, PAGE_READONLY, NULL, NULL, NULL); /* ¿ÕÎÄ¼þÔò·µ»ØÊ§°Ü */
+        hMapFile = CreateFileMapping(hFile, NULL, PAGE_READONLY, NULL, NULL, NULL); /* ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ò·µ»ï¿½Ê§ï¿½ï¿½ */
         if (hMapFile == NULL) {
             LastError = GetLastError();
             LOGA(ERROR_LEVEL, "LastError:%#d", LastError);
@@ -746,7 +610,7 @@ DWORD MapFile(_In_ LPCWSTR FileName, _In_opt_ PeCallBack CallBack)
             __leave;
         }
 
-        FileContent = (PBYTE)MapViewOfFile(hMapFile, SECTION_MAP_READ, NULL, NULL, 0/*Ó³ÉäËùÓÐ*/);
+        FileContent = (PBYTE)MapViewOfFile(hMapFile, SECTION_MAP_READ, NULL, NULL, 0/*Ó³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*/);
         if (FileContent == NULL) {
             LastError = GetLastError();
             LOGA(ERROR_LEVEL, "LastError:%#d", LastError);

@@ -8,59 +8,116 @@
 //#pragma comment(linker, "/ENTRY:Entry") 
 //#pragma comment(linker, "/subsystem:windows")
 
-wchar_t * g_tree_name[] = { //PEÎÄ¼þµÄË³Ðò.×¢Òâ´ÎÐò²»ÒªÂÒ,ÕâÃ¶¾ÙPE_SÒ»ÖÂ.
+wchar_t * g_tree_name[] = { //PEï¿½Ä¼ï¿½ï¿½ï¿½Ë³ï¿½ï¿½.×¢ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½,ï¿½ï¿½Ã¶ï¿½ï¿½PE_SÒ»ï¿½ï¿½.
     L"DOSÍ·",
-    L"PEÎÄ¼þÇ©Ãû",
-    L"COFFÎÄ¼þÍ·",
-    L"¿ÉÑ¡Í·",
-    L"±ê×¼Óò",
-    L"ÌØ¶¨Óò",
-    L"Êý¾ÝÄ¿Â¼", //Õâ¸ö²»»áÔÙÓÐ×Ó½Úµã.Õâ¸ö×¢ÊÍËµÃ÷ºÜÓÐÓÃ.
-    L"½ÚÐÅÏ¢",
-    L"½ÚÊý¾Ý",
-    L"Ö¤ÊéÊôÐÔ",
-    L"µ÷ÊÔÐÅÏ¢",
-    L"ÏêÏ¸ÐÅÏ¢",
-    L"ËµÃ÷"
+    L"PEï¿½Ä¼ï¿½Ç©ï¿½ï¿½",
+    L"COFFï¿½Ä¼ï¿½Í·",
+    L"ï¿½ï¿½Ñ¡Í·",
+    L"ï¿½ï¿½×¼ï¿½ï¿½",
+    L"ï¿½Ø¶ï¿½ï¿½ï¿½",
+    L"ï¿½ï¿½ï¿½ï¿½Ä¿Â¼", //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó½Úµï¿½.ï¿½ï¿½ï¿½×¢ï¿½ï¿½Ëµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
+    L"ï¿½ï¿½ï¿½ï¿½Ï¢",
+    L"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
+    L"Ö¤ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
+    L"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢",
+    L"ï¿½ï¿½Ï¸ï¿½ï¿½Ï¢",
+    L"Ëµï¿½ï¿½"
 };
 
-wchar_t * g_table_name[] = {//Êý¾ÝÄ¿Â¼µÄ¶ÔÓ¦µÄÃû×Ö,×¢Òâ´ÎÐò²»ÒªÂÒ
-    L"µ¼³ö±í",
-    L"µ¼Èë±í",
-    L"×ÊÔ´±í",
-    L"Òì³£±í",
-    L"ÊôÐÔÖ¤Êé±í",
-    L"»ùÖ·ÖØ¶¨Î»±í",
-    L"µ÷ÊÔÊý¾Ý",
-    L"ÌåÏµ¼Ü¹¹",//ÉèÖÃÎªÁã°É!Architecture
-    L"È«¾ÖÖ¸Õë",
-    L"Ïß³Ì¾Ö²¿´æ´¢(TLS)",
-    L"¼ÓÔØÅäÖÃ±í",
-    L"°ó¶¨µ¼Èë±í",
-    L"µ¼ÈëµØÖ·±í",
-    L"ÑÓ³Ùµ¼ÈëÃèÊö·û",
-    L"CLRµ¼ÈëÃèÊö·û",
-    L"0" //¶à¼ÓµÄÕâ¸ö¾ÍÉèÖÃÎª¿Õ°É!,ÆäÊµÕâ¸öÓÃ²»µ½.
+wchar_t * g_table_name[] = {//ï¿½ï¿½ï¿½ï¿½Ä¿Â¼ï¿½Ä¶ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,×¢ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½
+    L"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
+    L"ï¿½ï¿½ï¿½ï¿½ï¿½",
+    L"ï¿½ï¿½Ô´ï¿½ï¿½",
+    L"ï¿½ì³£ï¿½ï¿½",
+    L"ï¿½ï¿½ï¿½ï¿½Ö¤ï¿½ï¿½ï¿½",
+    L"ï¿½ï¿½Ö·ï¿½Ø¶ï¿½Î»ï¿½ï¿½",
+    L"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
+    L"ï¿½ï¿½Ïµï¿½Ü¹ï¿½",//ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½!Architecture
+    L"È«ï¿½ï¿½Ö¸ï¿½ï¿½",
+    L"ï¿½ß³Ì¾Ö²ï¿½ï¿½æ´¢(TLS)",
+    L"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã±ï¿½",
+    L"ï¿½ó¶¨µï¿½ï¿½ï¿½ï¿½",
+    L"ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½",
+    L"ï¿½Ó³Ùµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
+    L"CLRï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
+    L"0" //ï¿½ï¿½Óµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½Õ°ï¿½!,ï¿½ï¿½Êµï¿½ï¿½ï¿½ï¿½Ã²ï¿½ï¿½ï¿½.
 };
 
-HWND hwndMain;//Ö÷´°¿Ú.
-HWND g_h_edit_FilePath;//ÏÔÊ¾ÎÄ¼þÂ·¾¶ÓÃµÄ.
-HWND g_h_static_prompt;//ÌáÊ¾ÍÏ×§ÊÇ²»ÊÇÒ»¸öºÏ·¨µÄPEÎÄ¼þÓÃµÄ.
-HWND g_h_tree;//Î¨Ò»µÄÒ»¸öÊ÷ÐÎ¿Ø¼þµÄ¾ä±ú.
-HWND g_h_edit_rva;//RVAÊäÈë¿òµÄ´°¿Ú¾ä±ú.
-HWND g_h_edit_offset;//RVAÊäÈë¿òµÄ´°¿Ú¾ä±ú.
-HWND g_h[EXPLAIN + 1];//ÒÑ¾­È·¶¨µÄÊ÷ÐÎ¿Ø¼þµÄ¶ÔÓ¦µÄÏÔÊ¾¿Ø¼þµÄ¾ä±ú.
+HWND hwndMain;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
+HWND g_h_edit_FilePath;//ï¿½ï¿½Ê¾ï¿½Ä¼ï¿½Â·ï¿½ï¿½ï¿½Ãµï¿½.
+HWND g_h_static_prompt;//ï¿½ï¿½Ê¾ï¿½ï¿½×§ï¿½Ç²ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Ï·ï¿½ï¿½ï¿½PEï¿½Ä¼ï¿½ï¿½Ãµï¿½.
+HWND g_h_tree;//Î¨Ò»ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½Î¿Ø¼ï¿½ï¿½Ä¾ï¿½ï¿½.
+HWND g_h_edit_rva;//RVAï¿½ï¿½ï¿½ï¿½ï¿½Ä´ï¿½ï¿½Ú¾ï¿½ï¿½.
+HWND g_h_edit_offset;//RVAï¿½ï¿½ï¿½ï¿½ï¿½Ä´ï¿½ï¿½Ú¾ï¿½ï¿½.
+HWND g_h[EXPLAIN + 1];//ï¿½Ñ¾ï¿½È·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¿Ø¼ï¿½ï¿½Ä¶ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½Ø¼ï¿½ï¿½Ä¾ï¿½ï¿½.
 
-HTREEITEM g_htreeitem[EXPLAIN + 1];//´æ´¢Ê÷ÐÎ¿Ø¼þµÄÒÑÖªµÄÊýÁ¿µÄ±äÁ¿.
-HTREEITEM g_htreeitem_section[MAX_SECTION];//Ô¤ÏÈ·ÖÅäÕâÃ´¶à,Êµ¼ÊµÄ²»»á³¬¹ýÕâ¸öÊý.
-HTREEITEM g_htreeitem_data_directory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES];//Ô¤ÏÈ·ÖÅäÕâÃ´¶à,Êµ¼ÊµÄ²»»á³¬¹ýÕâ¸öÊý.
+HTREEITEM g_htreeitem[EXPLAIN + 1];//ï¿½æ´¢ï¿½ï¿½ï¿½Î¿Ø¼ï¿½ï¿½ï¿½ï¿½ï¿½Öªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä±ï¿½ï¿½ï¿½.
+HTREEITEM g_htreeitem_section[MAX_SECTION];//Ô¤ï¿½È·ï¿½ï¿½ï¿½ï¿½ï¿½Ã´ï¿½ï¿½,Êµï¿½ÊµÄ²ï¿½ï¿½á³¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
+HTREEITEM g_htreeitem_data_directory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES];//Ô¤ï¿½È·ï¿½ï¿½ï¿½ï¿½ï¿½Ã´ï¿½ï¿½,Êµï¿½ÊµÄ²ï¿½ï¿½á³¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 
-bool g_IsValidPE;//ÊÇÒ»¸öÓÐÐ§µÄPEÎÄ¼þÂð?
-bool g_IsPE32Ex;//ÊÇÒ»¸öPE32+ÎÄ¼þÂð?
+bool g_IsValidPE;//ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½PEï¿½Ä¼ï¿½ï¿½ï¿½?
+bool g_IsPE32Ex;//ï¿½ï¿½Ò»ï¿½ï¿½PE32+ï¿½Ä¼ï¿½ï¿½ï¿½?
+
+// Performance optimization: Helper structure to hold file mapping information
+struct FileMappingInfo {
+    HANDLE hfile;
+    HANDLE hfilemap;
+    LPVOID pmz;
+    DWORD64 filesize;
+    
+    FileMappingInfo() : hfile(INVALID_HANDLE_VALUE), hfilemap(NULL), pmz(NULL), filesize(0) {}
+    
+    ~FileMappingInfo() {
+        Cleanup();
+    }
+    
+    void Cleanup() {
+        if (pmz) {
+            UnmapViewOfFile(pmz);
+            pmz = NULL;
+        }
+        if (hfilemap) {
+            CloseHandle(hfilemap);
+            hfilemap = NULL;
+        }
+        if (hfile != INVALID_HANDLE_VALUE) {
+            CloseHandle(hfile);
+            hfile = INVALID_HANDLE_VALUE;
+        }
+    }
+};
+
+// Performance optimization: Map file once and reuse mapping
+bool MapFileForReading(wchar_t * filename, FileMappingInfo & info) {
+    info.hfile = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (info.hfile == INVALID_HANDLE_VALUE) {
+        return false;
+    }
+
+    DWORD FileSizeHigh;
+    DWORD FileSizeLow = GetFileSize(info.hfile, &FileSizeHigh);
+    info.filesize = ((DWORD64)FileSizeHigh << 32) | (DWORD64)FileSizeLow;
+
+    if (info.filesize == 0) {
+        return false;
+    }
+
+    info.hfilemap = CreateFileMapping(info.hfile, NULL, PAGE_READONLY, NULL, NULL, NULL);
+    if (info.hfilemap == NULL) {
+        return false;
+    }
+
+    info.pmz = MapViewOfFile(info.hfilemap, SECTION_MAP_READ, NULL, NULL, 0);
+    if (info.pmz == NULL) {
+        return false;
+    }
+
+    return true;
+}
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//´úÂë¿ªÊ¼.
+//ï¿½ï¿½ï¿½ë¿ªÊ¼.
 
 
 void ErrorBox(LPTSTR lpszFunction)
@@ -86,9 +143,9 @@ void ErrorBox(LPTSTR lpszFunction)
 void on_create(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
     /*
-    Õâ¸ö¿Ø¼þÏÔÊ¾µÄ×î´ó³¤¶ÈÓÐÏÞÖÆ.
-    ËùÒÔ²»¿ÉÒÔÈ¡Õâ¸ö¿Ø¼þµÄÄÚÈÝ,Ó¦¸Ã°Ñ»ñÈ¡µ½µÄÍÏ×§µÄÂ·¾¶±£´æµ½Ò»¸öÈ«¾ÖµÄ±äÁ¿ÀïÃæ.
-    »òÕß¸Ä±äÎª²»¿ÉÐ´µÄ±à¼­¿Ø¼þ. | ES_READONLY
+    ï¿½ï¿½ï¿½ï¿½Ø¼ï¿½ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½ó³¤¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
+    ï¿½ï¿½ï¿½Ô²ï¿½ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Ø¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,Ó¦ï¿½Ã°Ñ»ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×§ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½æµ½Ò»ï¿½ï¿½È«ï¿½ÖµÄ±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
+    ï¿½ï¿½ï¿½ß¸Ä±ï¿½Îªï¿½ï¿½ï¿½ï¿½Ð´ï¿½Ä±à¼­ï¿½Ø¼ï¿½. | ES_READONLY
     */
     /*g_h_edit_FilePath = CreateWindowEx(WS_EX_CLIENTEDGE,L"Static",0,WS_CHILD | WS_VISIBLE | SS_LEFT | WS_GROUP, 0,0,800,21,hWnd,0,GetModuleHandle(0),0);*/
         //SendMessage(h_Static,WM_SETTEXT,0,(LPARAM)L"");
@@ -97,142 +154,121 @@ void on_create(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     g_h_static_prompt = CreateWindowEx(WS_EX_CLIENTEDGE, L"Static", 0, WS_CHILD | WS_VISIBLE | SS_LEFT | WS_GROUP,
         800, 0, 199 - 6, 21, hWnd, 0, GetModuleHandle(0), 0);
-    SendMessage(g_h_static_prompt, WM_SETTEXT, 0, (LPARAM)L"ÇëÍÏ×§Ò»¸öPEÎÄ¼þ¹ýÀ´!");
+    SendMessage(g_h_static_prompt, WM_SETTEXT, 0, (LPARAM)L"ï¿½ï¿½ï¿½ï¿½×§Ò»ï¿½ï¿½PEï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½!");
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    //²»¿¼ÂÇ¶¯Ì¬µÄÏÔÊ¾,Õâ¸ö¿ÉÒÔÎª¾Ö²¿±äÁ¿.
+    //ï¿½ï¿½ï¿½ï¿½ï¿½Ç¶ï¿½Ì¬ï¿½ï¿½ï¿½ï¿½Ê¾,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½Ö²ï¿½ï¿½ï¿½ï¿½ï¿½.
     HWND h_Static_rva = CreateWindowEx(WS_EX_CLIENTEDGE, L"Static", 0, WS_CHILD | WS_VISIBLE | SS_LEFT | WS_GROUP, 0, 21, 40, 21, hWnd, 0, GetModuleHandle(0), 0);
-    SendMessage(h_Static_rva, WM_SETTEXT, 0, (LPARAM)L"RVA:");//(Ïà¶ÔÐéÄâµØÖ·»òÐéÄâµØÖ·µÄÆ«ÒÆ)
+    SendMessage(h_Static_rva, WM_SETTEXT, 0, (LPARAM)L"RVA:");//(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½Æ«ï¿½ï¿½)
 
     g_h_edit_rva = CreateWindowEx(0, L"EDIT", 0, WS_CHILD | WS_VISIBLE, 40, 21, 140, 21, hWnd, 0, GetModuleHandle(0), 0);//ES_NUMBER ES_PASSWORD
-    //SendMessage(h_sql,WM_SETTEXT,0,(LPARAM)L"ÇëÊäÈëÊ®Áù½øÖÆµÄÊý.");//(Ïà¶ÔÐéÄâµØÖ·»òÐéÄâµØÖ·µÄÆ«ÒÆ) ²»ÐèÒª¼Ó0x ,²»Òª´øÇ°ºó×º   
-    SendMessage(g_h_edit_rva, EM_SETLIMITTEXT, 16, 0);//×î¶àÊäÈë16¸ö×Ö·û¡£Ö»¶ÔEDIT¿Ø¼þÓÐÐ§.
+    //SendMessage(h_sql,WM_SETTEXT,0,(LPARAM)L"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê®ï¿½ï¿½ï¿½ï¿½ï¿½Æµï¿½ï¿½ï¿½.");//(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½Æ«ï¿½ï¿½) ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½0x ,ï¿½ï¿½Òªï¿½ï¿½Ç°ï¿½ï¿½×º   
+    SendMessage(g_h_edit_rva, EM_SETLIMITTEXT, 16, 0);//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½16ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½Ö»ï¿½ï¿½EDITï¿½Ø¼ï¿½ï¿½ï¿½Ð§.
     //HDC hdc = GetDC(g_h_edit_rva );
     //SetBkColor( hdc, 9999 );
 
-    //²»¿¼ÂÇ¶¯Ì¬µÄÏÔÊ¾,Õâ¸ö¿ÉÒÔÎª¾Ö²¿±äÁ¿.
+    //ï¿½ï¿½ï¿½ï¿½ï¿½Ç¶ï¿½Ì¬ï¿½ï¿½ï¿½ï¿½Ê¾,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½Ö²ï¿½ï¿½ï¿½ï¿½ï¿½.
     HWND h_static_offset = CreateWindowEx(WS_EX_CLIENTEDGE, L"Static", 0, WS_CHILD | WS_VISIBLE | SS_LEFT | WS_GROUP, 
         40 + 140, 21, 70, 21, hWnd, 0, GetModuleHandle(0), 0);
     SendMessage(h_static_offset, WM_SETTEXT, 0, (LPARAM)L"OFFSET:");
 
     HWND g_h_edit_offset = CreateWindowEx(0, L"EDIT", 0, WS_CHILD | WS_VISIBLE, 40 + 140 + 70, 21, 140, 21, hWnd, 0, GetModuleHandle(0), 0);
-    SendMessage(g_h_edit_offset, EM_SETLIMITTEXT, 16, 0);//×î¶àÊäÈë16¸ö×Ö·û¡£
+    SendMessage(g_h_edit_offset, EM_SETLIMITTEXT, 16, 0);//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½16ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½
 
-    CreateWindowEx(NULL, L"button", L"×ª»»", WS_CHILD | WS_VISIBLE, 30 + 150 + 70 + 140, 21, 50, 21, hWnd, (HMENU)99, GetModuleHandle(0), NULL);
-    CreateWindowEx(NULL, L"button", L"Äæ×ª", WS_CHILD | WS_VISIBLE, 30 + 150 + 70 + 140 + 9 + 50, 21, 50, 21, hWnd, (HMENU)100, GetModuleHandle(0), NULL);
+    CreateWindowEx(NULL, L"button", L"×ªï¿½ï¿½", WS_CHILD | WS_VISIBLE, 30 + 150 + 70 + 140, 21, 50, 21, hWnd, (HMENU)99, GetModuleHandle(0), NULL);
+    CreateWindowEx(NULL, L"button", L"ï¿½ï¿½×ª", WS_CHILD | WS_VISIBLE, 30 + 150 + 70 + 140 + 9 + 50, 21, 50, 21, hWnd, (HMENU)100, GetModuleHandle(0), NULL);
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     InitCommonControls();
     g_h_tree = CreateWindowEx(0, L"SysTreeView32", 0,
-        WS_CHILD | WS_VISIBLE | TVS_HASLINES | TVS_HASBUTTONS | TVS_LINESATROOT | WS_BORDER /*´ø±ß¿ò*/,
-        0, 42, 170, 768 - 29 /*±êÌâµÄ¸ß¶È*/ - 21 - 21 - 102, hWnd, 0, GetModuleHandle(0), 0);
+        WS_CHILD | WS_VISIBLE | TVS_HASLINES | TVS_HASBUTTONS | TVS_LINESATROOT | WS_BORDER /*ï¿½ï¿½ï¿½ß¿ï¿½*/,
+        0, 42, 170, 768 - 29 /*ï¿½ï¿½ï¿½ï¿½Ä¸ß¶ï¿½*/ - 21 - 21 - 102, hWnd, 0, GetModuleHandle(0), 0);
 
-    TV_INSERTSTRUCT tvinsert;//Ò»¸öTree¿Ø¼þ£¬Ö»ÊÊÒË´´½¨Ò»¸örootÏî£¬·ñÔòÏûÏ¢Ñ­»·µÄÐÅÏ¢µÄ´¦Àí£¬ÓÐµãÂé·³¡£
+    TV_INSERTSTRUCT tvinsert;//Ò»ï¿½ï¿½Treeï¿½Ø¼ï¿½ï¿½ï¿½Ö»ï¿½ï¿½ï¿½Ë´ï¿½ï¿½ï¿½Ò»ï¿½ï¿½rootï¿½î£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½Ä´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ðµï¿½ï¿½é·³ï¿½ï¿½
 
     tvinsert.hParent = 0;
     tvinsert.hInsertAfter = TVI_ROOT;
     tvinsert.item.mask = TVIF_TEXT + TVIF_IMAGE + TVIF_SELECTEDIMAGE;
-    tvinsert.item.pszText = g_tree_name[DOS];//L"DOSÍ·";//Î¢ÈíµÄ¹æ·¶×ÔÏàÃ¬¶Ü,Ò»»áËµdosÍ·ÊôÓÚpeÍ·,Ò»»áÓÖ·Ö¿ªÀ´Ëµ,ËùÒÔ×Ô¼ºÈÏÎªÓ¦¸Ã·Ö¿ª,ÕâÑùÈÝÒ×Àí½â,Õâ²ÅÊÇÖØÒªµÄ.
+    tvinsert.item.pszText = g_tree_name[DOS];//L"DOSÍ·";//Î¢ï¿½ï¿½ï¿½Ä¹æ·¶ï¿½ï¿½ï¿½ï¿½Ã¬ï¿½ï¿½,Ò»ï¿½ï¿½ËµdosÍ·ï¿½ï¿½ï¿½ï¿½peÍ·,Ò»ï¿½ï¿½ï¿½Ö·Ö¿ï¿½ï¿½ï¿½Ëµ,ï¿½ï¿½ï¿½ï¿½ï¿½Ô¼ï¿½ï¿½ï¿½ÎªÓ¦ï¿½Ã·Ö¿ï¿½,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½.
     g_htreeitem[DOS] = (HTREEITEM)SendMessage(g_h_tree, TVM_INSERTITEM, 0, (LPARAM)&tvinsert);
 
     //tvinsert.hParent = 0;
-    //tvinsert.item.pszText = L"PEÎÄ¼þÍ·";
+    //tvinsert.item.pszText = L"PEï¿½Ä¼ï¿½Í·";
     //HTREEITEM pe_head = (HTREEITEM)SendMessage(h_network_tree,TVM_INSERTITEM,0,(LPARAM)& tvinsert);
 
-    //ÆäÊµÓÃi++Ò²¿ÉÒÔ,Ö»²»¹ýÏÂÃæµÄ·½Ê½¸üÃ÷ÏÔÒ×¶®.
+    //ï¿½ï¿½Êµï¿½ï¿½i++Ò²ï¿½ï¿½ï¿½ï¿½,Ö»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä·ï¿½Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×¶ï¿½.
 
     tvinsert.hParent = 0;
-    tvinsert.item.pszText = g_tree_name[PESIGN];//L"PEÎÄ¼þÇ©Ãû";
+    tvinsert.item.pszText = g_tree_name[PESIGN];//L"PEï¿½Ä¼ï¿½Ç©ï¿½ï¿½";
     g_htreeitem[PESIGN] = (HTREEITEM)SendMessage(g_h_tree, TVM_INSERTITEM, 0, (LPARAM)&tvinsert);
 
     tvinsert.hParent = 0;
-    tvinsert.item.pszText = g_tree_name[COFF];//L"COFFÎÄ¼þÍ·";
+    tvinsert.item.pszText = g_tree_name[COFF];//L"COFFï¿½Ä¼ï¿½Í·";
     g_htreeitem[COFF] = (HTREEITEM)SendMessage(g_h_tree, TVM_INSERTITEM, 0, (LPARAM)&tvinsert);
 
     tvinsert.hParent = 0;
-    tvinsert.item.pszText = g_tree_name[MY_OPTIONAL];//L"¿ÉÑ¡Í·";
+    tvinsert.item.pszText = g_tree_name[MY_OPTIONAL];//L"ï¿½ï¿½Ñ¡Í·";
     g_htreeitem[MY_OPTIONAL] = (HTREEITEM)SendMessage(g_h_tree, TVM_INSERTITEM, 0, (LPARAM)&tvinsert);
 
     tvinsert.hParent = g_htreeitem[MY_OPTIONAL];
-    tvinsert.item.pszText = g_tree_name[STANDARD];//L"±ê×¼Óò";
+    tvinsert.item.pszText = g_tree_name[STANDARD];//L"ï¿½ï¿½×¼ï¿½ï¿½";
     g_htreeitem[STANDARD] = (HTREEITEM)SendMessage(g_h_tree, TVM_INSERTITEM, 0, (LPARAM)&tvinsert);
 
     //tvinsert.hParent = h_OptionalHeader;
-    //tvinsert.item.pszText = L"BaseOfData";//Õâ¸öÓ¦ÊôÓÚ±ê×¼Óò.pe32+Ã»ÓÐÕâ¸ö.
+    //tvinsert.item.pszText = L"BaseOfData";//ï¿½ï¿½ï¿½Ó¦ï¿½ï¿½ï¿½Ú±ï¿½×¼ï¿½ï¿½.pe32+Ã»ï¿½ï¿½ï¿½ï¿½ï¿½.
     //HTREEITEM h_BaseOfData = (HTREEITEM)SendMessage(h_network_tree,TVM_INSERTITEM,0,(LPARAM)& tvinsert);            
 
     tvinsert.hParent = g_htreeitem[MY_OPTIONAL];
-    tvinsert.item.pszText = g_tree_name[SPECIFIC];//L"ÌØ¶¨Óò";
+    tvinsert.item.pszText = g_tree_name[SPECIFIC];//L"ï¿½Ø¶ï¿½ï¿½ï¿½";
     g_htreeitem[SPECIFIC] = (HTREEITEM)SendMessage(g_h_tree, TVM_INSERTITEM, 0, (LPARAM)&tvinsert);
 
     tvinsert.hParent = g_htreeitem[MY_OPTIONAL];
-    tvinsert.item.pszText = g_tree_name[DATADIRECTORIES];//L"Êý¾ÝÄ¿Â¼";
+    tvinsert.item.pszText = g_tree_name[DATADIRECTORIES];//L"ï¿½ï¿½ï¿½ï¿½Ä¿Â¼";
     g_htreeitem[DATADIRECTORIES] = (HTREEITEM)SendMessage(g_h_tree, TVM_INSERTITEM, 0, (LPARAM)&tvinsert);
 
     tvinsert.hParent = 0;
-    tvinsert.item.pszText = g_tree_name[SECTIONTABLE];//L"½ÚÐÅÏ¢";//ÓÐÊ±ºòÕâºóÃæÒ²ÓÐÐÅÏ¢,²»ÖªµÀÊÇÉ¶ÐÅÏ¢,»³ÒÉÊÇÖ¤ÊéÊôÐÔºÍµ÷ÊÔÐÅÏ¢.
+    tvinsert.item.pszText = g_tree_name[SECTIONTABLE];//L"ï¿½ï¿½ï¿½ï¿½Ï¢";//ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò²ï¿½ï¿½ï¿½ï¿½Ï¢,ï¿½ï¿½Öªï¿½ï¿½ï¿½ï¿½É¶ï¿½ï¿½Ï¢,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¤ï¿½ï¿½ï¿½ï¿½ï¿½ÔºÍµï¿½ï¿½ï¿½ï¿½ï¿½Ï¢.
     g_htreeitem[SECTIONTABLE] = (HTREEITEM)SendMessage(g_h_tree, TVM_INSERTITEM, 0, (LPARAM)&tvinsert);
 
     tvinsert.hParent = 0;
-    tvinsert.item.pszText = g_tree_name[SECTIONDATA];//L"½ÚÊý¾Ý";
+    tvinsert.item.pszText = g_tree_name[SECTIONDATA];//L"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½";
     g_htreeitem[SECTIONDATA] = (HTREEITEM)SendMessage(g_h_tree, TVM_INSERTITEM, 0, (LPARAM)&tvinsert);
 
     tvinsert.hParent = 0;
-    tvinsert.item.pszText = g_tree_name[CERTIFICATEATTRIBUTE];//L"Ö¤ÊéÊôÐÔ";//¹æ·¶ËµÃ÷ÊÇÔÚ½ÚµÄºóÃæµÄ.
+    tvinsert.item.pszText = g_tree_name[CERTIFICATEATTRIBUTE];//L"Ö¤ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½";//ï¿½æ·¶Ëµï¿½ï¿½ï¿½ï¿½ï¿½Ú½ÚµÄºï¿½ï¿½ï¿½ï¿½.
     g_htreeitem[CERTIFICATEATTRIBUTE] = (HTREEITEM)SendMessage(g_h_tree, TVM_INSERTITEM, 0, (LPARAM)&tvinsert);
 
     tvinsert.hParent = 0;
-    tvinsert.item.pszText = g_tree_name[DEBUGINFORMATION];//L"µ÷ÊÔÐÅÏ¢";//¹æ·¶ËµÃ÷ÊÇÔÚ½ÚµÄºóÃæµÄ.
+    tvinsert.item.pszText = g_tree_name[DEBUGINFORMATION];//L"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢";//ï¿½æ·¶Ëµï¿½ï¿½ï¿½ï¿½ï¿½Ú½ÚµÄºï¿½ï¿½ï¿½ï¿½.
     g_htreeitem[DEBUGINFORMATION] = (HTREEITEM)SendMessage(g_h_tree, TVM_INSERTITEM, 0, (LPARAM)&tvinsert);
 
     tvinsert.hParent = 0;
-    tvinsert.item.pszText = g_tree_name[MOREINFORMATION];//L"¸÷ÖÖ±í";
+    tvinsert.item.pszText = g_tree_name[MOREINFORMATION];//L"ï¿½ï¿½ï¿½Ö±ï¿½";
     g_htreeitem[MOREINFORMATION] = (HTREEITEM)SendMessage(g_h_tree, TVM_INSERTITEM, 0, (LPARAM)&tvinsert);
 
     tvinsert.hParent = 0;
-    tvinsert.item.pszText = g_tree_name[EXPLAIN];//L"ËµÃ÷";
+    tvinsert.item.pszText = g_tree_name[EXPLAIN];//L"Ëµï¿½ï¿½";
     g_htreeitem[EXPLAIN] = (HTREEITEM)SendMessage(g_h_tree, TVM_INSERTITEM, 0, (LPARAM)&tvinsert);
 }
 
 
+// Performance optimization: Fixed resource leaks and improved error handling
 int IsValidPE(wchar_t * filename)
 {
-    bool r = false;//·µ»ØÖµ.
-
-    HANDLE hfile = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (hfile == INVALID_HANDLE_VALUE) {
-        int x = GetLastError();//0x00000020
-        //MessageBox(0,L"Çë¼ì²éÎÄ¼þÊÇ·ñ±»Õ¼ÓÃ»òÕß·ÃÎÊÈ¨ÏÞµÈÉèÖÃ!",L"´ò¿ªÎÄ¼þÊ§°Ü!",0);
-        //¿ÉÒÔ¿¼ÂÇ°ÑÎÄ¼þÃûÒ²ÏÔÊ¾³öÀ´¡£
-        ErrorBox(TEXT("CreateFile"));
-        return x;
-    }
-
-    DWORD FileSizeHigh;
-    DWORD FileSizeLow = GetFileSize(hfile, &FileSizeHigh);
-    DWORD64 filesize = FileSizeHigh * 0x100000000 + FileSizeLow;
-
-    if (FileSizeLow == 0 && FileSizeHigh == 0) {//Èç¹ûÎÄ¼þ´óÐ¡Îª0.
-        CloseHandle(hfile);
+    FileMappingInfo info;
+    
+    if (!MapFileForReading(filename, info)) {
+        if (info.hfile == INVALID_HANDLE_VALUE) {
+            int x = GetLastError();
+            ErrorBox(TEXT("CreateFile"));
+            return x;
+        }
         return false;
     }
 
-    HANDLE hfilemap = CreateFileMapping(hfile, NULL, PAGE_READONLY, NULL, NULL, NULL); /* ¿ÕÎÄ¼þÔò·µ»ØÊ§°Ü */
-    if (hfilemap == NULL) {
-        CloseHandle(hfile);
-        return false;
-    }
-
-    LPVOID pmz = MapViewOfFile(hfilemap, SECTION_MAP_READ, NULL, NULL, 0/*Ó³ÉäËùÓÐ*/);//Ó¦¸ÃÖ§³Ö´óÓÚ4GµÄÎÄ¼þ¡£
-    if (pmz == NULL) {
-        CloseHandle(hfilemap);
-        CloseHandle(hfile);
-        return false;
-    }
-
-    IMAGE_DOS_HEADER * p_image_dos_header = (IMAGE_DOS_HEADER *)pmz;
+    IMAGE_DOS_HEADER * p_image_dos_header = (IMAGE_DOS_HEADER *)info.pmz;
     if (IMAGE_DOS_SIGNATURE != p_image_dos_header->e_magic) {
         return false;
     }
@@ -242,68 +278,31 @@ int IsValidPE(wchar_t * filename)
     ntSignature = *(ULONG *)ntSignature;
 
     if (IMAGE_OS2_SIGNATURE == other) {
-        MessageBox(0, filename, L"¹§Ï²Äã:ÕâÊÇÒ»¸öNEÎÄ¼þ!", 0);
-        //return false;//ÒªÔËÐÐÏÂÃæµÄ,ÒªÊÇ·Å¾ä±ú.
+        MessageBox(0, filename, L"ï¿½ï¿½Ï²ï¿½ï¿½:ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½NEï¿½Ä¼ï¿½!", 0);
     }
 
-    if (IMAGE_OS2_SIGNATURE_LE == other) //IMAGE_VXD_SIGNATURE
-    {
-        MessageBox(0, filename, L"¹§Ï²Äã:ÕâÊÇÒ»¸öLEÎÄ¼þ!", 0);
-        //return false;
+    if (IMAGE_OS2_SIGNATURE_LE == other) {
+        MessageBox(0, filename, L"ï¿½ï¿½Ï²ï¿½ï¿½:ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½LEï¿½Ä¼ï¿½!", 0);
     }
 
     if (IMAGE_NT_SIGNATURE == ntSignature) {
-        //return false;
-        r = true;
+        return true;
     }
 
-    UnmapViewOfFile(pmz);
-    CloseHandle(hfilemap);
-    CloseHandle(hfile);
-
-    return r;
+    return false;
 }
 
 
+// Performance optimization: Fixed resource leaks and improved error handling
 bool IsPE32Ex(wchar_t * filename)
-{//ÆäÊµÕâ¸öº¯ÊýµÄ·µ»ØÀàÐÍ¿ÉÒÔÊÇint,·Ö±ð´ú±í²»Í¬µÄPEÎÄ¼þÀàÐÍ.
-
-    //IMAGE_DOS_HEADER      image_dos_header;
-    //IMAGE_FILE_HEADER     image_file_header;
-    //IMAGE_OPTIONAL_HEADER image_optional_header;
-    //IMAGE_SECTION_HEADER  image_section_header;
-    //IMAGE_NT_HEADERS Î¢ÈíµÄÊ¾Àý¶¼²»ÓÃÕâ¸ö,¿´À´Õâ¸öÖ»ÊÇ¸ÅÄî,±ðµÄÎÞÓÃ.
-
-    bool r = false;//·µ»ØÖµ.
-
-    HANDLE hfile = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (hfile == INVALID_HANDLE_VALUE) {
+{
+    FileMappingInfo info;
+    
+    if (!MapFileForReading(filename, info)) {
         return false;
     }
 
-    DWORD FileSizeHigh;
-    DWORD FileSizeLow = GetFileSize(hfile, &FileSizeHigh);
-    DWORD64 filesize = FileSizeHigh * 0x100000000 + FileSizeLow;
-
-    if (FileSizeLow == 0 && FileSizeHigh == 0) {//Èç¹ûÎÄ¼þ´óÐ¡Îª0.
-        CloseHandle(hfile);
-        return false;
-    }
-
-    HANDLE hfilemap = CreateFileMapping(hfile, NULL, PAGE_READONLY, NULL, NULL, NULL); /* ¿ÕÎÄ¼þÔò·µ»ØÊ§°Ü */
-    if (hfilemap == NULL) {
-        CloseHandle(hfile);
-        return false;
-    }
-
-    LPVOID pmz = MapViewOfFile(hfilemap, SECTION_MAP_READ, NULL, NULL, 0/*Ó³ÉäËùÓÐ*/);//ÔÝÊ±²»Ö§³Ö´óÓÚ4GµÄÎÄ¼þ¡£
-    if (pmz == NULL) {
-        CloseHandle(hfilemap);
-        CloseHandle(hfile);
-        return false;
-    }
-
-    IMAGE_DOS_HEADER * p_image_dos_header = (IMAGE_DOS_HEADER *)pmz;
+    IMAGE_DOS_HEADER * p_image_dos_header = (IMAGE_DOS_HEADER *)info.pmz;
     if (IMAGE_DOS_SIGNATURE != p_image_dos_header->e_magic) {
         return false;
     }
@@ -317,76 +316,32 @@ bool IsPE32Ex(wchar_t * filename)
     DWORD  CoffHeaderOffset = (ULONG)p_image_dos_header + p_image_dos_header->e_lfanew + sizeof(ULONG);
     IMAGE_FILE_HEADER * p_image_file_header = (IMAGE_FILE_HEADER *)CoffHeaderOffset;
 
-    //×¢ÒâÕâÀïÓÃµÄÓÀÔ¶ÊÇ:IMAGE_OPTIONAL_HEADER32.
-    //Òª·ÖÎöIMAGE_OPTIONAL_HEADER64µÄÒ»¸ö°ì·¨ÊÇ:Ç¿ÖÆ¶¨ÒåÒ»¸ö,ÔØ¸³Öµ×ª»».
-    //ÆäÊµÕâ¸ö½á¹¹µÄ´óÐ¡ÊÇ¹Ì¶¨µÄ,Ö»²»¹ý32Î»µÄºÍ64Î»µÄ²»Ò»Ñù.µ«»¹ÊÇÓÃ¹æ·¶½¨ÒéµÄ.IMAGE_FILE_HEADERµÄ³ÉÔ±·ÃÎÊºÃ.
     IMAGE_OPTIONAL_HEADER * p_image_optional_header = (IMAGE_OPTIONAL_HEADER *)((ULONG)p_image_file_header + sizeof(IMAGE_FILE_HEADER));
 
     if (p_image_optional_header->Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC) {
-        //ÕâÊÇÒ»¸öÆÕÍ¨µÄPEÎÄ¼þ
-        //return false;//ÒªÔËÐÐÏÂÃæµÄ,ÒªÊÇ·Å¾ä±ú.
-
+        return false;
     } else if (p_image_optional_header->Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC) {
-        //ÕâÊÇÒ»¸öµÄPE32+ÎÄ¼þ
-        //return true;
-        r = true;
+        return true;
     } else if (p_image_optional_header->Magic == IMAGE_ROM_OPTIONAL_HDR_MAGIC) {
-        //ÕâÊÇÒ»¸öµÄROMÓ³Ïñ
-        MessageBox(0, L"ÕâÊÇÒ»¸öROMÓ³Ïñ", L"¾ªÏ²!", 0);
+        MessageBox(0, L"ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ROMÓ³ï¿½ï¿½", L"ï¿½ï¿½Ï²!", 0);
     } else {
-        //Î´ÖªµÄÎÄ¼þÀàÐÍ.
-        MessageBox(0, L"ÕâÊÇÒ»¸öÎ´ÖªµÄÀàÐÍµÄPEÎÄ¼þ!", L"¾ªÏ²!", 0);
+        MessageBox(0, L"ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½Î´Öªï¿½ï¿½ï¿½ï¿½ï¿½Íµï¿½PEï¿½Ä¼ï¿½!", L"ï¿½ï¿½Ï²!", 0);
     }
 
-    UnmapViewOfFile(pmz);
-    CloseHandle(hfilemap);
-    CloseHandle(hfile);
-
-    return r;
+    return false;
 }
 
 
+// Performance optimization: Fixed resource leaks and reduced duplicate code
 bool AddSectionData(wchar_t * filename)
-/*
-¹¦ÄÜÊÇÔÚ½ÚÊý¾ÝÕâ¸öÊ÷ÐÎ½ÚµãÏÂÃæÌí¼Ó×Ó½Úµã.
-*/
 {
-    //IMAGE_DOS_HEADER      image_dos_header;
-    //IMAGE_FILE_HEADER     image_file_header;
-    //IMAGE_OPTIONAL_HEADER image_optional_header;
-    //IMAGE_SECTION_HEADER  image_section_header;
-    //IMAGE_NT_HEADERS Î¢ÈíµÄÊ¾Àý¶¼²»ÓÃÕâ¸ö,¿´À´Õâ¸öÖ»ÊÇ¸ÅÄî,±ðµÄÎÞÓÃ.
-
-    bool r = false;//·µ»ØÖµ.
-
-    HANDLE hfile = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (hfile == INVALID_HANDLE_VALUE) {
+    FileMappingInfo info;
+    
+    if (!MapFileForReading(filename, info)) {
         return false;
     }
 
-    DWORD FileSizeHigh;
-    DWORD FileSizeLow = GetFileSize(hfile, &FileSizeHigh);
-    DWORD64 filesize = FileSizeHigh * 0x100000000 + FileSizeLow;
-
-    if (FileSizeLow == 0 && FileSizeHigh == 0) {//Èç¹ûÎÄ¼þ´óÐ¡Îª0.
-        CloseHandle(hfile);
-        return false;
-    }
-
-    HANDLE hfilemap = CreateFileMapping(hfile, NULL, PAGE_READONLY, NULL, NULL, NULL); /* ¿ÕÎÄ¼þÔò·µ»ØÊ§°Ü */
-    if (hfilemap == NULL) {
-        CloseHandle(hfile);
-        return false;
-    }
-
-    LPVOID pmz = MapViewOfFile(hfilemap, SECTION_MAP_READ, NULL, NULL, 0/*Ó³ÉäËùÓÐ*/);//ÔÝÊ±²»Ö§³Ö´óÓÚ4GµÄÎÄ¼þ¡£
-    if (pmz == NULL) {
-        CloseHandle(hfilemap);
-        CloseHandle(hfile);
-        return false;
-    }
-
-    IMAGE_DOS_HEADER * p_image_dos_header = (IMAGE_DOS_HEADER *)pmz;
+    IMAGE_DOS_HEADER * p_image_dos_header = (IMAGE_DOS_HEADER *)info.pmz;
     if (IMAGE_DOS_SIGNATURE != p_image_dos_header->e_magic) {
         return false;
     }
@@ -400,110 +355,57 @@ bool AddSectionData(wchar_t * filename)
     DWORD  CoffHeaderOffset = (ULONG)p_image_dos_header + p_image_dos_header->e_lfanew + sizeof(ULONG);
     IMAGE_FILE_HEADER * p_image_file_header = (IMAGE_FILE_HEADER *)CoffHeaderOffset;
 
-    //×¢ÒâÕâÀïÓÃµÄÓÀÔ¶ÊÇ:IMAGE_OPTIONAL_HEADER32.
-    //Òª·ÖÎöIMAGE_OPTIONAL_HEADER64µÄÒ»¸ö°ì·¨ÊÇ:Ç¿ÖÆ¶¨ÒåÒ»¸ö,ÔØ¸³Öµ×ª»».
-    //ÆäÊµÕâ¸ö½á¹¹µÄ´óÐ¡ÊÇ¹Ì¶¨µÄ,Ö»²»¹ý32Î»µÄºÍ64Î»µÄ²»Ò»Ñù.µ«»¹ÊÇÓÃ¹æ·¶½¨ÒéµÄ.IMAGE_FILE_HEADERµÄ³ÉÔ±·ÃÎÊºÃ.
     IMAGE_OPTIONAL_HEADER * p_image_optional_header = (IMAGE_OPTIONAL_HEADER *)((ULONG)p_image_file_header + sizeof(IMAGE_FILE_HEADER));
 
-    IMAGE_SECTION_HEADER * p_image_section_header = (IMAGE_SECTION_HEADER *)((ULONG)p_image_optional_header + p_image_file_header->SizeOfOptionalHeader);//±ØÐë¼Ó(ULONG),²»È»³ö´í.
+    IMAGE_SECTION_HEADER * p_image_section_header = (IMAGE_SECTION_HEADER *)((ULONG)p_image_optional_header + p_image_file_header->SizeOfOptionalHeader);
 
-    //ÏÈÇå¿Õ×Ó½Úµã.
-    for (int i = 0; i < MAX_SECTION; i++) {
-        //Èç¹û´æÔÚ¾ÍÇå³ý.
+    // Performance optimization: Only clear items up to actual section count, not MAX_SECTION
+    WORD boundedSectionCount = min(p_image_file_header->NumberOfSections, MAX_SECTION);
+    for (int i = 0; i < boundedSectionCount; i++) {
         if (g_htreeitem_section[i]) {
-            BOOL b = TreeView_DeleteItem(g_h_tree, g_htreeitem_section[i]);
-            if (!b) {
-                int x = GetLastError();
-                //return false;//ÆäÊµÕâ¸öÊ§°ÜÎÞËùÎ½,¸ù±¾¾Í²»ÓÃ¼ì²é.
-            }
+            TreeView_DeleteItem(g_h_tree, g_htreeitem_section[i]);
+            g_htreeitem_section[i] = NULL;
         }
     }
 
-    //BOOL b = InvalidateRect(g_h_tree,0,0);//ÈÃ¸Ä±äÁ¢¼´ÏÔÊ¾.ÓÃÉÏÃæµÄ°ì·¨ÎÞÐ§.
-
-    //for ( ;p_image_section_header =  ; p_image_section_header += IMAGE_SIZEOF_SECTION_HEADER) //Õâ¸ö°ì·¨Ì«±¿.
-    for (int i = 0; i < p_image_file_header->NumberOfSections; i++) //¹æ·¶¹æ¶¨ÊÇ´Ó1¿ªÊ¼µÄ.
-    {
-        //×ª»»Îª¿í×Ö·û,È»ºóÏÔÊ¾.
+    for (int i = 0; i < boundedSectionCount; i++) {
         wchar_t wszSectionName[9] = {0};
-        if (MultiByteToWideChar(CP_ACP, 0, (LPCSTR)p_image_section_header[i].Name, lstrlenA((LPCSTR)p_image_section_header[i].Name), wszSectionName, _ARRAYSIZE(wszSectionName)) == 0) {
-            int x = GetLastError();
-            //r = false;
-            break;
-            //return FALSE;
+        // Performance optimization: Calculate string length manually for portability
+        int nameLen = 0;
+        while (nameLen < 8 && p_image_section_header[i].Name[nameLen] != '\0') {
+            nameLen++;
         }
+        if (nameLen > 0) {
+            if (MultiByteToWideChar(CP_ACP, 0, (LPCSTR)p_image_section_header[i].Name, nameLen, wszSectionName, _ARRAYSIZE(wszSectionName)) == 0) {
+                break;
+            }
 
-        TV_INSERTSTRUCT tvinsert;
-
-        tvinsert.hParent = g_htreeitem[SECTIONDATA];
-        tvinsert.item.mask = TVIF_TEXT + TVIF_IMAGE + TVIF_SELECTEDIMAGE;//±ØÐë¼ÓÕâÒ»ÐÐ,²»È»²»ÏÔÊ¾.
-        tvinsert.item.pszText = wszSectionName;
-        g_htreeitem_section[i] = (HTREEITEM)SendMessage(g_h_tree, TVM_INSERTITEM, 0, (LPARAM)&tvinsert);
+            TV_INSERTSTRUCT tvinsert;
+            tvinsert.hParent = g_htreeitem[SECTIONDATA];
+            tvinsert.item.mask = TVIF_TEXT + TVIF_IMAGE + TVIF_SELECTEDIMAGE;
+            tvinsert.item.pszText = wszSectionName;
+            g_htreeitem_section[i] = (HTREEITEM)SendMessage(g_h_tree, TVM_INSERTITEM, 0, (LPARAM)&tvinsert);
+        }
     }
 
-    BOOL b = InvalidateRect(g_h_tree, 0, 0);//ÈÃ¸Ä±äÁ¢¼´ÏÔÊ¾.ÓÃÉÏÃæµÄ°ì·¨ÎÞÐ§.
-
-    UnmapViewOfFile(pmz);
-    CloseHandle(hfilemap);
-    CloseHandle(hfile);
-
-    return r;//·µ»ØÖµÔÚÄÇÊ±Ã»ÓÐÒâÒå.
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    ////Ò»ÏÂÊÇ²âÊÔ´úÂë:Ìí¼Ó½ÚµãÓÃµÄ.
-    //TV_INSERTSTRUCT tvinsert;
-
-    //tvinsert.hParent = g_htreeitem[SECTIONDATA];
-    ////tvinsert.hInsertAfter = g_htreeitem[SECTIONDATA];
-    //tvinsert.item.mask = TVIF_TEXT+TVIF_IMAGE+TVIF_SELECTEDIMAGE;
-    //tvinsert.item.pszText = L"test";//L"DOSÍ·";
-    //g_htreeitem_section[0]  = (HTREEITEM)SendMessage(g_h_tree,TVM_INSERTITEM,0,(LPARAM)& tvinsert);
-    ////UpdateWindow(g_h_tree);
-    ////UpdateWindow(hwndMain);
-
-    //BOOL b = InvalidateRect(g_h_tree,0,0);//ÈÃ¸Ä±äÁ¢¼´ÏÔÊ¾.ÓÃÉÏÃæµÄ°ì·¨ÎÞÐ§.
-
-    ////ÁíÒ»¸öË¼Â·ÊÇ:ÓÃÏÂÃæµÄºê,Ã»ÓÐÊµÑé.
-    ////HTREEITEM TreeView_InsertItem(HWND hwndTV, LPTVINSERTSTRUCT lpis);
-    ////////////////////////////////////////////////////////////////////////////////////////////////
+    InvalidateRect(g_h_tree, 0, 0);
+    return true;
 }
 
 
+// Performance optimization: Fixed resource leaks and reduced duplicate code  
 bool AddMoreInformation(wchar_t * filename)
 /*
-¹¦ÄÜÊÇÔÚÄ³¸öÊ÷ÐÎ½ÚµãÏÂÃæÌí¼Ó×Ó½Úµã.×Ó½Úµã¾ÍÊÇ¸÷ÖÖ±í.ÓÉÊý¾ÝÄ¿Â¼Ö¸ÏòµÄ.
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä³ï¿½ï¿½ï¿½ï¿½ï¿½Î½Úµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó½Úµï¿½.ï¿½Ó½Úµï¿½ï¿½ï¿½Ç¸ï¿½ï¿½Ö±ï¿½.ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿Â¼Ö¸ï¿½ï¿½ï¿½.
 */
 {
-    bool r = false;//·µ»ØÖµ.
-
-    HANDLE hfile = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (hfile == INVALID_HANDLE_VALUE) {
+    FileMappingInfo info;
+    
+    if (!MapFileForReading(filename, info)) {
         return false;
     }
 
-    DWORD FileSizeHigh;
-    DWORD FileSizeLow = GetFileSize(hfile, &FileSizeHigh);
-    DWORD64 filesize = FileSizeHigh * 0x100000000 + FileSizeLow;
-
-    if (FileSizeLow == 0 && FileSizeHigh == 0) {//Èç¹ûÎÄ¼þ´óÐ¡Îª0.
-        CloseHandle(hfile);
-        return false;
-    }
-
-    HANDLE hfilemap = CreateFileMapping(hfile, NULL, PAGE_READONLY, NULL, NULL, NULL); /* ¿ÕÎÄ¼þÔò·µ»ØÊ§°Ü */
-    if (hfilemap == NULL) {
-        CloseHandle(hfile);
-        return false;
-    }
-
-    LPVOID pmz = MapViewOfFile(hfilemap, SECTION_MAP_READ, NULL, NULL, 0/*Ó³ÉäËùÓÐ*/);//ÔÝÊ±²»Ö§³Ö´óÓÚ4GµÄÎÄ¼þ¡£
-    if (pmz == NULL) {
-        CloseHandle(hfilemap);
-        CloseHandle(hfile);
-        return false;
-    }
-
-    IMAGE_DOS_HEADER * p_image_dos_header = (IMAGE_DOS_HEADER *)pmz;
+    IMAGE_DOS_HEADER * p_image_dos_header = (IMAGE_DOS_HEADER *)info.pmz;
     if (IMAGE_DOS_SIGNATURE != p_image_dos_header->e_magic) {
         return false;
     }
@@ -517,68 +419,48 @@ bool AddMoreInformation(wchar_t * filename)
     DWORD  CoffHeaderOffset = (ULONG)p_image_dos_header + p_image_dos_header->e_lfanew + sizeof(ULONG);
     IMAGE_FILE_HEADER * p_image_file_header = (IMAGE_FILE_HEADER *)CoffHeaderOffset;
 
-    //×¢ÒâÕâÀïÓÃµÄÓÀÔ¶ÊÇ:IMAGE_OPTIONAL_HEADER32.
-    //Òª·ÖÎöIMAGE_OPTIONAL_HEADER64µÄÒ»¸ö°ì·¨ÊÇ:Ç¿ÖÆ¶¨ÒåÒ»¸ö,ÔØ¸³Öµ×ª»».
-    //ÆäÊµÕâ¸ö½á¹¹µÄ´óÐ¡ÊÇ¹Ì¶¨µÄ,Ö»²»¹ý32Î»µÄºÍ64Î»µÄ²»Ò»Ñù.µ«»¹ÊÇÓÃ¹æ·¶½¨ÒéµÄ.IMAGE_FILE_HEADERµÄ³ÉÔ±·ÃÎÊºÃ.
     IMAGE_OPTIONAL_HEADER * p_image_optional_header = (IMAGE_OPTIONAL_HEADER *)((ULONG)p_image_file_header + sizeof(IMAGE_FILE_HEADER));
-
-    //±ØÐë¼Ó(ULONG),²»È»³ö´í.
-    //IMAGE_SECTION_HEADER  * p_image_section_header = (IMAGE_SECTION_HEADER *)((ULONG)p_image_optional_header + p_image_file_header->SizeOfOptionalHeader);
 
     IMAGE_DATA_DIRECTORY * p_image_data_directory = 0;
 
     if (g_IsPE32Ex) {
-        p_image_data_directory = (IMAGE_DATA_DIRECTORY *)((ULONG)p_image_optional_header + 112);//PE32+ÎÄ¼þ.
+        p_image_data_directory = (IMAGE_DATA_DIRECTORY *)((ULONG)p_image_optional_header + 112);
     } else {
         p_image_data_directory = (IMAGE_DATA_DIRECTORY *)((ULONG)p_image_optional_header + 96);
     }
 
-    //ÏÈÇå¿Õ×Ó½Úµã.
+    // Performance optimization: Clear only existing items
     for (int i = 0; i < IMAGE_NUMBEROF_DIRECTORY_ENTRIES; i++) {
-        //Èç¹û´æÔÚ¾ÍÇå³ý.
         if (g_htreeitem_data_directory[i]) {
-            BOOL b = TreeView_DeleteItem(g_h_tree, g_htreeitem_data_directory[i]);
-            if (!b) {
-                int x = GetLastError();
-                //return false;//ÆäÊµÕâ¸öÊ§°ÜÎÞËùÎ½,¸ù±¾¾Í²»ÓÃ¼ì²é.
-            }
+            TreeView_DeleteItem(g_h_tree, g_htreeitem_data_directory[i]);
+            g_htreeitem_data_directory[i] = NULL;
         }
     }
 
-    //BOOL b = InvalidateRect(g_h_tree,0,0);//ÈÃ¸Ä±äÁ¢¼´ÏÔÊ¾.ÓÃÉÏÃæµÄ°ì·¨ÎÞÐ§.
-
-    int m = 0;
-    int n = 0;
-    for (; m < IMAGE_NUMBEROF_DIRECTORY_ENTRIES; m++) //¹æ·¶¹æ¶¨ÊÇ´Ó1¿ªÊ¼µÄ.
-    {
-        //Èç¹ûÕâÒ»Ïî²»Îª¿Õ,¾ÍÏÔÊ¾¶ÔÓ¦µÄÃû×Ö.Õâ¸öÒ²¸ã¸öÃ¶¾Ù.
+    // Performance optimization: Add only valid entries
+    for (int m = 0; m < IMAGE_NUMBEROF_DIRECTORY_ENTRIES; m++) {
         if (p_image_data_directory[m].VirtualAddress && p_image_data_directory[m].Size) {
             TV_INSERTSTRUCT tvinsert;
             tvinsert.hParent = g_htreeitem[MOREINFORMATION];
-            tvinsert.item.mask = TVIF_TEXT + TVIF_IMAGE + TVIF_SELECTEDIMAGE;//±ØÐë¼ÓÕâÒ»ÐÐ,²»È»²»ÏÔÊ¾.
+            tvinsert.item.mask = TVIF_TEXT + TVIF_IMAGE + TVIF_SELECTEDIMAGE;
             tvinsert.item.pszText = g_table_name[m];
             g_htreeitem_data_directory[m] = (HTREEITEM)SendMessage(g_h_tree, TVM_INSERTITEM, 0, (LPARAM)&tvinsert);
-
-            n++;//Õâ¸öË³Ðò²»ÒÀÀµi.
         }
     }
 
-    BOOL b = InvalidateRect(g_h_tree, 0, 0);//ÈÃ¸Ä±äÁ¢¼´ÏÔÊ¾.ÓÃÉÏÃæµÄ°ì·¨ÎÞÐ§.
-
-    UnmapViewOfFile(pmz);
-    CloseHandle(hfilemap);
-    CloseHandle(hfile);
-
-    return r;//·µ»ØÖµÔÝÊ±Ã»ÓÐÒâÒå.
+    InvalidateRect(g_h_tree, 0, 0);
+    return true;
 }
+
+
 
 
 void On_DropFiles(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
     wchar_t szFileName[MAX_PATH] = {0};
-    DragQueryFile((HDROP)wParam, 0, szFileName, _ARRAYSIZE(szFileName)); //Ö»È¡Ò»¸öÎÄ¼þ£¬µÚ¶þ¸ö²ÎÊý¿ÉÒÔÉèÖÃÎª0¡£KmdManager.exe ¾ÍÊÇÕâÑùÊµÏÖµÄ¡£
+    DragQueryFile((HDROP)wParam, 0, szFileName, _ARRAYSIZE(szFileName)); //Ö»È¡Ò»ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½Ú¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0ï¿½ï¿½KmdManager.exe ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Êµï¿½ÖµÄ¡ï¿½
 
-    //UINT cFiles = DragQueryFile((HDROP)wParam, (UINT)-1, NULL, 0);//Õâ¸ö¸öÊýÃ»ÓÐÓÃ.
+    //UINT cFiles = DragQueryFile((HDROP)wParam, (UINT)-1, NULL, 0);//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½.
 
     BOOL b = PathIsDirectory(szFileName);
     //if (b == true) //00B4161A  cmp         dword ptr [ebp-268h],1
@@ -589,11 +471,11 @@ void On_DropFiles(HWND hWnd, WPARAM wParam, LPARAM lParam)
         g_IsPE32Ex = false;
 
         SendMessage(g_h_edit_FilePath, WM_SETTEXT, 0, 0);
-        SendMessage(g_h_static_prompt, WM_SETTEXT, 0, (LPARAM)L"ÇëÍÏ×§Ò»¸öPEÎÄ¼þ¹ýÀ´!");
+        SendMessage(g_h_static_prompt, WM_SETTEXT, 0, (LPARAM)L"ï¿½ï¿½ï¿½ï¿½×§Ò»ï¿½ï¿½PEï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½!");
 
-        //ÎÄ¼þÊÇ:C:\Users\Administrator\Desktop\aasdasf,²»ÂÛÎÄ¼þ´óÐ¡ÊÇ·ñÎª0.·µ»ØÖµÊÇ0.
-        MessageBox(0, szFileName, L"ÕâÊÇÒ»¸öÄ¿Â¼!,ÇëÑ¡ÔñÒ»¸öÎÄ¼þ", 0);
-        //wchar_t buffer[MAX_PATH] = L"ÕâÊÇÒ»¸öÄ¿Â¼,ÇëÑ¡ÔñÒ»¸öÎÄ¼þ.";
+        //ï¿½Ä¼ï¿½ï¿½ï¿½:C:\Users\Administrator\Desktop\aasdasf,ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½Ð¡ï¿½Ç·ï¿½Îª0.ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½0.
+        MessageBox(0, szFileName, L"ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½Ä¿Â¼!,ï¿½ï¿½Ñ¡ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Ä¼ï¿½", 0);
+        //wchar_t buffer[MAX_PATH] = L"ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½Ä¿Â¼,ï¿½ï¿½Ñ¡ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Ä¼ï¿½.";
         //SendMessage(g_h_edit_FilePath,WM_SETTEXT,0,(LPARAM)buffer); 
     } else {
         int r = IsValidPE(szFileName);
@@ -607,10 +489,10 @@ void On_DropFiles(HWND hWnd, WPARAM wParam, LPARAM lParam)
             if (b) {
                 g_IsPE32Ex = true;
 
-                wchar_t buffer[MAX_PATH] = L"ÕâÊÇÒ»¸öpe32+ÎÄ¼þ.";
+                wchar_t buffer[MAX_PATH] = L"ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½pe32+ï¿½Ä¼ï¿½.";
                 SendMessage(g_h_static_prompt, WM_SETTEXT, 0, (LPARAM)buffer);
             } else {
-                wchar_t buffer[MAX_PATH] = L"ÕâÊÇÒ»¸öpe32ÎÄ¼þ.";
+                wchar_t buffer[MAX_PATH] = L"ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½pe32ï¿½Ä¼ï¿½.";
                 SendMessage(g_h_static_prompt, WM_SETTEXT, 0, (LPARAM)buffer);
 
                 g_IsPE32Ex = false;
@@ -620,53 +502,53 @@ void On_DropFiles(HWND hWnd, WPARAM wParam, LPARAM lParam)
             g_IsPE32Ex = false;
 
             SendMessage(g_h_edit_FilePath, WM_SETTEXT, 0, (LPARAM)0);
-            wchar_t buffer[MAX_PATH] = L"ÇëÍÏ×§Ò»¸öPEÎÄ¼þ¹ýÀ´!";
+            wchar_t buffer[MAX_PATH] = L"ï¿½ï¿½ï¿½ï¿½×§Ò»ï¿½ï¿½PEï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½!";
             SendMessage(g_h_static_prompt, WM_SETTEXT, 0, (LPARAM)buffer);
 
             if (r == 0) {
-                MessageBox(0, szFileName, L"Õâ²»ÊÇÒ»¸öÓÐÐ§µÄPEÎÄ¼þ.", 0);
+                MessageBox(0, szFileName, L"ï¿½â²»ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½PEï¿½Ä¼ï¿½.", 0);
             } else {
-                //¿ÉÒÔ¿¼ÂÇµ¯³ö¸öÏûÏ¢¡£
+                //ï¿½ï¿½ï¿½Ô¿ï¿½ï¿½Çµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½
             }
 
-            /*wchar_t buffer[MAX_PATH] = L"Õâ²»ÊÇÒ»¸öpeÎÄ¼þ.";
+            /*wchar_t buffer[MAX_PATH] = L"ï¿½â²»ï¿½ï¿½Ò»ï¿½ï¿½peï¿½Ä¼ï¿½.";
             SendMessage(g_h_static_prompt,WM_SETTEXT,0,(LPARAM)buffer);*/
         }
 
-        //Ìí¼Ó½ÚÊý¾ÝÏÂµÄ×Ó½Úµã.
+        //ï¿½ï¿½ï¿½Ó½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Âµï¿½ï¿½Ó½Úµï¿½.
         bool b = AddSectionData(szFileName);
 
-        //Ìí¼Ó±íÏÂµÄ×Ó½Úµã.
+        //ï¿½ï¿½ï¿½Ó±ï¿½ï¿½Âµï¿½ï¿½Ó½Úµï¿½.
         b = AddMoreInformation(szFileName);// MOREINFORMATION
     }
 
-    b = InvalidateRect(g_h_tree, 0, 0);//ÈÃ¸Ä±äÁ¢¼´ÏÔÊ¾.
+    b = InvalidateRect(g_h_tree, 0, 0);//ï¿½Ã¸Ä±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾.
 
-    b = TreeView_Expand(g_h_tree, g_htreeitem[MOREINFORMATION], TVE_COLLAPSE);//ÕÛµþ
+    b = TreeView_Expand(g_h_tree, g_htreeitem[MOREINFORMATION], TVE_COLLAPSE);//ï¿½Ûµï¿½
     //b = TreeView_Expand(g_h_tree, g_htreeitem_data_directory[IMPORT], TVE_EXPAND);
 
     DragFinish((HDROP)wParam);
 }
 
 
-void On_Notify_Click(HWND hWnd, WPARAM wParam, LPARAM lParam) //¿Ø¼þµÄµ¥»÷´¦Àí.
+void On_Notify_Click(HWND hWnd, WPARAM wParam, LPARAM lParam) //ï¿½Ø¼ï¿½ï¿½Äµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 {
-    //MessageBox(0,L"Êó±êµ¥»÷",L"Ê÷ÐÎ¿Ø¼þÏûÏ¢",0);
+    //MessageBox(0,L"ï¿½ï¿½êµ¥ï¿½ï¿½",L"ï¿½ï¿½ï¿½Î¿Ø¼ï¿½ï¿½ï¿½Ï¢",0);
 
-    //HTREEITEM hTreeItem = TreeView_GetSelection(g_h_tree);//·¢ÏÖÕâ¸öÃ»ÓÐ!
+    //HTREEITEM hTreeItem = TreeView_GetSelection(g_h_tree);//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½!
     //if (hTreeItem)
     //{
     //    //MessageBox(0,0,0,0);
     //    //TreeView_DeleteItem(hwndTreeView, hTreeItem);
     //}
 
-    //hTreeItem = TreeView_GetSelection(((LPNMHDR)lParam)->hwndFrom);//ÓÃÕâ¸ö»á³ö´í.
+    //hTreeItem = TreeView_GetSelection(((LPNMHDR)lParam)->hwndFrom);//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
     //if (hTreeItem)
     //{
     //    MessageBox(0,0,0,0);
     //}
 
-    //·½·¨Ò»:
+    //ï¿½ï¿½ï¿½ï¿½Ò»:
     //TVHITTESTINFO hti;
     //POINT p1;
     //wchar_t achBuf[100] = {0};
@@ -687,9 +569,9 @@ void On_Notify_Click(HWND hWnd, WPARAM wParam, LPARAM lParam) //¿Ø¼þµÄµ¥»÷´¦Àí.
     //MessageBox(0,tv.pszText,0,0);
 
     //////////////////////////////////////////////////////////////////////////
-    //·½·¨¶þ:ÆäÊµÊÇÒ»ÑùµÄ.
+    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½:ï¿½ï¿½Êµï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½.
 
-    if (((LPNMHDR)lParam)->hwndFrom == g_h_tree) //Èç¹ûÊÇÊ÷ÐÎ¿Ø¼þ,»¹ÓÐ¿ÉÄÜÊÇÁÐ±í¿Ø¼þ.
+    if (((LPNMHDR)lParam)->hwndFrom == g_h_tree) //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¿Ø¼ï¿½,ï¿½ï¿½ï¿½Ð¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð±ï¿½ï¿½Ø¼ï¿½.
     {
         LPNMHDR lpnmh = (LPNMHDR)lParam;
         DWORD dwPos = GetMessagePos();
@@ -713,35 +595,35 @@ void On_Notify_Click(HWND hWnd, WPARAM wParam, LPARAM lParam) //¿Ø¼þµÄµ¥»÷´¦Àí.
         TreeView_GetItem(lpnmh->hwndFrom, &ti);
 
         /*
-        ÆäÊµÕâÒ²¿ÉÓÃÒ»¸öº¯ÊýÍê³É:»ñÈ¡¿Õ¼äµÄ×Ö·û,¼°ÎÄ¼þÂ·¾¶,È»ºóÐ£ÑéÕâ¸öÎÄ¼þÊÇ·ñºÏ·¨.
-        ¼ÓºóÃæÒ»¸öÌõ¼þÊÇ:µ¥»÷¿Õ°×´¦,²»µ¯³öÌáÊ¾.
+        ï¿½ï¿½Êµï¿½ï¿½Ò²ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½:ï¿½ï¿½È¡ï¿½Õ¼ï¿½ï¿½ï¿½Ö·ï¿½,ï¿½ï¿½ï¿½Ä¼ï¿½Â·ï¿½ï¿½,È»ï¿½ï¿½Ð£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½Ç·ï¿½Ï·ï¿½.
+        ï¿½Óºï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½:ï¿½ï¿½ï¿½ï¿½ï¿½Õ°×´ï¿½,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾.
         */
         if (g_IsValidPE == false && lstrlen(buf) != 0) {
-            MessageBox(0, L"ÇëÑ¡ÔñÒ»¸öÓÐÐ§µÄPEÎÄ¼þ", L"ÓÑºÃÌáÊ¾!", 0);
+            MessageBox(0, L"ï¿½ï¿½Ñ¡ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½PEï¿½Ä¼ï¿½", L"ï¿½Ñºï¿½ï¿½ï¿½Ê¾!", 0);
             return;
         }
 
-        //1.Èç¹ûÊÇÔ­À´ÒÑÖªµÄÊ÷ÐÎ¿Ø¼þµÄ½Úµã¼°×Ó½Úµã
-        //±È½ÏÃ¿¸ö½Úµã,ÊÇÄ³¸ö½Úµã,²¢Ñ¡ÔñÏàÓ¦µÄ½Úµã´¦Àíº¯Êý.
+        //1.ï¿½ï¿½ï¿½ï¿½ï¿½Ô­ï¿½ï¿½ï¿½ï¿½Öªï¿½ï¿½ï¿½ï¿½ï¿½Î¿Ø¼ï¿½ï¿½Ä½Úµã¼°ï¿½Ó½Úµï¿½
+        //ï¿½È½ï¿½Ã¿ï¿½ï¿½ï¿½Úµï¿½,ï¿½ï¿½Ä³ï¿½ï¿½ï¿½Úµï¿½,ï¿½ï¿½Ñ¡ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½Ä½Úµã´¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 
-        //2.Èç¹ûÊÇ½ÚÊý¾ÝµÄ×Ó½Úµã.
-        //±È½ÏÃ¿¸ö½Úµã,ÊÇÄ³¸ö½Úµã,²¢Ñ¡ÔñÏàÓ¦µÄ½Úµã´¦Àíº¯Êý.
-        //Õâ¸ö½ÚµãµÄÃû×ÖÃ»ÓÐ±£´æ,¿ÉÒÔ¸ù¾ÝÃû×ÖÔÙËÑË÷Ò»ÏÂ,È»ºóÔÙ¶¨Î».
+        //2.ï¿½ï¿½ï¿½ï¿½Ç½ï¿½ï¿½ï¿½ï¿½Ýµï¿½ï¿½Ó½Úµï¿½.
+        //ï¿½È½ï¿½Ã¿ï¿½ï¿½ï¿½Úµï¿½,ï¿½ï¿½Ä³ï¿½ï¿½ï¿½Úµï¿½,ï¿½ï¿½Ñ¡ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½Ä½Úµã´¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
+        //ï¿½ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½Ð±ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½Ô¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½,È»ï¿½ï¿½ï¿½Ù¶ï¿½Î».
 
-        //3.Èç¹ûÊÇÏêÏ¸ÐÅÏ¢µÄ×Ó½Úµã.
-        //±È½ÏÃ¿¸ö½Úµã,ÊÇÄ³¸ö½Úµã,²¢Ñ¡ÔñÏàÓ¦µÄ½Úµã´¦Àíº¯Êý.
+        //3.ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½Ó½Úµï¿½.
+        //ï¿½È½ï¿½Ã¿ï¿½ï¿½ï¿½Úµï¿½,ï¿½ï¿½Ä³ï¿½ï¿½ï¿½Úµï¿½,ï¿½ï¿½Ñ¡ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½Ä½Úµã´¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 
-        //Èç¹ûÊÇÊý¾ÝÄ¿Â¼¼°ÏêÏ¸ÐÅÏ¢¡£
+        //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿Â¼ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Ï¢ï¿½ï¿½
         if (lstrcmpi(buf, g_tree_name[MOREINFORMATION]) == 0) {
             on_import();
 
-            //ÏÂÃæ»¹¿ÉÄÜÓÐ¸ü¶àµÄ´¦Àí¡£
+            //ï¿½ï¿½ï¿½æ»¹ï¿½ï¿½ï¿½ï¿½ï¿½Ð¸ï¿½ï¿½ï¿½Ä´ï¿½ï¿½ï¿½ï¿½ï¿½
 
-            BOOL b = InvalidateRect(g_h_tree, 0, 0);//ÈÃ¸Ä±äÁ¢¼´ÏÔÊ¾.ÓÃÉÏÃæµÄ°ì·¨ÎÞÐ§.
+            BOOL b = InvalidateRect(g_h_tree, 0, 0);//ï¿½Ã¸Ä±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾.ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä°ì·¨ï¿½ï¿½Ð§.
         }
 
 
-        //¼ì²éÊÇ²»ÊÇÊý¾ÝÄ¿Â¼µÄ×Ó½Úµã¡£
+        //ï¿½ï¿½ï¿½ï¿½Ç²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿Â¼ï¿½ï¿½ï¿½Ó½Úµã¡£
         for (int i = 0; i < IMAGE_NUMBEROF_DIRECTORY_ENTRIES; i++) {
             //wchar_t wszName[9] = {0};
             //if (MultiByteToWideChar(CP_ACP, 0,(LPCSTR)buf,lstrlenA((LPCSTR)buf),wszName,sizeof(wszName)) == 0) 
@@ -754,10 +636,10 @@ void On_Notify_Click(HWND hWnd, WPARAM wParam, LPARAM lParam) //¿Ø¼þµÄµ¥»÷´¦Àí.
 
             if (lstrcmpi(buf, g_table_name[i]) == 0) {
                 switch (i) {
-                case EXPORT://ÆäÊµÕâ¸öÒ²¿ÉÒÔ¸ã¸öÃ¶¾Ù,
-                    //On_Export(hWnd, wParam, lParam);//Õâ¸öÒ²¿ÉÒÔ¸ã¸öº¯ÊýÊý×é,¶ÔÓ¦ÉÏÃæµÄÃ¶¾Ù.
+                case EXPORT://ï¿½ï¿½Êµï¿½ï¿½ï¿½Ò²ï¿½ï¿½ï¿½Ô¸ï¿½ï¿½Ã¶ï¿½ï¿½,
+                    //On_Export(hWnd, wParam, lParam);//ï¿½ï¿½ï¿½Ò²ï¿½ï¿½ï¿½Ô¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½Ã¶ï¿½ï¿½.
                     break;
-                case IMPORT: //ÆäÊµÒ²¿ÉÒÔÓÃÕâ¸ö:IMAGE_DIRECTORY_ENTRY_IMPORTÏµÍ³×Ô¶¨ÒåµÄ..
+                case IMPORT: //ï¿½ï¿½ÊµÒ²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½:IMAGE_DIRECTORY_ENTRY_IMPORTÏµÍ³ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½..
                     //on_import();                         
                     break;
                 case RESOURCE:
@@ -800,7 +682,7 @@ void On_Notify_Click(HWND hWnd, WPARAM wParam, LPARAM lParam) //¿Ø¼þµÄµ¥»÷´¦Àí.
                 default:
                     return;
                 }
-                break;//Õâ¸ö¿ÉÓÐ¿ÉÎÞ.
+                break;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¿ï¿½ï¿½ï¿½.
             }//end if
         }//end for
 
@@ -813,20 +695,20 @@ void On_Notify_Click(HWND hWnd, WPARAM wParam, LPARAM lParam) //¿Ø¼þµÄµ¥»÷´¦Àí.
 
 void On_Notify_SelChanged(HWND hWnd, WPARAM wParam, LPARAM lParam)
 /*
-¿Ø¼þµÄÑ¡ÔñµÄ±ä»¯µÄ´¦Àí.
-Õâ¸öÔÝÊ±²»ÓÃ.
+ï¿½Ø¼ï¿½ï¿½ï¿½Ñ¡ï¿½ï¿½Ä±ä»¯ï¿½Ä´ï¿½ï¿½ï¿½.
+ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½.
 */
 {
-    //MessageBox(0,L"Ñ¡Ôñ¸Ä±ä",L"Ê÷ÐÎ¿Ø¼þÏûÏ¢",0);
+    //MessageBox(0,L"Ñ¡ï¿½ï¿½Ä±ï¿½",L"ï¿½ï¿½ï¿½Î¿Ø¼ï¿½ï¿½ï¿½Ï¢",0);
 
     HTREEITEM hTreeItem = TreeView_GetSelection(g_h_tree);
     if (hTreeItem) {
-        //MessageBox(0,0,0,0);//Õâ¸öÒ²½øÈëÁË.
+        //MessageBox(0,0,0,0);//ï¿½ï¿½ï¿½Ò²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
     }
 
     //hTreeItem = TreeView_GetSelection(((LPNMHDR)lParam)->hwndFrom);
     if (hTreeItem) {
-        //MessageBox(0,0,0,0);//Õâ¸öÒ²½øÈëÁË.
+        //MessageBox(0,0,0,0);//ï¿½ï¿½ï¿½Ò²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
     }
 
     TVITEM tvi;
@@ -838,24 +720,24 @@ void On_Notify_SelChanged(HWND hWnd, WPARAM wParam, LPARAM lParam)
     tvi.cchTextMax = sizeof(szText);
     BOOL bSuccess = TreeView_GetItem(((LPNMHDR)lParam)->hwndFrom, &tvi);
 
-    //MessageBox(0,tvi.pszText,0,0);//Õâ¸ö°ì·¨ÊÇÕýÈ·µÄ.
+    //MessageBox(0,tvi.pszText,0,0);//ï¿½ï¿½ï¿½ï¿½ì·¨ï¿½ï¿½ï¿½ï¿½È·ï¿½ï¿½.
 }
 
 
 void On_Notify(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
     switch (((LPNMHDR)lParam)->code) {
-    case NM_CLICK://×ó¼üµ¥»÷.ºóÃæ³£ÓÐ¸Ä±äµÄÏûÏ¢.
+    case NM_CLICK://ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.ï¿½ï¿½ï¿½æ³£ï¿½Ð¸Ä±ï¿½ï¿½ï¿½ï¿½Ï¢.
         On_Notify_Click(hWnd, wParam, lParam);
         break;
-        //case NM_DBLCLK://×ó¼üË«»÷»÷.Ç°Ãæ³£ÓÐµ¥»÷µÄÏûÏ¢.
-        //    MessageBox(0,L"Êó±êË«»÷",L"Ê÷ÐÎ¿Ø¼þÏûÏ¢",0);
+        //case NM_DBLCLK://ï¿½ï¿½ï¿½Ë«ï¿½ï¿½ï¿½ï¿½.Ç°ï¿½æ³£ï¿½Ðµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢.
+        //    MessageBox(0,L"ï¿½ï¿½ï¿½Ë«ï¿½ï¿½",L"ï¿½ï¿½ï¿½Î¿Ø¼ï¿½ï¿½ï¿½Ï¢",0);
         //    break; 
-        //case TVN_KEYDOWN ://µã»÷¼üÅÌ.
-        //    MessageBox(0,L"¼üÅÌ°´ÏÂ",L"Ê÷ÐÎ¿Ø¼þÏûÏ¢",0);
+        //case TVN_KEYDOWN ://ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
+        //    MessageBox(0,L"ï¿½ï¿½ï¿½Ì°ï¿½ï¿½ï¿½",L"ï¿½ï¿½ï¿½Î¿Ø¼ï¿½ï¿½ï¿½Ï¢",0);
         //    break; 
-    case TVN_SELCHANGED://Ñ¡Ôñ¸Ä±ä
-    { //²»¼ÓÕâ¸öÀ¨ºÅ,ÔÚÉÏÃæµÄÌõ¼þÏÂ,Ò²¿ÉÒÔ¿´µ½ÕâÀïÃæµÄ±äÁ¿.
+    case TVN_SELCHANGED://Ñ¡ï¿½ï¿½Ä±ï¿½
+    { //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,Ò²ï¿½ï¿½ï¿½Ô¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä±ï¿½ï¿½ï¿½.
         On_Notify_SelChanged(hWnd, wParam, lParam);
     }
     break;
@@ -870,7 +752,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         on_create(hWnd, wParam, lParam);
         break;
     case WM_LBUTTONDOWN:
-        SendMessage(hWnd, WM_SYSCOMMAND, SC_MOVE | HTCAPTION, 0);//Ö§³ÖÍÏ¶¯£º»òÕßSendMessage,hWnd,WM_NCLBUTTONDOWN,HTCAPTION,lParam        
+        SendMessage(hWnd, WM_SYSCOMMAND, SC_MOVE | HTCAPTION, 0);//Ö§ï¿½ï¿½ï¿½Ï¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½SendMessage,hWnd,WM_NCLBUTTONDOWN,HTCAPTION,lParam        
         break;
     case WM_DROPFILES:
         On_DropFiles(hWnd, wParam, lParam);
@@ -893,15 +775,15 @@ bool get_r(RECTANGLE & r)
     r.w = 999;
     r.h = 768 - 102;
 
-    int hc = GetSystemMetrics(SM_CYCAPTION);//ÒÔÏñËØ¼ÆËãµÄÆÕÍ¨´°¿Ú±êÌâµÄ¸ß¶È:19
+    int hc = GetSystemMetrics(SM_CYCAPTION);//ï¿½ï¿½ï¿½ï¿½ï¿½Ø¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½Ú±ï¿½ï¿½ï¿½Ä¸ß¶ï¿½:19
 
     int xs = GetSystemMetrics(SM_CXSCREEN);
     int ys = GetSystemMetrics(SM_CYSCREEN);
     r.x = (xs - r.w) / 2;
-    r.y = (ys - r.h /*Õâ¸öÊÇÈ«ÆÁ¾ÓÖÐ,¿ÉÒÔ¿¼ÂÇ¼õÈ¥ÈÎÎñÀ¸µÄ¸ß¶È*/) / 2;//¾ÓÖÐÏÔÊ¾£¬Èç¹ûx,yÎª¸ºÊý£¬°Ñx,y¶¼ÉèÖÃÎª0.
+    r.y = (ys - r.h /*ï¿½ï¿½ï¿½ï¿½ï¿½È«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½Ô¿ï¿½ï¿½Ç¼ï¿½È¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¸ß¶ï¿½*/) / 2;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½ï¿½x,yÎªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½x,yï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0.
 
     if (xs < 999 || ys < 768) {
-        MessageBox(0, L"ÄãµÄÆÁÄ»µÄ·Ö±æÂÊ¹ýÐ¡,×îÐ¡ÉèÖÃÎª:1024X768.ÇëÉèÖÃºóÖØÐÂÔËÐÐ³ÌÐò.", L"ÓÑÇéÌáÊ¾", 0);
+        MessageBox(0, L"ï¿½ï¿½ï¿½ï¿½ï¿½Ä»ï¿½Ä·Ö±ï¿½ï¿½Ê¹ï¿½Ð¡,ï¿½ï¿½Ð¡ï¿½ï¿½ï¿½ï¿½Îª:1024X768.ï¿½ï¿½ï¿½ï¿½ï¿½Ãºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð³ï¿½ï¿½ï¿½.", L"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾", 0);
         ExitProcess(0);
         r.x = r.y = 0;
     }
@@ -920,13 +802,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     ATOM a = RegisterClassEx(&sWndClassEx);
     hwndMain = CreateWindowEx(WS_EX_ACCEPTFILES, L"correy", L"pe32+", 0x0Ca0000, r.x, r.y, r.w, r.h, 0, 0, GetModuleHandle(0), 0);
     ShowWindow(hwndMain, 1);
-    UpdateWindow(hwndMain);//×îºÃ¼ÓÉÏ.
+    UpdateWindow(hwndMain);//ï¿½ï¿½Ã¼ï¿½ï¿½ï¿½.
 
     MSG msg;
-    while (GetMessage(&msg, NULL, 0, 0) > 0) {   //ÕâÀï»¹¿ÉÒÔ¼ÓÈë¿ì½Ý¼ü£ºTranslateAccelerator£¬
-        if (!TranslateAccelerator(msg.hwnd, 0, &msg)) //hAccelTable Ö§³Ö¿ì½Ý¼üºÍ²Ëµ¥¡£
+    while (GetMessage(&msg, NULL, 0, 0) > 0) {   //ï¿½ï¿½ï¿½ï»¹ï¿½ï¿½ï¿½Ô¼ï¿½ï¿½ï¿½ï¿½Ý¼ï¿½ï¿½ï¿½TranslateAcceleratorï¿½ï¿½
+        if (!TranslateAccelerator(msg.hwnd, 0, &msg)) //hAccelTable Ö§ï¿½Ö¿ï¿½Ý¼ï¿½ï¿½Í²Ëµï¿½ï¿½ï¿½
         {
-            TranslateMessage(&msg);//Ö§³ÖÌØÊâµÄ°´¼ü£¨×Ö·û£©
+            TranslateMessage(&msg);//Ö§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½
             DispatchMessage(&msg);
         }
     }
