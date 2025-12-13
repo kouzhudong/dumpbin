@@ -360,18 +360,21 @@ bool AddSectionData(wchar_t * filename)
     IMAGE_SECTION_HEADER * p_image_section_header = (IMAGE_SECTION_HEADER *)((ULONG)p_image_optional_header + p_image_file_header->SizeOfOptionalHeader);
 
     // Performance optimization: Only clear items up to actual section count, not MAX_SECTION
-    WORD numSections = min(p_image_file_header->NumberOfSections, MAX_SECTION);
-    for (int i = 0; i < numSections; i++) {
+    WORD boundedSectionCount = min(p_image_file_header->NumberOfSections, MAX_SECTION);
+    for (int i = 0; i < boundedSectionCount; i++) {
         if (g_htreeitem_section[i]) {
             TreeView_DeleteItem(g_h_tree, g_htreeitem_section[i]);
             g_htreeitem_section[i] = NULL;
         }
     }
 
-    for (int i = 0; i < numSections; i++) {
+    for (int i = 0; i < boundedSectionCount; i++) {
         wchar_t wszSectionName[9] = {0};
-        // Performance optimization: Check string length before conversion
-        int nameLen = strnlen((LPCSTR)p_image_section_header[i].Name, 8);
+        // Performance optimization: Calculate string length manually for portability
+        int nameLen = 0;
+        while (nameLen < 8 && p_image_section_header[i].Name[nameLen] != '\0') {
+            nameLen++;
+        }
         if (nameLen > 0) {
             if (MultiByteToWideChar(CP_ACP, 0, (LPCSTR)p_image_section_header[i].Name, nameLen, wszSectionName, _ARRAYSIZE(wszSectionName)) == 0) {
                 break;

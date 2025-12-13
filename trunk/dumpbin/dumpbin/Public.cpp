@@ -95,7 +95,7 @@ void GetSectionCharacteristics(_In_ DWORD Characteristics, _Out_writes_(cchDest)
     #define APPEND_IF_SET(flag, text) \
         if (Characteristics & flag) { \
             const size_t len = sizeof(text) - 1; \
-            if (len < remaining - 1) { \
+            if (len + 1 <= remaining) { \
                 memcpy(ptr, text, len); \
                 ptr += len; \
                 remaining -= len; \
@@ -160,7 +160,7 @@ void GetDllCharacteristics(_In_ WORD Characteristics, _Out_writes_(cchDest) PCHA
     #define APPEND_IF_SET(flag, text) \
         if (Characteristics & flag) { \
             const size_t len = sizeof(text) - 1; \
-            if (len < remaining - 1) { \
+            if (len + 1 <= remaining) { \
                 memcpy(ptr, text, len); \
                 ptr += len; \
                 remaining -= len; \
@@ -299,7 +299,7 @@ void GetCharacteristics(_In_ WORD Characteristics, _Out_writes_(cchDest) PCHAR S
     #define APPEND_IF_SET(flag, text) \
         if (Characteristics & flag) { \
             const size_t len = sizeof(text) - 1; \
-            if (len < remaining - 1) { \
+            if (len + 1 <= remaining) { \
                 memcpy(ptr, text, len); \
                 ptr += len; \
                 remaining -= len; \
