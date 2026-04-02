@@ -133,7 +133,7 @@ void on_create(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     tvinsert.hParent = 0;
     tvinsert.hInsertAfter = TVI_ROOT;
-    tvinsert.item.mask = TVIF_TEXT + TVIF_IMAGE + TVIF_SELECTEDIMAGE;
+    tvinsert.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
     tvinsert.item.pszText = g_tree_name[DOS];//L"DOS头";//微软的规范自相矛盾,一会说dos头属于pe头,一会又分开来说,所以自己认为应该分开,这样容易理解,这才是重要的.
     g_htreeitem[DOS] = (HTREEITEM)SendMessage(g_h_tree, TVM_INSERTITEM, 0, (LPARAM)&tvinsert);
 
@@ -199,61 +199,57 @@ void on_create(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 int IsValidPE(wchar_t * filename)
 {
-    bool r = false;//返回值.
-
     HANDLE hfile = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hfile == INVALID_HANDLE_VALUE) {
-        int x = GetLastError();//0x00000020
-        //MessageBox(0,L"请检查文件是否被占用或者访问权限等设置!",L"打开文件失败!",0);
-        //可以考虑把文件名也显示出来。
+        int x = GetLastError();
         ErrorBox(TEXT("CreateFile"));
         return x;
     }
 
     DWORD FileSizeHigh;
     DWORD FileSizeLow = GetFileSize(hfile, &FileSizeHigh);
-    DWORD64 filesize = FileSizeHigh * 0x100000000 + FileSizeLow;
 
-    if (FileSizeLow == 0 && FileSizeHigh == 0) {//如果文件大小为0.
+    if (FileSizeLow == 0 && FileSizeHigh == 0) {
         CloseHandle(hfile);
         return false;
     }
 
-    HANDLE hfilemap = CreateFileMapping(hfile, NULL, PAGE_READONLY, NULL, NULL, NULL); /* 空文件则返回失败 */
+    HANDLE hfilemap = CreateFileMapping(hfile, NULL, PAGE_READONLY, NULL, NULL, NULL);
     if (hfilemap == NULL) {
         CloseHandle(hfile);
         return false;
     }
 
-    LPVOID pmz = MapViewOfFile(hfilemap, SECTION_MAP_READ, NULL, NULL, 0/*映射所有*/);//应该支持大于4G的文件。
+    LPVOID pmz = MapViewOfFile(hfilemap, SECTION_MAP_READ, NULL, NULL, 0);
     if (pmz == NULL) {
         CloseHandle(hfilemap);
         CloseHandle(hfile);
         return false;
     }
 
+    bool r = false;
+
     IMAGE_DOS_HEADER * p_image_dos_header = (IMAGE_DOS_HEADER *)pmz;
     if (IMAGE_DOS_SIGNATURE != p_image_dos_header->e_magic) {
+        UnmapViewOfFile(pmz);
+        CloseHandle(hfilemap);
+        CloseHandle(hfile);
         return false;
     }
 
-    ULONG  ntSignature = (ULONG)p_image_dos_header + p_image_dos_header->e_lfanew;
-    unsigned short int other = *(unsigned short int *)ntSignature;
-    ntSignature = *(ULONG *)ntSignature;
+    ULONG_PTR ntSigAddr = (ULONG_PTR)p_image_dos_header + p_image_dos_header->e_lfanew;
+    unsigned short int other = *(unsigned short int *)ntSigAddr;
+    ULONG ntSignature = *(ULONG *)ntSigAddr;
 
     if (IMAGE_OS2_SIGNATURE == other) {
         MessageBox(0, filename, L"恭喜你:这是一个NE文件!", 0);
-        //return false;//要运行下面的,要是放句柄.
     }
 
-    if (IMAGE_OS2_SIGNATURE_LE == other) //IMAGE_VXD_SIGNATURE
-    {
+    if (IMAGE_OS2_SIGNATURE_LE == other) {
         MessageBox(0, filename, L"恭喜你:这是一个LE文件!", 0);
-        //return false;
     }
 
     if (IMAGE_NT_SIGNATURE == ntSignature) {
-        //return false;
         r = true;
     }
 
@@ -266,310 +262,91 @@ int IsValidPE(wchar_t * filename)
 
 
 bool IsPE32Ex(wchar_t * filename)
-{//其实这个函数的返回类型可以是int,分别代表不同的PE文件类型.
-
-    //IMAGE_DOS_HEADER      image_dos_header;
-    //IMAGE_FILE_HEADER     image_file_header;
-    //IMAGE_OPTIONAL_HEADER image_optional_header;
-    //IMAGE_SECTION_HEADER  image_section_header;
-    //IMAGE_NT_HEADERS 微软的示例都不用这个,看来这个只是概念,别的无用.
-
-    bool r = false;//返回值.
-
-    HANDLE hfile = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (hfile == INVALID_HANDLE_VALUE) {
+{
+    PEFileMap pe;
+    if (!pe.Open(filename)) {
         return false;
     }
 
-    DWORD FileSizeHigh;
-    DWORD FileSizeLow = GetFileSize(hfile, &FileSizeHigh);
-    DWORD64 filesize = FileSizeHigh * 0x100000000 + FileSizeLow;
+    bool r = false;
 
-    if (FileSizeLow == 0 && FileSizeHigh == 0) {//如果文件大小为0.
-        CloseHandle(hfile);
-        return false;
-    }
-
-    HANDLE hfilemap = CreateFileMapping(hfile, NULL, PAGE_READONLY, NULL, NULL, NULL); /* 空文件则返回失败 */
-    if (hfilemap == NULL) {
-        CloseHandle(hfile);
-        return false;
-    }
-
-    LPVOID pmz = MapViewOfFile(hfilemap, SECTION_MAP_READ, NULL, NULL, 0/*映射所有*/);//暂时不支持大于4G的文件。
-    if (pmz == NULL) {
-        CloseHandle(hfilemap);
-        CloseHandle(hfile);
-        return false;
-    }
-
-    IMAGE_DOS_HEADER * p_image_dos_header = (IMAGE_DOS_HEADER *)pmz;
-    if (IMAGE_DOS_SIGNATURE != p_image_dos_header->e_magic) {
-        return false;
-    }
-
-    ULONG  ntSignature = (ULONG)p_image_dos_header + p_image_dos_header->e_lfanew;
-    ntSignature = *(ULONG *)ntSignature;
-    if (IMAGE_NT_SIGNATURE != ntSignature) {
-        return false;
-    }
-
-    DWORD  CoffHeaderOffset = (ULONG)p_image_dos_header + p_image_dos_header->e_lfanew + sizeof(ULONG);
-    IMAGE_FILE_HEADER * p_image_file_header = (IMAGE_FILE_HEADER *)CoffHeaderOffset;
-
-    //注意这里用的永远是:IMAGE_OPTIONAL_HEADER32.
-    //要分析IMAGE_OPTIONAL_HEADER64的一个办法是:强制定义一个,载赋值转换.
-    //其实这个结构的大小是固定的,只不过32位的和64位的不一样.但还是用规范建议的.IMAGE_FILE_HEADER的成员访问好.
-    IMAGE_OPTIONAL_HEADER * p_image_optional_header = (IMAGE_OPTIONAL_HEADER *)((ULONG)p_image_file_header + sizeof(IMAGE_FILE_HEADER));
-
-    if (p_image_optional_header->Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC) {
-        //这是一个普通的PE文件
-        //return false;//要运行下面的,要是放句柄.
-
-    } else if (p_image_optional_header->Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC) {
-        //这是一个的PE32+文件
-        //return true;
-        r = true;
-    } else if (p_image_optional_header->Magic == IMAGE_ROM_OPTIONAL_HDR_MAGIC) {
-        //这是一个的ROM映像
+    if (pe.optional->Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC) {
+        //PE32
+    } else if (pe.optional->Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC) {
+        r = true; //PE32+
+    } else if (pe.optional->Magic == IMAGE_ROM_OPTIONAL_HDR_MAGIC) {
         MessageBox(0, L"这是一个ROM映像", L"惊喜!", 0);
     } else {
-        //未知的文件类型.
         MessageBox(0, L"这是一个未知的类型的PE文件!", L"惊喜!", 0);
     }
-
-    UnmapViewOfFile(pmz);
-    CloseHandle(hfilemap);
-    CloseHandle(hfile);
 
     return r;
 }
 
 
 bool AddSectionData(wchar_t * filename)
-/*
-功能是在节数据这个树形节点下面添加子节点.
-*/
 {
-    //IMAGE_DOS_HEADER      image_dos_header;
-    //IMAGE_FILE_HEADER     image_file_header;
-    //IMAGE_OPTIONAL_HEADER image_optional_header;
-    //IMAGE_SECTION_HEADER  image_section_header;
-    //IMAGE_NT_HEADERS 微软的示例都不用这个,看来这个只是概念,别的无用.
-
-    bool r = false;//返回值.
-
-    HANDLE hfile = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (hfile == INVALID_HANDLE_VALUE) {
+    PEFileMap pe;
+    if (!pe.Open(filename, g_IsPE32Ex, true)) {
         return false;
     }
 
-    DWORD FileSizeHigh;
-    DWORD FileSizeLow = GetFileSize(hfile, &FileSizeHigh);
-    DWORD64 filesize = FileSizeHigh * 0x100000000 + FileSizeLow;
-
-    if (FileSizeLow == 0 && FileSizeHigh == 0) {//如果文件大小为0.
-        CloseHandle(hfile);
-        return false;
-    }
-
-    HANDLE hfilemap = CreateFileMapping(hfile, NULL, PAGE_READONLY, NULL, NULL, NULL); /* 空文件则返回失败 */
-    if (hfilemap == NULL) {
-        CloseHandle(hfile);
-        return false;
-    }
-
-    LPVOID pmz = MapViewOfFile(hfilemap, SECTION_MAP_READ, NULL, NULL, 0/*映射所有*/);//暂时不支持大于4G的文件。
-    if (pmz == NULL) {
-        CloseHandle(hfilemap);
-        CloseHandle(hfile);
-        return false;
-    }
-
-    IMAGE_DOS_HEADER * p_image_dos_header = (IMAGE_DOS_HEADER *)pmz;
-    if (IMAGE_DOS_SIGNATURE != p_image_dos_header->e_magic) {
-        return false;
-    }
-
-    ULONG  ntSignature = (ULONG)p_image_dos_header + p_image_dos_header->e_lfanew;
-    ntSignature = *(ULONG *)ntSignature;
-    if (IMAGE_NT_SIGNATURE != ntSignature) {
-        return false;
-    }
-
-    DWORD  CoffHeaderOffset = (ULONG)p_image_dos_header + p_image_dos_header->e_lfanew + sizeof(ULONG);
-    IMAGE_FILE_HEADER * p_image_file_header = (IMAGE_FILE_HEADER *)CoffHeaderOffset;
-
-    //注意这里用的永远是:IMAGE_OPTIONAL_HEADER32.
-    //要分析IMAGE_OPTIONAL_HEADER64的一个办法是:强制定义一个,载赋值转换.
-    //其实这个结构的大小是固定的,只不过32位的和64位的不一样.但还是用规范建议的.IMAGE_FILE_HEADER的成员访问好.
-    IMAGE_OPTIONAL_HEADER * p_image_optional_header = (IMAGE_OPTIONAL_HEADER *)((ULONG)p_image_file_header + sizeof(IMAGE_FILE_HEADER));
-
-    IMAGE_SECTION_HEADER * p_image_section_header = (IMAGE_SECTION_HEADER *)((ULONG)p_image_optional_header + p_image_file_header->SizeOfOptionalHeader);//必须加(ULONG),不然出错.
-
-    //先清空子节点.
     for (int i = 0; i < MAX_SECTION; i++) {
-        //如果存在就清除.
         if (g_htreeitem_section[i]) {
-            BOOL b = TreeView_DeleteItem(g_h_tree, g_htreeitem_section[i]);
-            if (!b) {
-                int x = GetLastError();
-                //return false;//其实这个失败无所谓,根本就不用检查.
-            }
+            TreeView_DeleteItem(g_h_tree, g_htreeitem_section[i]);
+            g_htreeitem_section[i] = NULL;
         }
     }
 
-    //BOOL b = InvalidateRect(g_h_tree,0,0);//让改变立即显示.用上面的办法无效.
+    int numSections = min((int)pe.coff->NumberOfSections, MAX_SECTION);
 
-    //for ( ;p_image_section_header =  ; p_image_section_header += IMAGE_SIZEOF_SECTION_HEADER) //这个办法太笨.
-    for (int i = 0; i < p_image_file_header->NumberOfSections; i++) //规范规定是从1开始的.
-    {
-        //转换为宽字符,然后显示.
+    for (int i = 0; i < numSections; i++) {
         wchar_t wszSectionName[9] = {0};
-        if (MultiByteToWideChar(CP_ACP, 0, (LPCSTR)p_image_section_header[i].Name, lstrlenA((LPCSTR)p_image_section_header[i].Name), wszSectionName, _ARRAYSIZE(wszSectionName)) == 0) {
-            int x = GetLastError();
-            //r = false;
+        if (MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pe.sections[i].Name,
+            lstrlenA((LPCSTR)pe.sections[i].Name), wszSectionName, _ARRAYSIZE(wszSectionName)) == 0) {
             break;
-            //return FALSE;
         }
 
         TV_INSERTSTRUCT tvinsert;
-
         tvinsert.hParent = g_htreeitem[SECTIONDATA];
-        tvinsert.item.mask = TVIF_TEXT + TVIF_IMAGE + TVIF_SELECTEDIMAGE;//必须加这一行,不然不显示.
+        tvinsert.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
         tvinsert.item.pszText = wszSectionName;
         g_htreeitem_section[i] = (HTREEITEM)SendMessage(g_h_tree, TVM_INSERTITEM, 0, (LPARAM)&tvinsert);
     }
 
-    BOOL b = InvalidateRect(g_h_tree, 0, 0);//让改变立即显示.用上面的办法无效.
+    InvalidateRect(g_h_tree, 0, 0);
 
-    UnmapViewOfFile(pmz);
-    CloseHandle(hfilemap);
-    CloseHandle(hfile);
-
-    return r;//返回值在那时没有意义.
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    ////一下是测试代码:添加节点用的.
-    //TV_INSERTSTRUCT tvinsert;
-
-    //tvinsert.hParent = g_htreeitem[SECTIONDATA];
-    ////tvinsert.hInsertAfter = g_htreeitem[SECTIONDATA];
-    //tvinsert.item.mask = TVIF_TEXT+TVIF_IMAGE+TVIF_SELECTEDIMAGE;
-    //tvinsert.item.pszText = L"test";//L"DOS头";
-    //g_htreeitem_section[0]  = (HTREEITEM)SendMessage(g_h_tree,TVM_INSERTITEM,0,(LPARAM)& tvinsert);
-    ////UpdateWindow(g_h_tree);
-    ////UpdateWindow(hwndMain);
-
-    //BOOL b = InvalidateRect(g_h_tree,0,0);//让改变立即显示.用上面的办法无效.
-
-    ////另一个思路是:用下面的宏,没有实验.
-    ////HTREEITEM TreeView_InsertItem(HWND hwndTV, LPTVINSERTSTRUCT lpis);
-    ////////////////////////////////////////////////////////////////////////////////////////////////
+    return true;
 }
 
 
 bool AddMoreInformation(wchar_t * filename)
-/*
-功能是在某个树形节点下面添加子节点.子节点就是各种表.由数据目录指向的.
-*/
 {
-    bool r = false;//返回值.
-
-    HANDLE hfile = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (hfile == INVALID_HANDLE_VALUE) {
+    PEFileMap pe;
+    if (!pe.Open(filename, g_IsPE32Ex, false, true)) {
         return false;
     }
 
-    DWORD FileSizeHigh;
-    DWORD FileSizeLow = GetFileSize(hfile, &FileSizeHigh);
-    DWORD64 filesize = FileSizeHigh * 0x100000000 + FileSizeLow;
-
-    if (FileSizeLow == 0 && FileSizeHigh == 0) {//如果文件大小为0.
-        CloseHandle(hfile);
-        return false;
-    }
-
-    HANDLE hfilemap = CreateFileMapping(hfile, NULL, PAGE_READONLY, NULL, NULL, NULL); /* 空文件则返回失败 */
-    if (hfilemap == NULL) {
-        CloseHandle(hfile);
-        return false;
-    }
-
-    LPVOID pmz = MapViewOfFile(hfilemap, SECTION_MAP_READ, NULL, NULL, 0/*映射所有*/);//暂时不支持大于4G的文件。
-    if (pmz == NULL) {
-        CloseHandle(hfilemap);
-        CloseHandle(hfile);
-        return false;
-    }
-
-    IMAGE_DOS_HEADER * p_image_dos_header = (IMAGE_DOS_HEADER *)pmz;
-    if (IMAGE_DOS_SIGNATURE != p_image_dos_header->e_magic) {
-        return false;
-    }
-
-    ULONG  ntSignature = (ULONG)p_image_dos_header + p_image_dos_header->e_lfanew;
-    ntSignature = *(ULONG *)ntSignature;
-    if (IMAGE_NT_SIGNATURE != ntSignature) {
-        return false;
-    }
-
-    DWORD  CoffHeaderOffset = (ULONG)p_image_dos_header + p_image_dos_header->e_lfanew + sizeof(ULONG);
-    IMAGE_FILE_HEADER * p_image_file_header = (IMAGE_FILE_HEADER *)CoffHeaderOffset;
-
-    //注意这里用的永远是:IMAGE_OPTIONAL_HEADER32.
-    //要分析IMAGE_OPTIONAL_HEADER64的一个办法是:强制定义一个,载赋值转换.
-    //其实这个结构的大小是固定的,只不过32位的和64位的不一样.但还是用规范建议的.IMAGE_FILE_HEADER的成员访问好.
-    IMAGE_OPTIONAL_HEADER * p_image_optional_header = (IMAGE_OPTIONAL_HEADER *)((ULONG)p_image_file_header + sizeof(IMAGE_FILE_HEADER));
-
-    //必须加(ULONG),不然出错.
-    //IMAGE_SECTION_HEADER  * p_image_section_header = (IMAGE_SECTION_HEADER *)((ULONG)p_image_optional_header + p_image_file_header->SizeOfOptionalHeader);
-
-    IMAGE_DATA_DIRECTORY * p_image_data_directory = 0;
-
-    if (g_IsPE32Ex) {
-        p_image_data_directory = (IMAGE_DATA_DIRECTORY *)((ULONG)p_image_optional_header + 112);//PE32+文件.
-    } else {
-        p_image_data_directory = (IMAGE_DATA_DIRECTORY *)((ULONG)p_image_optional_header + 96);
-    }
-
-    //先清空子节点.
     for (int i = 0; i < IMAGE_NUMBEROF_DIRECTORY_ENTRIES; i++) {
-        //如果存在就清除.
         if (g_htreeitem_data_directory[i]) {
-            BOOL b = TreeView_DeleteItem(g_h_tree, g_htreeitem_data_directory[i]);
-            if (!b) {
-                int x = GetLastError();
-                //return false;//其实这个失败无所谓,根本就不用检查.
-            }
+            TreeView_DeleteItem(g_h_tree, g_htreeitem_data_directory[i]);
+            g_htreeitem_data_directory[i] = NULL;
         }
     }
 
-    //BOOL b = InvalidateRect(g_h_tree,0,0);//让改变立即显示.用上面的办法无效.
-
-    int m = 0;
-    int n = 0;
-    for (; m < IMAGE_NUMBEROF_DIRECTORY_ENTRIES; m++) //规范规定是从1开始的.
-    {
-        //如果这一项不为空,就显示对应的名字.这个也搞个枚举.
-        if (p_image_data_directory[m].VirtualAddress && p_image_data_directory[m].Size) {
+    for (int m = 0; m < IMAGE_NUMBEROF_DIRECTORY_ENTRIES; m++) {
+        if (pe.datadirs[m].VirtualAddress && pe.datadirs[m].Size) {
             TV_INSERTSTRUCT tvinsert;
             tvinsert.hParent = g_htreeitem[MOREINFORMATION];
-            tvinsert.item.mask = TVIF_TEXT + TVIF_IMAGE + TVIF_SELECTEDIMAGE;//必须加这一行,不然不显示.
+            tvinsert.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
             tvinsert.item.pszText = g_table_name[m];
             g_htreeitem_data_directory[m] = (HTREEITEM)SendMessage(g_h_tree, TVM_INSERTITEM, 0, (LPARAM)&tvinsert);
-
-            n++;//这个顺序不依赖i.
         }
     }
 
-    BOOL b = InvalidateRect(g_h_tree, 0, 0);//让改变立即显示.用上面的办法无效.
+    InvalidateRect(g_h_tree, 0, 0);
 
-    UnmapViewOfFile(pmz);
-    CloseHandle(hfilemap);
-    CloseHandle(hfile);
-
-    return r;//返回值暂时没有意义.
+    return true;
 }
 
 
@@ -593,8 +370,6 @@ void On_DropFiles(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
         //文件是:C:\Users\Administrator\Desktop\aasdasf,不论文件大小是否为0.返回值是0.
         MessageBox(0, szFileName, L"这是一个目录!,请选择一个文件", 0);
-        //wchar_t buffer[MAX_PATH] = L"这是一个目录,请选择一个文件.";
-        //SendMessage(g_h_edit_FilePath,WM_SETTEXT,0,(LPARAM)buffer); 
     } else {
         int r = IsValidPE(szFileName);
 
@@ -650,46 +425,8 @@ void On_DropFiles(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 
 void On_Notify_Click(HWND hWnd, WPARAM wParam, LPARAM lParam) //控件的单击处理.
-{
-    //MessageBox(0,L"鼠标单击",L"树形控件消息",0);
-
-    //HTREEITEM hTreeItem = TreeView_GetSelection(g_h_tree);//发现这个没有!
-    //if (hTreeItem)
-    //{
-    //    //MessageBox(0,0,0,0);
-    //    //TreeView_DeleteItem(hwndTreeView, hTreeItem);
-    //}
-
-    //hTreeItem = TreeView_GetSelection(((LPNMHDR)lParam)->hwndFrom);//用这个会出错.
-    //if (hTreeItem)
-    //{
-    //    MessageBox(0,0,0,0);
-    //}
-
-    //方法一:
-    //TVHITTESTINFO hti;
-    //POINT p1;
-    //wchar_t achBuf[100] = {0};
-
-    //GetCursorPos(&p1);
-    //hti.flags=TVHT_ONITEM;
-    //memcpy(&hti.pt, &p1, sizeof(POINT));
-    //ScreenToClient(((LPNMHDR)lParam)->hwndFrom, &hti.pt);
-
-    //TVITEM tv;
-    //ZeroMemory(&tv, sizeof(TVITEM));
-    //tv.hItem=(HTREEITEM)TreeView_HitTest(((LPNMHDR)lParam)->hwndFrom, &hti);
-    //tv.cchTextMax=100;
-    //tv.pszText=achBuf;
-    //tv.mask=TVIF_TEXT|TVIF_HANDLE;
-    //TreeView_GetItem(((LPNMHDR)lParam)->hwndFrom,&tv);
-
-    //MessageBox(0,tv.pszText,0,0);
-
-    //////////////////////////////////////////////////////////////////////////
-    //方法二:其实是一样的.
-
-    if (((LPNMHDR)lParam)->hwndFrom == g_h_tree) //如果是树形控件,还有可能是列表控件.
+{
+if (((LPNMHDR)lParam)->hwndFrom == g_h_tree) //如果是树形控件,还有可能是列表控件.
     {
         LPNMHDR lpnmh = (LPNMHDR)lParam;
         DWORD dwPos = GetMessagePos();
@@ -743,15 +480,6 @@ void On_Notify_Click(HWND hWnd, WPARAM wParam, LPARAM lParam) //控件的单击处理.
 
         //检查是不是数据目录的子节点。
         for (int i = 0; i < IMAGE_NUMBEROF_DIRECTORY_ENTRIES; i++) {
-            //wchar_t wszName[9] = {0};
-            //if (MultiByteToWideChar(CP_ACP, 0,(LPCSTR)buf,lstrlenA((LPCSTR)buf),wszName,sizeof(wszName)) == 0) 
-            //{
-            //    int x = GetLastError();
-            //    //r = false;
-            //    break;
-            //    //return FALSE;
-            //}
-
             if (lstrcmpi(buf, g_table_name[i]) == 0) {
                 switch (i) {
                 case EXPORT://其实这个也可以搞个枚举,
@@ -812,33 +540,19 @@ void On_Notify_Click(HWND hWnd, WPARAM wParam, LPARAM lParam) //控件的单击处理.
 
 
 void On_Notify_SelChanged(HWND hWnd, WPARAM wParam, LPARAM lParam)
-/*
-控件的选择的变化的处理.
-这个暂时不用.
-*/
 {
-    //MessageBox(0,L"选择改变",L"树形控件消息",0);
-
     HTREEITEM hTreeItem = TreeView_GetSelection(g_h_tree);
-    if (hTreeItem) {
-        //MessageBox(0,0,0,0);//这个也进入了.
+    if (!hTreeItem) {
+        return;
     }
 
-    //hTreeItem = TreeView_GetSelection(((LPNMHDR)lParam)->hwndFrom);
-    if (hTreeItem) {
-        //MessageBox(0,0,0,0);//这个也进入了.
-    }
-
-    TVITEM tvi;
+    TVITEM tvi = {0};
     TCHAR szText[MAX_PATH] = {0};
-    memset(&tvi, 0, sizeof(tvi));
     tvi.mask = TVIF_TEXT | TVIF_PARAM;
-    tvi.hItem = hTreeItem;//g_h_tree;//the item handle;
+    tvi.hItem = hTreeItem;
     tvi.pszText = szText;
-    tvi.cchTextMax = sizeof(szText);
-    BOOL bSuccess = TreeView_GetItem(((LPNMHDR)lParam)->hwndFrom, &tvi);
-
-    //MessageBox(0,tvi.pszText,0,0);//这个办法是正确的.
+    tvi.cchTextMax = _ARRAYSIZE(szText);
+    TreeView_GetItem(((LPNMHDR)lParam)->hwndFrom, &tvi);
 }
 
 
@@ -903,7 +617,6 @@ bool get_r(RECTANGLE & r)
     if (xs < 999 || ys < 768) {
         MessageBox(0, L"你的屏幕的分辨率过小,最小设置为:1024X768.请设置后重新运行程序.", L"友情提示", 0);
         ExitProcess(0);
-        r.x = r.y = 0;
     }
 
     return true;
@@ -916,10 +629,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     RECTANGLE r = {0};
     get_r(r);
 
-    WNDCLASSEX sWndClassEx = {48,3,WindowProc,0,0,GetModuleHandle(0),0,LoadCursor(0,IDC_ARROW),(HBRUSH)COLOR_BACKGROUND /*6*/,0,L"correy",0};
+    WNDCLASSEX sWndClassEx = {0};
+    sWndClassEx.cbSize = sizeof(WNDCLASSEX);
+    sWndClassEx.style = CS_HREDRAW | CS_VREDRAW;
+    sWndClassEx.lpfnWndProc = WindowProc;
+    sWndClassEx.hInstance = GetModuleHandle(0);
+    sWndClassEx.hCursor = LoadCursor(0, IDC_ARROW);
+    sWndClassEx.hbrBackground = (HBRUSH)COLOR_BACKGROUND;
+    sWndClassEx.lpszClassName = L"correy";
     ATOM a = RegisterClassEx(&sWndClassEx);
-    hwndMain = CreateWindowEx(WS_EX_ACCEPTFILES, L"correy", L"pe32+", 0x0Ca0000, r.x, r.y, r.w, r.h, 0, 0, GetModuleHandle(0), 0);
-    ShowWindow(hwndMain, 1);
+    hwndMain = CreateWindowEx(WS_EX_ACCEPTFILES, L"correy", L"pe32+", WS_OVERLAPPEDWINDOW, r.x, r.y, r.w, r.h, 0, 0, GetModuleHandle(0), 0);
+    ShowWindow(hwndMain, nCmdShow);
     UpdateWindow(hwndMain);//最好加上.
 
     MSG msg;
