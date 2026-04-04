@@ -8,6 +8,34 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+static DWORD GetCertificateBlobLength(_In_ const WIN_CERTIFICATE * certificate)
+{
+    if (certificate == NULL || certificate->dwLength < FIELD_OFFSET(WIN_CERTIFICATE, bCertificate)) {
+        return 0;
+    }
+
+    return certificate->dwLength - FIELD_OFFSET(WIN_CERTIFICATE, bCertificate);
+}
+
+
+static LPCWSTR GetInputFileNameFromCommandLine()
+{
+    int Args = 0;
+    LPWSTR * Arglist = CommandLineToArgvW(GetCommandLineW(), &Args);
+    if (Arglist == NULL) {
+        return NULL;
+    }
+
+    LPCWSTR FileName = NULL;
+    if (Args > 2) {
+        FileName = _wcsdup(Arglist[2]);
+    }
+
+    LocalFree(Arglist);
+    return FileName;
+}
+
+
 PCSTR GetCertificateType(_In_ WORD CertificateType)
 {
     PCSTR CertificateTypeStr = NULL;
@@ -56,6 +84,10 @@ PCSTR GetCertRevision(_In_ WORD wRevision)
 
 void DumpCertInfo(PCERT_INFO CertInfo)
 {
+    if (CertInfo == NULL) {
+        return;
+    }
+
     _tprintf(_T("版本:%d.\n"), CertInfo->dwVersion + 1);
 
     _tprintf(_T("ObjId:%hs.\n"), CertInfo->SignatureAlgorithm.pszObjId);
@@ -103,14 +135,18 @@ void DumpCertInfo(PCERT_INFO CertInfo)
     //还有IssuerUniqueId，SubjectUniqueId，cExtension等信息。
 
     _tprintf(_T("cExtension:%d.\n"), CertInfo->cExtension);
-    _tprintf(_T("Extension ObjId:%hs.\n"), CertInfo->rgExtension->pszObjId);
-    _tprintf(_T("Extension fCritical:%d.\n"), CertInfo->rgExtension->fCritical);
-    _tprintf(_T("Extension Value: "));
-    dwData = CertInfo->rgExtension->Value.cbData;
-    for (DWORD n = 0; n < dwData; n++) {
-        _tprintf(_T("%02x "), CertInfo->rgExtension->Value.pbData[n]);
+    if (CertInfo->cExtension > 0 && CertInfo->rgExtension != NULL) {
+        _tprintf(_T("Extension ObjId:%hs.\n"), CertInfo->rgExtension->pszObjId);
+        _tprintf(_T("Extension fCritical:%d.\n"), CertInfo->rgExtension->fCritical);
+        _tprintf(_T("Extension Value: "));
+        dwData = CertInfo->rgExtension->Value.cbData;
+        for (DWORD n = 0; n < dwData; n++) {
+            _tprintf(_T("%02x "), CertInfo->rgExtension->Value.pbData[n]);
+        }
+        _tprintf(_T("\n"));
+    } else {
+        _tprintf(_T("Extension: 无.\n"));
     }
-    _tprintf(_T("\n"));
 }
 
 
@@ -121,6 +157,10 @@ BOOL PrintCertContext(PCCERT_CONTEXT pCertContext)
     DWORD dwData;
 
     __try {
+        if (pCertContext == NULL || pCertContext->pCertInfo == NULL) {
+            __leave;
+        }
+
         //用openssl的方式处理pCertContext->cbCertEncoded + pCertContext->pbCertEncoded。
         //经测试，这种办法有效可行正确。
         if (false) {
@@ -201,18 +241,21 @@ void DecodeCertificate(PBYTE Certificate, DWORD Length)
 功能：用CryptDecodeObjectEx解码PKCS#7 SignedData的ASN1结构。
 */
 {
+    BYTE * pbDecoded = NULL;
+    HCERTSTORE CertStore = NULL;
+    HCRYPTMSG Msg = NULL;
+
     //  Get the length needed for the decoded buffer.
-    DWORD cbDecoded = NULL;
+    DWORD cbDecoded = 0;
     if (CryptDecodeObjectEx(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, PKCS_CONTENT_INFO, Certificate, Length, CRYPT_DECODE_NOCOPY_FLAG, NULL, NULL, &cbDecoded)) {
         //printf("The needed buffer length is %d\n", cbDecoded);
     } else {
-        _ASSERTE(false);
+        return;
     }
 
     // Allocate memory for the decoded information.
-    BYTE * pbDecoded;
     if (!(pbDecoded = (BYTE *)malloc(cbDecoded))) {
-        _ASSERTE(false);
+        return;
     }
 
     // Decode the encoded buffer.
@@ -233,9 +276,7 @@ void DecodeCertificate(PBYTE Certificate, DWORD Length)
             //    _ASSERTE(false);
             //}
 
-            HCERTSTORE CertStore = NULL;
-            HCRYPTMSG Msg = NULL;
-            CryptQueryObject(CERT_QUERY_OBJECT_BLOB,
+            if (!CryptQueryObject(CERT_QUERY_OBJECT_BLOB,
                 &content_info->Content,
                 CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED,
                 CERT_QUERY_FORMAT_FLAG_BINARY,
@@ -245,7 +286,10 @@ void DecodeCertificate(PBYTE Certificate, DWORD Length)
                 NULL,
                 &CertStore,
                 &Msg,
-                NULL);
+                NULL)) {
+                free(pbDecoded);
+                return;
+            }
 
             PCCERT_CONTEXT PrevCertContext = NULL;
             while ((PrevCertContext = CertEnumCertificatesInStore(CertStore, PrevCertContext)) != NULL) {
@@ -253,11 +297,23 @@ void DecodeCertificate(PBYTE Certificate, DWORD Length)
                 _tprintf(_T("\n\n\n"));
             }
         } else {
-            _ASSERTE(false);
+            free(pbDecoded);
+            return;
         }
     } else {
-        _ASSERTE(false);
+        free(pbDecoded);
+        return;
     }
+
+    if (Msg != NULL) {
+        CryptMsgClose(Msg);
+    }
+
+    if (CertStore != NULL) {
+        CertCloseStore(CertStore, 0);
+    }
+
+    free(pbDecoded);
 }
 
 
@@ -273,6 +329,12 @@ void PrintSecurity(LPWIN_CERTIFICATE SecurityDirectory)
         break;
     case WIN_CERT_TYPE_PKCS_SIGNED_DATA://bCertificate 包含的是 PKCS#7 SignedData 结构
     {
+        DWORD CertificateLength = GetCertificateBlobLength(SecurityDirectory);
+        if (CertificateLength == 0) {
+            _ASSERTE(false);
+            break;
+        }
+
         //这个数据是啥结构呢？
         //以前的经验是SecurityDirectory->bCertificate里面有utf8编码。
 
@@ -288,12 +350,12 @@ void PrintSecurity(LPWIN_CERTIFICATE SecurityDirectory)
         //经测试，这种办法有效可行正确。
         if (false) {
             unsigned char * CertData = (unsigned char *)SecurityDirectory->bCertificate;
-            long CertDataLength = SecurityDirectory->dwLength - FIELD_OFFSET(WIN_CERTIFICATE, bCertificate);
+            long CertDataLength = CertificateLength;
             PKCS7 * pkcs7 = d2i_PKCS7(NULL, (const unsigned char **)&CertData, CertDataLength);
             DumpPKCS7(pkcs7);
         }
 
-        DecodeCertificate(SecurityDirectory->bCertificate, SecurityDirectory->dwLength);
+        DecodeCertificate(SecurityDirectory->bCertificate, CertificateLength);
 
         break;
     }
@@ -337,7 +399,11 @@ BOOL VerifyEmbeddedSignature(IN LPCTSTR filename, OUT wchar_t * signer_file)
 
     DWORD hash_count = 100;
     BYTE hash_data[100];
-    CryptCATAdminCalcHashFromFileHandle(hFile, &hash_count, hash_data, 0);
+    if (!CryptCATAdminCalcHashFromFileHandle(hFile, &hash_count, hash_data, 0)) {
+        CloseHandle(hFile);
+        CryptCATAdminReleaseContext(cat_admin_handle, 0);
+        return FALSE;
+    }
     CloseHandle(hFile);
 
     std::wstring member_tag;
@@ -477,9 +543,10 @@ BOOL GetSignerInfo(IN WCHAR * FileName)
 
 void ParseCertificateInfo1()
 {
-    int Args;
-    LPWSTR * Arglist = CommandLineToArgvW(GetCommandLineW(), &Args);
-    LPCWSTR FileName = Arglist[2];
+    LPCWSTR FileName = GetInputFileNameFromCommandLine();
+    if (FileName == NULL) {
+        return;
+    }
 
     wchar_t signer_file[MAX_PATH] = {0};
     if (VerifyEmbeddedSignature(FileName, signer_file)) {
@@ -489,7 +556,7 @@ void ParseCertificateInfo1()
         }
     }
 
-    LocalFree(Arglist);
+    free((void *)FileName);
 }
 
 
@@ -500,9 +567,11 @@ void ParseCertificateInfo2()
 这种方式没有分析PE文件的DataDirectory。
 */
 {
-    int Args;
-    LPWSTR * Arglist = CommandLineToArgvW(GetCommandLineW(), &Args);
-    LPCWSTR FileName = Arglist[2];
+    LPCWSTR FileName = GetInputFileNameFromCommandLine();
+    if (FileName == NULL) {
+        return;
+    }
+
     HANDLE hfile = INVALID_HANDLE_VALUE;
     LPWIN_CERTIFICATE buffer = NULL;
 
@@ -534,13 +603,19 @@ void ParseCertificateInfo2()
             ret = ImageGetCertificateData(hfile, i, &Certificate, &RequiredLength);
             if (!ret) {
                 int x = GetLastError();
+                UNREFERENCED_PARAMETER(x);
+                continue;
             }
 
             buffer = (LPWIN_CERTIFICATE)HeapAlloc(GetProcessHeap(), 0, RequiredLength);
             _ASSERTE(buffer);
 
             ret = ImageGetCertificateData(hfile, i, buffer, &RequiredLength);
-            _ASSERTE(ret);
+            if (!ret) {
+                HeapFree(GetProcessHeap(), 0, buffer);
+                buffer = NULL;
+                continue;
+            }
 
             CRYPT_DATA_BLOB p7Data;
             p7Data.cbData = RequiredLength - sizeof(DWORD) - sizeof(WORD) - sizeof(WORD);
@@ -585,17 +660,23 @@ void ParseCertificateInfo2()
             ret = ImageGetDigestStream(hfile, i, DigestFunction, &DigestHandle);        
             if (!ret) {
                 int x = GetLastError();
+                UNREFERENCED_PARAMETER(x);
             }
 
             HeapFree(GetProcessHeap(), 0, buffer);
+            buffer = NULL;
         }
     } __finally {
+        if (buffer != NULL) {
+            HeapFree(GetProcessHeap(), 0, buffer);
+        }
+
         if (INVALID_HANDLE_VALUE != hfile) {
             CloseHandle(hfile);
         }
     }
 
-    LocalFree(Arglist);
+    free((void *)FileName);
 }
 
 
@@ -630,8 +711,14 @@ void ParseCertificateInfo4(PIMAGE_DATA_DIRECTORY DataDirectory, LPWIN_CERTIFICAT
 用openssl解析PE的证书。
 */
 {
+    UNREFERENCED_PARAMETER(DataDirectory);
+
     unsigned char * CertData = (unsigned char *)SecurityDirectory->bCertificate;
-    long CertDataLength = SecurityDirectory->dwLength - FIELD_OFFSET(WIN_CERTIFICATE, bCertificate);
+    long CertDataLength = GetCertificateBlobLength(SecurityDirectory);
+    if (CertDataLength <= 0) {
+        return;
+    }
+
     PKCS7 * pkcs7 = d2i_PKCS7(NULL, (const unsigned char **)&CertData, CertDataLength);
     if (NULL == pkcs7) {
         return;
@@ -803,8 +890,19 @@ void ParseCertificateInfo5(PIMAGE_DATA_DIRECTORY DataDirectory, LPWIN_CERTIFICAT
 仅仅测试代码。
 */
 {
+    UNREFERENCED_PARAMETER(DataDirectory);
+
+    asn1_tree * asn1_objects = NULL;
+    asn1_tree cms = {0};
+    asn1_tree * content_type = NULL;
+    asn1_tree * encrypted_data = NULL;
+    asn1_tree * cms_version = NULL;
+    uint8_t version = 0;
     unsigned char * CertData = (unsigned char *)SecurityDirectory->bCertificate;
-    long CertDataLength = SecurityDirectory->dwLength - FIELD_OFFSET(WIN_CERTIFICATE, bCertificate);
+    long CertDataLength = GetCertificateBlobLength(SecurityDirectory);
+    if (CertDataLength <= 0) {
+        return;
+    }
 
     int32_t asn1_object_count = der_object_count(CertData, CertDataLength);
     if (asn1_object_count < 0) {
@@ -812,45 +910,40 @@ void ParseCertificateInfo5(PIMAGE_DATA_DIRECTORY DataDirectory, LPWIN_CERTIFICAT
         return;
     }
 
-    asn1_tree * asn1_objects = (asn1_tree *)(malloc(sizeof(asn1_tree) * asn1_object_count));
+    asn1_objects = (asn1_tree *)(malloc(sizeof(asn1_tree) * asn1_object_count));
     if (asn1_objects == NULL) {
         fprintf(stderr, "ERROR: Could not allocate the memory for the ASN.1 objects.\n");
         return;
     }
 
-    asn1_tree cms;
-    if (der_decode(CertData, CertDataLength, &cms, asn1_objects, asn1_object_count) < 0) {
+    if (der_decode(CertData, CertDataLength, &cms, asn1_objects, asn1_object_count) >= 0) {
+        print_asn1(&cms, 0); //Dump the data
+
+        //Since we know this is CMS data, we can try to interpret it.
+        if (cms.type != ASN1_TYPE_SEQUENCE) {
+            fprintf(stderr, "ERROR: The outer type is not a SEQUENCE.\n");
+        } else {
+            content_type = cms.child;
+            if (content_type == NULL || content_type->type != ASN1_TYPE_OBJECT_IDENTIFIER) {
+                fprintf(stderr, "ERROR: No ContentType information available.\n");
+            } else {
+                encrypted_data = content_type->next != NULL ? content_type->next->child : NULL;
+                if (encrypted_data == NULL || encrypted_data->type != ASN1_TYPE_SEQUENCE) {
+                    fprintf(stderr, "ERROR: EncryptedData not availavble.\n");
+                } else {
+                    cms_version = encrypted_data->child;
+                    if (cms_version == NULL || cms_version->type != ASN1_TYPE_INTEGER || cms_version->length != 1) {
+                        fprintf(stderr, "ERROR: CMSVersion not availavble.\n");
+                    } else {
+                        version = cms_version->data[0];
+                        printf("CMSVersion: %d\n", version);
+                    }
+                }
+            }
+        }
+    } else {
         fprintf(stderr, "ERROR: Could not parse the data.\n");
-        return;
     }
-
-    print_asn1(&cms, 0); //Dump the data
-
-    //Since we know this is CMS data, we can try to interpret it.
-    if (cms.type != ASN1_TYPE_SEQUENCE) {
-        fprintf(stderr, "ERROR: The outer type is not a SEQUENCE.\n");
-        return;
-    }
-
-    asn1_tree * content_type = cms.child;
-    if (content_type == NULL || content_type->type != ASN1_TYPE_OBJECT_IDENTIFIER) {
-        fprintf(stderr, "ERROR: No ContentType information available.\n");
-        return;
-    }
-
-    asn1_tree * encrypted_data = content_type->next->child;
-    if (encrypted_data == NULL || encrypted_data->type != ASN1_TYPE_SEQUENCE) {
-        fprintf(stderr, "ERROR: EncryptedData not availavble.\n");
-        return;
-    }
-
-    asn1_tree * cms_version = encrypted_data->child;
-    if (cms_version == NULL || cms_version->type != ASN1_TYPE_INTEGER || cms_version->length != 1) {
-        fprintf(stderr, "ERROR: CMSVersion not availavble.\n");
-        return;
-    }
-    uint8_t version = cms_version->data[0];
-    printf("CMSVersion: %d\n", version);
 
     free(asn1_objects);
 }
