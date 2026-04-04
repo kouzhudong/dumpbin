@@ -457,7 +457,7 @@ DWORD MapFile(_In_ LPCWSTR FileName, _In_opt_ PeCallBack CallBack)
     PVOID Wow64OldValue = NULL;
     BOOL Wow64FsRedirectionDisabled = FALSE;
 
-    if (FileName == NULL) {
+    if (FileName == NULL || FileName[0] == L'\0') {
         return ERROR_INVALID_PARAMETER;
     }
 
@@ -476,26 +476,26 @@ DWORD MapFile(_In_ LPCWSTR FileName, _In_opt_ PeCallBack CallBack)
         }
 
         LARGE_INTEGER FileSize = {0};
-        if (0 == GetFileSizeEx(hFile, &FileSize)) {
+        if (!GetFileSizeEx(hFile, &FileSize)) {
             LastError = GetLastError();
             LOGA(ERROR_LEVEL, "LastError:%#d", LastError);
             LogApiErrMsg("GetFileSizeEx");
             __leave;
         }
 
-        if (0 == FileSize.QuadPart) {//如果文件大小为0.
+        if (FileSize.QuadPart == 0) {
             LastError = ERROR_EMPTY;
-            LOGA(ERROR_LEVEL, "LastError:%#d", LastError);
+            LOGA(ERROR_LEVEL, "file is empty");
             __leave;
         }
 
-        if (FileSize.HighPart) {//暂时不支持大于4G的文件。
-            LastError = ERROR_EMPTY;
-            LOGA(ERROR_LEVEL, "LastError:%#d", LastError);
+        if (FileSize.HighPart != 0) {//暂时不支持大于4G的文件。
+            LastError = ERROR_FILE_TOO_LARGE;
+            LOGA(ERROR_LEVEL, "file too large: %llu bytes", FileSize.QuadPart);
             __leave;
         }
 
-        hMapFile = CreateFileMapping(hFile, NULL, PAGE_READONLY, NULL, NULL, NULL); /* 空文件则返回失败 */
+        hMapFile = CreateFileMapping(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
         if (hMapFile == NULL) {
             LastError = GetLastError();
             LOGA(ERROR_LEVEL, "LastError:%#d", LastError);
@@ -503,7 +503,7 @@ DWORD MapFile(_In_ LPCWSTR FileName, _In_opt_ PeCallBack CallBack)
             __leave;
         }
 
-        FileContent = (PBYTE)MapViewOfFile(hMapFile, SECTION_MAP_READ, NULL, NULL, 0/*映射所有*/);
+        FileContent = (PBYTE)MapViewOfFile(hMapFile, SECTION_MAP_READ, 0, 0, 0);
         if (FileContent == NULL) {
             LastError = GetLastError();
             LOGA(ERROR_LEVEL, "LastError:%#d", LastError);
