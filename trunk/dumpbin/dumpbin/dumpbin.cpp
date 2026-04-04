@@ -165,7 +165,7 @@ int _cdecl wmain(_In_ int argc, _In_reads_(argc) TCHAR * argv[])
     case 6:
     {
         if (lstrcmpi(argv[1], TEXT("SaveFile")) == 0) {
-            ret = SaveFile(argv[2], argv[3], argv[4], argv[4]);
+            ret = SaveFile(argv[2], argv[3], argv[4], argv[5]);
         } else {
             Usage(argv[0]);
         }

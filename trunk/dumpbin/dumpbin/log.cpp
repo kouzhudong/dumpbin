@@ -105,22 +105,29 @@ void LogApiErrMsg(PCSTR Api)
 3.
 */
 {
-    LPWSTR lpvMessageBuffer;
+    DWORD LastError = GetLastError();
+    LPWSTR lpvMessageBuffer = NULL;
 
     FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
                   NULL,
-                  GetLastError(),
+                  LastError,
                   MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
                   (LPWSTR)&lpvMessageBuffer,//特别注意：数据后有回车换行，而且还有垃圾数据。
                   0,
                   NULL);
 
     //去掉回车换行
-    int x = lstrlenW((LPWSTR)lpvMessageBuffer);
-    lpvMessageBuffer[x - 1] = 0;
-    lpvMessageBuffer[x - 2] = 0;
+    if (lpvMessageBuffer) {
+        int x = lstrlenW((LPWSTR)lpvMessageBuffer);
+        if (x >= 2) {
+            lpvMessageBuffer[x - 1] = 0;
+            lpvMessageBuffer[x - 2] = 0;
+        }
 
-    LOGA(ERROR_LEVEL, "API:%s, LastError:%#x, Message:%ls", Api, GetLastError(), lpvMessageBuffer);
+        LOGA(ERROR_LEVEL, "API:%s, LastError:%#x, Message:%ls", Api, LastError, lpvMessageBuffer);
 
-    LocalFree(lpvMessageBuffer);
+        LocalFree(lpvMessageBuffer);
+    } else {
+        LOGA(ERROR_LEVEL, "API:%s, LastError:%#x", Api, LastError);
+    }
 }

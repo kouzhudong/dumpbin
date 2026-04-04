@@ -100,7 +100,7 @@ DWORD OptionlHeader(_In_ PBYTE Data, _In_ DWORD Size)
     PIMAGE_NT_HEADERS NtHeader = ImageNtHeader(Data);
     _ASSERTE(NtHeader);
 
-    printf("File Header Information:\r\n");
+    printf("Optional Header Information:\r\n");
 
     CHAR DllCharacteristics[MAX_PATH] = {0};
 

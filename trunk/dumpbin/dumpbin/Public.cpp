@@ -647,8 +647,9 @@ bool IsValidPE(_In_ PBYTE Data, _In_ DWORD Size)
         }
 #endif // 0
     } __except (EXCEPTION_EXECUTE_HANDLER) {
-        ret = GetExceptionCode();
-        LOGA(ERROR_LEVEL, "ExceptionCode:%#x", ret);
+        DWORD ExceptionCode = GetExceptionCode();
+        LOGA(ERROR_LEVEL, "ExceptionCode:%#x", ExceptionCode);
+        ret = false;
     }
 
     return ret;
@@ -689,8 +690,9 @@ bool IsPE32Ex(_In_ PBYTE Data, _In_ DWORD Size)
             break;
         }
     } __except (EXCEPTION_EXECUTE_HANDLER) {
-        ret = GetExceptionCode();
-        LOGA(ERROR_LEVEL, "ExceptionCode:%#x", ret);
+        DWORD ExceptionCode = GetExceptionCode();
+        LOGA(ERROR_LEVEL, "ExceptionCode:%#x", ExceptionCode);
+        ret = false;
     }
 
     return ret;

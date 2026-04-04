@@ -91,8 +91,8 @@ DWORD BaseReloc(_In_ PBYTE Data, _In_ DWORD Size)
 
         printf("VirtualAddress:%#010X, SizeOfBlock:%#010X.\r\n", temp->VirtualAddress, temp->SizeOfBlock);
 
-        DWORD SizeOfBlock = temp->SizeOfBlock - sizeof(temp->SizeOfBlock) - sizeof(temp->SizeOfBlock);
-        SizeOfBlock /= sizeof(DWORD);
+        DWORD SizeOfBlock = temp->SizeOfBlock - sizeof(IMAGE_BASE_RELOCATION);
+        SizeOfBlock /= sizeof(BaseRelocBit);
 
         PBaseRelocBit BaseRelocBit = (PBaseRelocBit)((PBYTE)temp + sizeof(IMAGE_BASE_RELOCATION));
 

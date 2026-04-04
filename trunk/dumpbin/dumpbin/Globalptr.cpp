@@ -36,7 +36,7 @@ DWORD Globalptr(_In_ PBYTE Data, _In_ DWORD Size)
                                     IMAGE_DIRECTORY_ENTRY_GLOBALPTR,
                                     &size, &FoundHeader);
 
-    printf("Architecture Directory Information:\r\n");
+    printf("Globalptr Directory Information:\r\n");
     printf("VirtualAddress:%#010X.\r\n", DataDirectory.VirtualAddress);
     printf("Size:%#010X.\r\n", DataDirectory.Size);
     printf("\r\n");

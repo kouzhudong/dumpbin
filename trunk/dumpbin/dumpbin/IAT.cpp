@@ -44,7 +44,6 @@ DWORD IAT(_In_ PBYTE Data, _In_ DWORD Size)
 
         printf("ImportThunk:%zd.\r\n", ImportThunk);
 
-        i++;//跳过一个DWORD的0.
     }
 
     return ret;
