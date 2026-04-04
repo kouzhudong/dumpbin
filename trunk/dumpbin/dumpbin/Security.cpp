@@ -241,75 +241,59 @@ void DecodeCertificate(PBYTE Certificate, DWORD Length)
 功能：用CryptDecodeObjectEx解码PKCS#7 SignedData的ASN1结构。
 */
 {
-    BYTE * pbDecoded = NULL;
-    HCERTSTORE CertStore = NULL;
-    HCRYPTMSG Msg = NULL;
-
     //  Get the length needed for the decoded buffer.
     DWORD cbDecoded = 0;
-    if (CryptDecodeObjectEx(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, PKCS_CONTENT_INFO, Certificate, Length, CRYPT_DECODE_NOCOPY_FLAG, NULL, NULL, &cbDecoded)) {
-        //printf("The needed buffer length is %d\n", cbDecoded);
-    } else {
+    if (!CryptDecodeObjectEx(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, PKCS_CONTENT_INFO, Certificate, Length, CRYPT_DECODE_NOCOPY_FLAG, NULL, NULL, &cbDecoded)) {
         return;
     }
 
     // Allocate memory for the decoded information.
-    if (!(pbDecoded = (BYTE *)malloc(cbDecoded))) {
+    BYTE * pbDecoded = (BYTE *)malloc(cbDecoded);
+    if (pbDecoded == NULL) {
         return;
     }
 
     // Decode the encoded buffer.
-    if (CryptDecodeObjectEx(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, PKCS_CONTENT_INFO, Certificate, Length, CRYPT_DECODE_NOCOPY_FLAG, NULL, pbDecoded, &cbDecoded)) {
-        CRYPT_CONTENT_INFO * content_info = (CRYPT_CONTENT_INFO *)pbDecoded;
-        if (content_info) {
-            printf("ObjId:%s\n", content_info->pszObjId);
-
-            //WCHAR szSubject[1024] = {0};//d2i_X509_NAME  +  X509_NAME_oneline
-            //DWORD cbSize = CertNameToStr(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, 
-            //                             &content_info->Content,
-            //                             CERT_X500_NAME_STR | CERT_NAME_STR_REVERSE_FLAG,
-            //                             szSubject,
-            //                             sizeof(szSubject));
-            //if (cbSize > 1) {//  If it returns one, the name is an empty string.
-            //    ///printf("szSubject：%ls\n", szSubject);//内容为空。
-            //} else {
-            //    _ASSERTE(false);
-            //}
-
-            if (!CryptQueryObject(CERT_QUERY_OBJECT_BLOB,
-                &content_info->Content,
-                CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED,
-                CERT_QUERY_FORMAT_FLAG_BINARY,
-                0,
-                NULL,
-                NULL,
-                NULL,
-                &CertStore,
-                &Msg,
-                NULL)) {
-                free(pbDecoded);
-                return;
-            }
-
-            PCCERT_CONTEXT PrevCertContext = NULL;
-            while ((PrevCertContext = CertEnumCertificatesInStore(CertStore, PrevCertContext)) != NULL) {
-                PrintCertContext(PrevCertContext);
-                _tprintf(_T("\n\n\n"));
-            }
-        } else {
-            free(pbDecoded);
-            return;
-        }
-    } else {
+    if (!CryptDecodeObjectEx(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, PKCS_CONTENT_INFO, Certificate, Length, CRYPT_DECODE_NOCOPY_FLAG, NULL, pbDecoded, &cbDecoded)) {
         free(pbDecoded);
         return;
     }
 
-    if (Msg != NULL) {
-        CryptMsgClose(Msg);
-    }
+    CRYPT_CONTENT_INFO * content_info = (CRYPT_CONTENT_INFO *)pbDecoded;
+    printf("ObjId:%s\n", content_info->pszObjId);
 
-    if (CertStore != NULL) {
+    //WCHAR szSubject[1024] = {0};//d2i_X509_NAME  +  X509_NAME_oneline
+    //DWORD cbSize = CertNameToStr(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+    //                             &content_info->Content,
+    //                             CERT_X500_NAME_STR | CERT_NAME_STR_REVERSE_FLAG,
+    //                             szSubject,
+    //                             sizeof(szSubject));
+    //if (cbSize > 1) {//  If it returns one, the name is an empty string.
+    //    ///printf("szSubject：%ls\n", szSubject);//内容为空。
+    //} else {
+    //    _ASSERTE(false);
+    //}
+
+    HCERTSTORE CertStore = NULL;
+    HCRYPTMSG Msg = NULL;
+    if (CryptQueryObject(CERT_QUERY_OBJECT_BLOB,
+        &content_info->Content,
+        CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED,
+        CERT_QUERY_FORMAT_FLAG_BINARY,
+        0,
+        NULL,
+        NULL,
+        NULL,
+        &CertStore,
+        &Msg,
+        NULL)) {
+        PCCERT_CONTEXT PrevCertContext = NULL;
+        while ((PrevCertContext = CertEnumCertificatesInStore(CertStore, PrevCertContext)) != NULL) {
+            PrintCertContext(PrevCertContext);
+            _tprintf(_T("\n\n\n"));
+        }
+
+        CryptMsgClose(Msg);
         CertCloseStore(CertStore, 0);
     }
 
@@ -377,6 +361,9 @@ void PrintSecurity(LPWIN_CERTIFICATE SecurityDirectory)
 BOOL WINAPI DigestFunction(DIGEST_HANDLE refdata, PBYTE pData, DWORD dwLength)
 //这个会被调用多次。
 {
+    UNREFERENCED_PARAMETER(refdata);
+    UNREFERENCED_PARAMETER(pData);
+    UNREFERENCED_PARAMETER(dwLength);
 
     return true;
 }
@@ -487,7 +474,7 @@ BOOL GetSignerInfo(IN WCHAR * FileName)
             __leave;
         }
 
-        DWORD dwSignerInfo = NULL;
+        DWORD dwSignerInfo = 0;
         fResult = CryptMsgGetParam(hMsg, CMSG_SIGNER_INFO_PARAM, 0, NULL, &dwSignerInfo);// Get signer information size.
         if (!fResult) {
             printf("FileName:%ls, GetLastError:%#x", FileName, GetLastError());
@@ -594,18 +581,11 @@ void ParseCertificateInfo2()
         for (DWORD i = 0; i < CertificateCount; i++) {
             WIN_CERTIFICATE Certificateheader = {0};
             ret = ImageGetCertificateHeader(hfile, i, &Certificateheader);
-            if (!ret) {
-                int x = GetLastError();
-            }
-
-            WIN_CERTIFICATE Certificate = {0};
-            DWORD RequiredLength = sizeof(WIN_CERTIFICATE);
-            ret = ImageGetCertificateData(hfile, i, &Certificate, &RequiredLength);
-            if (!ret) {
-                int x = GetLastError();
-                UNREFERENCED_PARAMETER(x);
+            if (!ret || Certificateheader.dwLength < sizeof(WIN_CERTIFICATE)) {
                 continue;
             }
+
+            DWORD RequiredLength = Certificateheader.dwLength;
 
             buffer = (LPWIN_CERTIFICATE)HeapAlloc(GetProcessHeap(), 0, RequiredLength);
             _ASSERTE(buffer);
@@ -618,7 +598,7 @@ void ParseCertificateInfo2()
             }
 
             CRYPT_DATA_BLOB p7Data;
-            p7Data.cbData = RequiredLength - sizeof(DWORD) - sizeof(WORD) - sizeof(WORD);
+            p7Data.cbData = GetCertificateBlobLength(buffer);
             p7Data.pbData = buffer->bCertificate;
             HCERTSTORE hStore = CertOpenStore(CERT_STORE_PROV_PKCS7, X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, NULL, 0, &p7Data);
             if (hStore) {
@@ -633,7 +613,7 @@ void ParseCertificateInfo2()
                 // Find certificates that contain the Code Signing Enhanced Key Usage
                 PCCERT_CONTEXT  pCertContext = NULL;
                 do {
-                    pCertContext = CertFindCertificateInStore(hStore,
+                    pCertContext = CertFindCertificateInStore(hStore, 
                         X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
                         CERT_FIND_EXT_ONLY_ENHKEY_USAGE_FLAG,
                         CERT_FIND_ENHKEY_USAGE,
@@ -657,7 +637,7 @@ void ParseCertificateInfo2()
             }
 
             DIGEST_HANDLE DigestHandle = NULL;
-            ret = ImageGetDigestStream(hfile, i, DigestFunction, &DigestHandle);        
+            ret = ImageGetDigestStream(hfile, i, DigestFunction, &DigestHandle);
             if (!ret) {
                 int x = GetLastError();
                 UNREFERENCED_PARAMETER(x);
@@ -688,20 +668,24 @@ void ParseCertificateInfo3(PIMAGE_DATA_DIRECTORY DataDirectory, LPWIN_CERTIFICAT
 从分析PE文件的DataDirectory开始，一步一步的解析。
 */
 {
-    for (DWORD i = 0; i < DataDirectory->Size; ) {
-        SecurityDirectory = LPWIN_CERTIFICATE((PBYTE)SecurityDirectory + i);
+    DWORD index = 0;
+    PBYTE base = (PBYTE)SecurityDirectory;
+    DWORD offset = 0;
 
-        printf("index:%d.\r\n", i + 1);
+    while (offset < DataDirectory->Size) {
+        LPWIN_CERTIFICATE entry = LPWIN_CERTIFICATE(base + offset);
 
-        PrintSecurity(SecurityDirectory);
-
-        DWORD dwLength = SecurityDirectory->dwLength / 8;
-
-        if (SecurityDirectory->dwLength % 8) {
-            dwLength++;
+        if (entry->dwLength < sizeof(WIN_CERTIFICATE)) {
+            break;
         }
 
-        i += dwLength * 8;
+        printf("index:%d.\r\n", ++index);
+
+        PrintSecurity(entry);
+
+        // WIN_CERTIFICATE entries are aligned to 8-byte boundaries.
+        DWORD aligned = (entry->dwLength + 7) & ~7u;
+        offset += aligned;
     }
 }
 
@@ -799,6 +783,9 @@ https://learn.microsoft.com/zh-cn/windows/win32/seccertenroll/about-encoded-tag-
 
         break;
     case 0x13://PrintableString
+    case 0x16://IA5String
+    case 0x17://UTCTime
+    case 0x18://GeneralizedTime
     {
         LPSTR pws = (LPSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (SIZE_T)list->length + 2);
         _ASSERTE(pws);
@@ -812,39 +799,6 @@ https://learn.microsoft.com/zh-cn/windows/win32/seccertenroll/about-encoded-tag-
     case 0x14://TeletexString
 
         break;
-    case 0x16://IA5String
-    {
-        LPSTR pws = (LPSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (SIZE_T)list->length + 2);
-        _ASSERTE(pws);
-
-        RtlCopyMemory(pws, list->data, list->length);
-        printf("Value: %s\n", pws);
-
-        HeapFree(GetProcessHeap(), 0, pws);
-        break;
-    }
-    case 0x17://不知啥类型
-    {
-        LPSTR pws = (LPSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (SIZE_T)list->length + 2);
-        _ASSERTE(pws);
-
-        RtlCopyMemory(pws, list->data, list->length);
-        printf("Value: %s\n", pws);
-
-        HeapFree(GetProcessHeap(), 0, pws);
-        break;
-    }
-    case 0x18://不知啥类型
-    {
-        LPSTR pws = (LPSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (SIZE_T)list->length + 2);
-        _ASSERTE(pws);
-
-        RtlCopyMemory(pws, list->data, list->length);
-        printf("Value: %s\n", pws);
-
-        HeapFree(GetProcessHeap(), 0, pws);
-        break;
-    }
     case ASN1_TYPE_PRINTABLE_STRING:
 
         break;
@@ -892,12 +846,6 @@ void ParseCertificateInfo5(PIMAGE_DATA_DIRECTORY DataDirectory, LPWIN_CERTIFICAT
 {
     UNREFERENCED_PARAMETER(DataDirectory);
 
-    asn1_tree * asn1_objects = NULL;
-    asn1_tree cms = {0};
-    asn1_tree * content_type = NULL;
-    asn1_tree * encrypted_data = NULL;
-    asn1_tree * cms_version = NULL;
-    uint8_t version = 0;
     unsigned char * CertData = (unsigned char *)SecurityDirectory->bCertificate;
     long CertDataLength = GetCertificateBlobLength(SecurityDirectory);
     if (CertDataLength <= 0) {
@@ -910,40 +858,50 @@ void ParseCertificateInfo5(PIMAGE_DATA_DIRECTORY DataDirectory, LPWIN_CERTIFICAT
         return;
     }
 
-    asn1_objects = (asn1_tree *)(malloc(sizeof(asn1_tree) * asn1_object_count));
+    asn1_tree * asn1_objects = (asn1_tree *)(malloc(sizeof(asn1_tree) * asn1_object_count));
     if (asn1_objects == NULL) {
         fprintf(stderr, "ERROR: Could not allocate the memory for the ASN.1 objects.\n");
         return;
     }
 
-    if (der_decode(CertData, CertDataLength, &cms, asn1_objects, asn1_object_count) >= 0) {
-        print_asn1(&cms, 0); //Dump the data
-
-        //Since we know this is CMS data, we can try to interpret it.
-        if (cms.type != ASN1_TYPE_SEQUENCE) {
-            fprintf(stderr, "ERROR: The outer type is not a SEQUENCE.\n");
-        } else {
-            content_type = cms.child;
-            if (content_type == NULL || content_type->type != ASN1_TYPE_OBJECT_IDENTIFIER) {
-                fprintf(stderr, "ERROR: No ContentType information available.\n");
-            } else {
-                encrypted_data = content_type->next != NULL ? content_type->next->child : NULL;
-                if (encrypted_data == NULL || encrypted_data->type != ASN1_TYPE_SEQUENCE) {
-                    fprintf(stderr, "ERROR: EncryptedData not availavble.\n");
-                } else {
-                    cms_version = encrypted_data->child;
-                    if (cms_version == NULL || cms_version->type != ASN1_TYPE_INTEGER || cms_version->length != 1) {
-                        fprintf(stderr, "ERROR: CMSVersion not availavble.\n");
-                    } else {
-                        version = cms_version->data[0];
-                        printf("CMSVersion: %d\n", version);
-                    }
-                }
-            }
-        }
-    } else {
+    asn1_tree cms = {0};
+    if (der_decode(CertData, CertDataLength, &cms, asn1_objects, asn1_object_count) < 0) {
         fprintf(stderr, "ERROR: Could not parse the data.\n");
+        free(asn1_objects);
+        return;
     }
+
+    print_asn1(&cms, 0); //Dump the data
+
+    //Since we know this is CMS data, we can try to interpret it.
+    if (cms.type != ASN1_TYPE_SEQUENCE) {
+        fprintf(stderr, "ERROR: The outer type is not a SEQUENCE.\n");
+        free(asn1_objects);
+        return;
+    }
+
+    asn1_tree * content_type = cms.child;
+    if (content_type == NULL || content_type->type != ASN1_TYPE_OBJECT_IDENTIFIER) {
+        fprintf(stderr, "ERROR: No ContentType information available.\n");
+        free(asn1_objects);
+        return;
+    }
+
+    asn1_tree * encrypted_data = content_type->next != NULL ? content_type->next->child : NULL;
+    if (encrypted_data == NULL || encrypted_data->type != ASN1_TYPE_SEQUENCE) {
+        fprintf(stderr, "ERROR: EncryptedData not availavble.\n");
+        free(asn1_objects);
+        return;
+    }
+
+    asn1_tree * cms_version = encrypted_data->child;
+    if (cms_version == NULL || cms_version->type != ASN1_TYPE_INTEGER || cms_version->length != 1) {
+        fprintf(stderr, "ERROR: CMSVersion not availavble.\n");
+        free(asn1_objects);
+        return;
+    }
+
+    printf("CMSVersion: %d\n", cms_version->data[0]);
 
     free(asn1_objects);
 }
