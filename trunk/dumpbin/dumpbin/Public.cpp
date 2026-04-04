@@ -12,9 +12,14 @@ LPWSTR UTF8ToWide(IN PCHAR utf8)
 */
 {
     int cchWideChar = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, 0, 0);
+    if (cchWideChar == 0) {
+        return NULL;
+    }
 
-    LPWSTR pws = (LPWSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (SIZE_T)cchWideChar * 4);
-    _ASSERTE(pws);
+    LPWSTR pws = (LPWSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (SIZE_T)cchWideChar * sizeof(WCHAR));
+    if (pws == NULL) {
+        return NULL;
+    }
 
     int ret = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, pws, cchWideChar);//utf8->Unicode
     _ASSERTE(ret);
@@ -32,7 +37,7 @@ void GetDataDirectory(_In_ PBYTE Data, _In_ DWORD Size, _In_ BYTE index, _Out_ P
         return;
     }
 
-    _ASSERTE(index <= IMAGE_NUMBEROF_DIRECTORY_ENTRIES);
+    _ASSERTE(index < IMAGE_NUMBEROF_DIRECTORY_ENTRIES);
 
     PIMAGE_NT_HEADERS NtHeader = ImageNtHeader(Data);
     _ASSERTE(NtHeader);
@@ -705,10 +710,16 @@ DWORD MapFile(_In_ LPCWSTR FileName, _In_opt_ PeCallBack CallBack)
     HANDLE hFile = INVALID_HANDLE_VALUE;
     HANDLE hMapFile = NULL;
     PBYTE FileContent = NULL;
+    PVOID Wow64OldValue = NULL;
+    BOOL Wow64FsRedirectionDisabled = FALSE;
+
+    if (FileName == NULL) {
+        return ERROR_INVALID_PARAMETER;
+    }
 
     if (IsWow64()) {//在wow64下关闭文件重定向。
-        BOOLEAN bRet = Wow64EnableWow64FsRedirection(FALSE);
-        _ASSERTE(bRet);
+        Wow64FsRedirectionDisabled = Wow64DisableWow64FsRedirection(&Wow64OldValue);
+        _ASSERTE(Wow64FsRedirectionDisabled);
     }
 
     __try {
@@ -752,7 +763,7 @@ DWORD MapFile(_In_ LPCWSTR FileName, _In_opt_ PeCallBack CallBack)
         if (FileContent == NULL) {
             LastError = GetLastError();
             LOGA(ERROR_LEVEL, "LastError:%#d", LastError);
-            LogApiErrMsg("CreateFileMapping");
+            LogApiErrMsg("MapViewOfFile");
             __leave;
         }
 
@@ -776,11 +787,10 @@ DWORD MapFile(_In_ LPCWSTR FileName, _In_opt_ PeCallBack CallBack)
         if (INVALID_HANDLE_VALUE != hFile) {
             CloseHandle(hFile);
         }
-    }
 
-    if (IsWow64()) {
-        BOOLEAN bRet = Wow64EnableWow64FsRedirection(TRUE);//Enable WOW64 file system redirection. 
-        _ASSERTE(bRet);
+        if (Wow64FsRedirectionDisabled) {
+            Wow64RevertWow64FsRedirection(Wow64OldValue);
+        }
     }
 
     return LastError;
