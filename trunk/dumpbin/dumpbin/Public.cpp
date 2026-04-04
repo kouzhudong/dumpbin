@@ -6,6 +6,23 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+struct FlagEntry
+{
+    DWORD   Flag;
+    PCSTR   Name;
+};
+
+
+static void AppendFlags(_In_ DWORD Value, _In_reads_(Count) const FlagEntry * Table, _In_ size_t Count, _Out_writes_(cchDest) PCHAR String, _In_ size_t cchDest)
+{
+    for (size_t i = 0; i < Count; i++) {
+        if (Value & Table[i].Flag) {
+            StringCchCatA(String, cchDest, Table[i].Name);
+        }
+    }
+}
+
+
 LPWSTR UTF8ToWide(IN PCHAR utf8)
 /*
 得到的内存有调用者释放。
@@ -42,25 +59,18 @@ void GetDataDirectory(_In_ PBYTE Data, _In_ DWORD Size, _In_ BYTE index, _Out_ P
     PIMAGE_NT_HEADERS NtHeader = ImageNtHeader(Data);
     _ASSERTE(NtHeader);
 
-    PIMAGE_DATA_DIRECTORY data_directory = NULL;
-
-    bool IsPe64 = IsPE32Ex(Data, Size);
-    if (IsPe64) {
-        PIMAGE_OPTIONAL_HEADER64 OptionalHeader = (PIMAGE_OPTIONAL_HEADER64)&NtHeader->OptionalHeader;
-
-        data_directory = &OptionalHeader->DataDirectory[0];
-
-        _ASSERTE(IMAGE_NUMBEROF_DIRECTORY_ENTRIES == OptionalHeader->NumberOfRvaAndSizes);
+    PIMAGE_DATA_DIRECTORY directory_entry;
+    if (IsPE32Ex(Data, Size)) {
+        PIMAGE_OPTIONAL_HEADER64 opt = (PIMAGE_OPTIONAL_HEADER64)&NtHeader->OptionalHeader;
+        _ASSERTE(IMAGE_NUMBEROF_DIRECTORY_ENTRIES == opt->NumberOfRvaAndSizes);
+        directory_entry = opt->DataDirectory;
     } else {
-        PIMAGE_OPTIONAL_HEADER32 OptionalHeader = (PIMAGE_OPTIONAL_HEADER32)&NtHeader->OptionalHeader;
-
-        data_directory = &OptionalHeader->DataDirectory[0];
-
-        _ASSERTE(IMAGE_NUMBEROF_DIRECTORY_ENTRIES == OptionalHeader->NumberOfRvaAndSizes);
+        PIMAGE_OPTIONAL_HEADER32 opt = (PIMAGE_OPTIONAL_HEADER32)&NtHeader->OptionalHeader;
+        _ASSERTE(IMAGE_NUMBEROF_DIRECTORY_ENTRIES == opt->NumberOfRvaAndSizes);
+        directory_entry = opt->DataDirectory;
     }
 
-    DataDirectory->VirtualAddress = data_directory[index].VirtualAddress;
-    DataDirectory->Size = data_directory[index].Size;
+    *DataDirectory = directory_entry[index];
 }
 
 
@@ -69,300 +79,144 @@ UINT Rva2Va(_In_ PBYTE Data, _In_ UINT rva)
 返回0表示失败，其他的是在文件中的偏移。
 */
 {
-    UINT offset = 0;//返回值。
-
     PIMAGE_NT_HEADERS NtHeader = ImageNtHeader(Data);
     _ASSERTE(NtHeader);
-    PIMAGE_FILE_HEADER FileHeader = (PIMAGE_FILE_HEADER)&NtHeader->FileHeader;
-    PIMAGE_OPTIONAL_HEADER OptionalHeader = (PIMAGE_OPTIONAL_HEADER)&NtHeader->OptionalHeader;
-    PIMAGE_SECTION_HEADER SectionHeader = (PIMAGE_SECTION_HEADER)((PBYTE)OptionalHeader + FileHeader->SizeOfOptionalHeader);//必须加(ULONG),不然出错.
 
-    //注意：有个宏叫IMAGE_FIRST_SECTION。
+    PIMAGE_SECTION_HEADER SectionHeader = IMAGE_FIRST_SECTION(NtHeader);
+    WORD NumberOfSections = NtHeader->FileHeader.NumberOfSections;
 
-    for (WORD i = 0; i < FileHeader->NumberOfSections; i++) {
-        if (rva >= SectionHeader[i].VirtualAddress && rva <= (SectionHeader[i].VirtualAddress + SectionHeader[i].Misc.VirtualSize)) {
-            offset = rva - SectionHeader[i].VirtualAddress + SectionHeader[i].PointerToRawData;
-            break;
+    for (WORD i = 0; i < NumberOfSections; i++) {
+        if (rva >= SectionHeader[i].VirtualAddress && rva < SectionHeader[i].VirtualAddress + SectionHeader[i].Misc.VirtualSize) {
+            return rva - SectionHeader[i].VirtualAddress + SectionHeader[i].PointerToRawData;
         }
     }
 
-    return offset;
+    return 0;
 }
 
 
 void GetSectionCharacteristics(_In_ DWORD Characteristics, _Out_writes_(cchDest) PCHAR String, _In_ size_t cchDest)
 {
-    if (Characteristics & IMAGE_SCN_SCALE_INDEX) {
-        StringCchCatA(String, cchDest, "SCALE_INDEX ");
-    }
+    static const FlagEntry SectionFlags[] = {
+        {IMAGE_SCN_SCALE_INDEX,              "SCALE_INDEX "},
+        {IMAGE_SCN_TYPE_NO_PAD,              "TYPE_NO_PAD "},
+        {IMAGE_SCN_CNT_CODE,                 "CNT_CODE "},
+        {IMAGE_SCN_CNT_INITIALIZED_DATA,     "INITIALIZED_DATA "},
+        {IMAGE_SCN_CNT_UNINITIALIZED_DATA,   "CNT_UNINITIALIZED_DATA "},
+        {IMAGE_SCN_LNK_OTHER,                "LNK_OTHER "},
+        {IMAGE_SCN_LNK_INFO,                 "LNK_INFO "},
+        {IMAGE_SCN_LNK_REMOVE,               "LNK_REMOVE "},
+        {IMAGE_SCN_LNK_COMDAT,               "LNK_COMDAT "},
+        {IMAGE_SCN_NO_DEFER_SPEC_EXC,        "NO_DEFER_SPEC_EXC "},
+        {IMAGE_SCN_GPREL,                    "GPREL "},
+        {IMAGE_SCN_MEM_FARDATA,              "MEM_FARDATA "},
+        {IMAGE_SCN_MEM_PURGEABLE,            "MEM_PURGEABLE "},
+        {IMAGE_SCN_MEM_LOCKED,               "MEM_LOCKED "},
+        {IMAGE_SCN_MEM_PRELOAD,              "MEM_PRELOAD "},
+        {IMAGE_SCN_LNK_NRELOC_OVFL,          "LNK_NRELOC_OVFL "},
+        {IMAGE_SCN_MEM_DISCARDABLE,          "MEM_DISCARDABLE "},
+        {IMAGE_SCN_MEM_NOT_CACHED,           "MEM_NOT_CACHED "},
+        {IMAGE_SCN_MEM_NOT_PAGED,            "MEM_NOT_PAGED "},
+        {IMAGE_SCN_MEM_SHARED,               "MEM_SHARED "},
+        {IMAGE_SCN_MEM_EXECUTE,              "MEM_EXECUTE "},
+        {IMAGE_SCN_MEM_READ,                 "MEM_READ "},
+        {IMAGE_SCN_MEM_WRITE,                "MEM_WRITE "},
+    };
 
-    if (Characteristics & IMAGE_SCN_TYPE_NO_PAD) {
-        StringCchCatA(String, cchDest, "TYPE_NO_PAD ");
-    }
+    AppendFlags(Characteristics, SectionFlags, _countof(SectionFlags), String, cchDest);
 
-    if (Characteristics & IMAGE_SCN_CNT_CODE) {
-        StringCchCatA(String, cchDest, "CNT_CODE ");
-    }
+    // IMAGE_SCN_ALIGN_* is a 4-bit field, not independent bit flags.
+    static const PCSTR AlignNames[] = {
+        NULL,               // 0: default
+        "ALIGN_1BYTES ",    // 1
+        "ALIGN_2BYTES ",    // 2
+        "ALIGN_4BYTES ",    // 3
+        "ALIGN_8BYTES ",    // 4
+        "ALIGN_16BYTES ",   // 5
+        "ALIGN_32BYTES ",   // 6
+        "ALIGN_64BYTES ",   // 7
+        "ALIGN_128BYTES ",  // 8
+        "ALIGN_256BYTES ",  // 9
+        "ALIGN_512BYTES ",  // 10
+        "ALIGN_1024BYTES ", // 11
+        "ALIGN_2048BYTES ", // 12
+        "ALIGN_4096BYTES ", // 13
+        "ALIGN_8192BYTES ", // 14
+        NULL,               // 15: reserved
+    };
 
-    if (Characteristics & IMAGE_SCN_CNT_INITIALIZED_DATA) {
-        StringCchCatA(String, cchDest, "INITIALIZED_DATA ");
-    }
-
-    if (Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA) {
-        StringCchCatA(String, cchDest, "CNT_UNINITIALIZED_DATA ");
-    }
-
-    if (Characteristics & IMAGE_SCN_LNK_OTHER) {
-        StringCchCatA(String, cchDest, "LNK_OTHER ");
-    }
-
-    if (Characteristics & IMAGE_SCN_LNK_INFO) {
-        StringCchCatA(String, cchDest, "LNK_INFO ");
-    }
-
-    if (Characteristics & IMAGE_SCN_LNK_REMOVE) {
-        StringCchCatA(String, cchDest, "LNK_REMOVE ");
-    }
-
-    if (Characteristics & IMAGE_SCN_LNK_COMDAT) {
-        StringCchCatA(String, cchDest, "LNK_COMDAT ");
-    }
-
-    if (Characteristics & IMAGE_SCN_NO_DEFER_SPEC_EXC) {
-        StringCchCatA(String, cchDest, "NO_DEFER_SPEC_EXC ");
-    }
-
-    if (Characteristics & IMAGE_SCN_GPREL) {
-        StringCchCatA(String, cchDest, "GPREL ");
-    }
-
-    if (Characteristics & IMAGE_SCN_MEM_FARDATA) {
-        StringCchCatA(String, cchDest, "MEM_FARDATA ");
-    }
-
-    if (Characteristics & IMAGE_SCN_MEM_PURGEABLE) {
-        StringCchCatA(String, cchDest, "MEM_PURGEABLE ");
-    }
-
-    if (Characteristics & IMAGE_SCN_MEM_16BIT) {
-        StringCchCatA(String, cchDest, "MEM_16BIT ");
-    }
-
-    if (Characteristics & IMAGE_SCN_MEM_LOCKED) {
-        StringCchCatA(String, cchDest, "MEM_LOCKED ");
-    }
-
-    if (Characteristics & IMAGE_SCN_MEM_PRELOAD) {
-        StringCchCatA(String, cchDest, "MEM_PRELOAD ");
-    }
-
-    if (Characteristics & IMAGE_SCN_ALIGN_1BYTES) {
-        StringCchCatA(String, cchDest, "ALIGN_1BYTES ");
-    }
-
-    if (Characteristics & IMAGE_SCN_ALIGN_2BYTES) {
-        StringCchCatA(String, cchDest, "ALIGN_2BYTES ");
-    }
-
-    if (Characteristics & IMAGE_SCN_ALIGN_4BYTES) {
-        StringCchCatA(String, cchDest, "ALIGN_4BYTES ");
-    }
-
-    if (Characteristics & IMAGE_SCN_ALIGN_8BYTES) {
-        StringCchCatA(String, cchDest, "ALIGN_8BYTES ");
-    }
-
-    if (Characteristics & IMAGE_SCN_ALIGN_16BYTES) {
-        StringCchCatA(String, cchDest, "ALIGN_16BYTES ");
-    }
-
-    if (Characteristics & IMAGE_SCN_ALIGN_32BYTES) {
-        StringCchCatA(String, cchDest, "ALIGN_32BYTES ");
-    }
-
-    if (Characteristics & IMAGE_SCN_ALIGN_64BYTES) {
-        StringCchCatA(String, cchDest, "ALIGN_64BYTES ");
-    }
-
-    if (Characteristics & IMAGE_SCN_ALIGN_128BYTES) {
-        StringCchCatA(String, cchDest, "ALIGN_128BYTES ");
-    }
-
-    if (Characteristics & IMAGE_SCN_ALIGN_256BYTES) {
-        StringCchCatA(String, cchDest, "ALIGN_256BYTES ");
-    }
-
-    if (Characteristics & IMAGE_SCN_ALIGN_512BYTES) {
-        StringCchCatA(String, cchDest, "ALIGN_512BYTES ");
-    }
-
-    if (Characteristics & IMAGE_SCN_ALIGN_1024BYTES) {
-        StringCchCatA(String, cchDest, "ALIGN_1024BYTES ");
-    }
-
-    if (Characteristics & IMAGE_SCN_ALIGN_2048BYTES) {
-        StringCchCatA(String, cchDest, "ALIGN_2048BYTES ");
-    }
-
-    if (Characteristics & IMAGE_SCN_ALIGN_4096BYTES) {
-        StringCchCatA(String, cchDest, "ALIGN_4096BYTES ");
-    }
-
-    if (Characteristics & IMAGE_SCN_ALIGN_8192BYTES) {
-        StringCchCatA(String, cchDest, "ALIGN_8192BYTES ");
-    }
-
-    if (Characteristics & IMAGE_SCN_ALIGN_MASK) {
-        StringCchCatA(String, cchDest, "ALIGN_MASK ");
-    }
-
-    if (Characteristics & IMAGE_SCN_LNK_NRELOC_OVFL) {
-        StringCchCatA(String, cchDest, "LNK_NRELOC_OVFL ");
-    }
-
-    if (Characteristics & IMAGE_SCN_MEM_DISCARDABLE) {
-        StringCchCatA(String, cchDest, "MEM_DISCARDABLE ");
-    }
-
-    if (Characteristics & IMAGE_SCN_MEM_NOT_CACHED) {
-        StringCchCatA(String, cchDest, "MEM_NOT_CACHED ");
-    }
-
-    if (Characteristics & IMAGE_SCN_MEM_NOT_PAGED) {
-        StringCchCatA(String, cchDest, "MEM_NOT_PAGED ");
-    }
-
-    if (Characteristics & IMAGE_SCN_MEM_SHARED) {
-        StringCchCatA(String, cchDest, "MEM_SHARED ");
-    }
-
-    if (Characteristics & IMAGE_SCN_MEM_EXECUTE) {
-        StringCchCatA(String, cchDest, "MEM_EXECUTE ");
-    }
-
-    if (Characteristics & IMAGE_SCN_MEM_READ) {
-        StringCchCatA(String, cchDest, "MEM_READ ");
-    }
-
-    if (Characteristics & IMAGE_SCN_MEM_WRITE) {
-        StringCchCatA(String, cchDest, "MEM_WRITE ");
+    DWORD alignIndex = (Characteristics & IMAGE_SCN_ALIGN_MASK) >> 20;
+    if (alignIndex < _countof(AlignNames) && AlignNames[alignIndex] != NULL) {
+        StringCchCatA(String, cchDest, AlignNames[alignIndex]);
     }
 }
 
 
 void GetDllCharacteristics(_In_ WORD Characteristics, _Out_writes_(cchDest) PCHAR String, _In_ size_t cchDest)
 {
-    if (Characteristics & IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA) {
-        StringCchCatA(String, cchDest, "HIGH_ENTROPY_VA ");
-    }
+    static const FlagEntry DllFlags[] = {
+        {IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA,       "HIGH_ENTROPY_VA "},
+        {IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE,          "DYNAMIC_BASE "},
+        {IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY,       "FORCE_INTEGRITY "},
+        {IMAGE_DLLCHARACTERISTICS_NX_COMPAT,             "NX_COMPAT "},
+        {IMAGE_DLLCHARACTERISTICS_NO_ISOLATION,          "NO_ISOLATION "},
+        {IMAGE_DLLCHARACTERISTICS_NO_SEH,                "NO_SEH "},
+        {IMAGE_DLLCHARACTERISTICS_NO_BIND,               "NO_BIND "},
+        {IMAGE_DLLCHARACTERISTICS_APPCONTAINER,          "APPCONTAINER "},
+        {IMAGE_DLLCHARACTERISTICS_WDM_DRIVER,            "WDM_DRIVER "},
+        {IMAGE_DLLCHARACTERISTICS_GUARD_CF,              "GUARD_CF "},
+        {IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE, "TERMINAL_SERVER_AWARE "},
+    };
 
-    if (Characteristics & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE) {
-        StringCchCatA(String, cchDest, "DYNAMIC_BASE ");
-    }
-
-    if (Characteristics & IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY) {
-        StringCchCatA(String, cchDest, "FORCE_INTEGRITY ");
-    }
-
-    if (Characteristics & IMAGE_DLLCHARACTERISTICS_NX_COMPAT) {
-        StringCchCatA(String, cchDest, "NX_COMPAT ");
-    }
-
-    if (Characteristics & IMAGE_DLLCHARACTERISTICS_NO_ISOLATION) {
-        StringCchCatA(String, cchDest, "NO_ISOLATION ");
-    }
-
-    if (Characteristics & IMAGE_DLLCHARACTERISTICS_NO_SEH) {
-        StringCchCatA(String, cchDest, "NO_SEH ");
-    }
-
-    if (Characteristics & IMAGE_DLLCHARACTERISTICS_NO_BIND) {
-        StringCchCatA(String, cchDest, "NO_BIND ");
-    }
-
-    if (Characteristics & IMAGE_DLLCHARACTERISTICS_APPCONTAINER) {
-        StringCchCatA(String, cchDest, "APPCONTAINER ");
-    }
-
-    if (Characteristics & IMAGE_DLLCHARACTERISTICS_WDM_DRIVER) {
-        StringCchCatA(String, cchDest, "WDM_DRIVER ");
-    }
-
-    if (Characteristics & IMAGE_DLLCHARACTERISTICS_GUARD_CF) {
-        StringCchCatA(String, cchDest, "GUARD_CF ");
-    }
-
-    if (Characteristics & IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE) {
-        StringCchCatA(String, cchDest, "TERMINAL_SERVER_AWARE ");
-    }
+    AppendFlags(Characteristics, DllFlags, _countof(DllFlags), String, cchDest);
 }
 
 
 PCSTR GetSubsystem(_In_ WORD Subsystem)
 {
-    PCSTR SubsystemString = NULL;
+    struct SubsystemEntry
+    {
+        WORD    Value;
+        PCSTR   Name;
+    };
 
-    switch (Subsystem) {
-    case IMAGE_SUBSYSTEM_UNKNOWN:
-        SubsystemString = "UNKNOWN";
-        break;
-    case IMAGE_SUBSYSTEM_NATIVE:
-        SubsystemString = "NATIVE";
-        break;
-    case IMAGE_SUBSYSTEM_WINDOWS_GUI:
-        SubsystemString = "WINDOWS_GUI";
-        break;
-    case IMAGE_SUBSYSTEM_WINDOWS_CUI:
-        SubsystemString = "WINDOWS_CUI";
-        break;
-    case IMAGE_SUBSYSTEM_OS2_CUI:
-        SubsystemString = "OS2_CUI";
-        break;
-    case IMAGE_SUBSYSTEM_POSIX_CUI:
-        SubsystemString = "POSIX_CUI";
-        break;
-    case IMAGE_SUBSYSTEM_NATIVE_WINDOWS:
-        SubsystemString = "NATIVE_WINDOWS";
-        break;
-    case IMAGE_SUBSYSTEM_WINDOWS_CE_GUI:
-        SubsystemString = "WINDOWS_CE_GUI";
-        break;
-    case IMAGE_SUBSYSTEM_EFI_APPLICATION:
-        SubsystemString = "EFI_APPLICATION";
-        break;
-    case IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER:
-        SubsystemString = "EFI_BOOT_SERVICE_DRIVER";
-        break;
-    case IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER:
-        SubsystemString = "EFI_RUNTIME_DRIVER";
-        break;
-    case IMAGE_SUBSYSTEM_EFI_ROM:
-        SubsystemString = "EFI_ROM";
-        break;
-    case IMAGE_SUBSYSTEM_XBOX:
-        SubsystemString = "XBOX";
-        break;
-    case IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION:
-        SubsystemString = "WINDOWS_BOOT_APPLICATION";
-        break;
-    case IMAGE_SUBSYSTEM_XBOX_CODE_CATALOG:
-        SubsystemString = "XBOX_CODE_CATALOG";
-        break;
-    default:
-        LOGA(ERROR_LEVEL, "SUBSYSTEM:%#X", Subsystem);
-        SubsystemString = "未定义";
-        break;
+    static const SubsystemEntry Table[] = {
+        {IMAGE_SUBSYSTEM_UNKNOWN,                  "UNKNOWN"},
+        {IMAGE_SUBSYSTEM_NATIVE,                   "NATIVE"},
+        {IMAGE_SUBSYSTEM_WINDOWS_GUI,              "WINDOWS_GUI"},
+        {IMAGE_SUBSYSTEM_WINDOWS_CUI,              "WINDOWS_CUI"},
+        {IMAGE_SUBSYSTEM_OS2_CUI,                  "OS2_CUI"},
+        {IMAGE_SUBSYSTEM_POSIX_CUI,                "POSIX_CUI"},
+        {IMAGE_SUBSYSTEM_NATIVE_WINDOWS,           "NATIVE_WINDOWS"},
+        {IMAGE_SUBSYSTEM_WINDOWS_CE_GUI,           "WINDOWS_CE_GUI"},
+        {IMAGE_SUBSYSTEM_EFI_APPLICATION,          "EFI_APPLICATION"},
+        {IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER,  "EFI_BOOT_SERVICE_DRIVER"},
+        {IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER,       "EFI_RUNTIME_DRIVER"},
+        {IMAGE_SUBSYSTEM_EFI_ROM,                  "EFI_ROM"},
+        {IMAGE_SUBSYSTEM_XBOX,                     "XBOX"},
+        {IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION, "WINDOWS_BOOT_APPLICATION"},
+        {IMAGE_SUBSYSTEM_XBOX_CODE_CATALOG,        "XBOX_CODE_CATALOG"},
+    };
+
+    for (size_t i = 0; i < _countof(Table); i++) {
+        if (Table[i].Value == Subsystem) {
+            return Table[i].Name;
+        }
     }
 
-    return SubsystemString;
+    LOGA(ERROR_LEVEL, "SUBSYSTEM:%#X", Subsystem);
+    return "未定义";
 }
 
 
 void TimeStampToFileTime(INT64 timeStamp, FILETIME & fileTime)
 {
-    INT64 nll = timeStamp * 10000000 + 116444736000000000;
-    fileTime.dwLowDateTime = (DWORD)nll;
-    fileTime.dwHighDateTime = nll >> 32;
+    static const INT64 TICKS_PER_SECOND = 10000000LL;
+    static const INT64 EPOCH_DIFFERENCE = 116444736000000000LL; // 1601-01-01 to 1970-01-01
+
+    INT64 ticks = timeStamp * TICKS_PER_SECOND + EPOCH_DIFFERENCE;
+    fileTime.dwLowDateTime = (DWORD)ticks;
+    fileTime.dwHighDateTime = (DWORD)(ticks >> 32);
 }
 
 
@@ -399,209 +253,95 @@ void GetTimeDateStamp(_In_ DWORD TimeDateStamp, _Out_writes_(MAX_PATH) PCHAR Str
 
 
 void GetCharacteristics(_In_ WORD Characteristics, _Out_writes_(cchDest) PCHAR String, _In_ size_t cchDest)
-/*
-这个函数不能用BitTest，因为它是从零开始的，但是这个结构没有0，从1开始的。
-
-BitTest的第二个数必须是大于零的，不能是负数。
-_bittest64需要_AMD64_。
-*/
 {
+    static const FlagEntry FileFlags[] = {
+        {IMAGE_FILE_RELOCS_STRIPPED,         "RELOCS_STRIPPED "},
+        {IMAGE_FILE_EXECUTABLE_IMAGE,        "EXECUTABLE_IMAGE "},
+        {IMAGE_FILE_LINE_NUMS_STRIPPED,       "LINE_NUMS_STRIPPED "},
+        {IMAGE_FILE_LOCAL_SYMS_STRIPPED,      "LOCAL_SYMS_STRIPPED "},
+        {IMAGE_FILE_AGGRESIVE_WS_TRIM,       "AGGRESIVE_WS_TRIM "},
+        {IMAGE_FILE_LARGE_ADDRESS_AWARE,      "LARGE_ADDRESS_AWARE "},
+        {IMAGE_FILE_BYTES_REVERSED_LO,        "BYTES_REVERSED_LO "},
+        {IMAGE_FILE_32BIT_MACHINE,            "32BIT_MACHINE "},
+        {IMAGE_FILE_DEBUG_STRIPPED,            "DEBUG_STRIPPED "},
+        {IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP,  "REMOVABLE_RUN_FROM_SWAP "},
+        {IMAGE_FILE_NET_RUN_FROM_SWAP,        "NET_RUN_FROM_SWAP "},
+        {IMAGE_FILE_SYSTEM,                   "SYSTEM "},
+        {IMAGE_FILE_DLL,                      "DLL "},
+        {IMAGE_FILE_UP_SYSTEM_ONLY,           "UP_SYSTEM_ONLY "},
+        {IMAGE_FILE_BYTES_REVERSED_HI,        "BYTES_REVERSED_HI "},
+    };
+
     _ASSERTE(String);
-    //String[0] = 0;
 
-    if (Characteristics & IMAGE_FILE_RELOCS_STRIPPED) {
-        StringCchCatA(String, cchDest, "RELOCS_STRIPPED ");
-    }
-
-    if (Characteristics & IMAGE_FILE_EXECUTABLE_IMAGE) {
-        StringCchCatA(String, cchDest, "EXECUTABLE_IMAGE ");
-    }
-
-    if (Characteristics & IMAGE_FILE_LINE_NUMS_STRIPPED) {
-        StringCchCatA(String, cchDest, "LINE_NUMS_STRIPPED ");
-    }
-
-    if (Characteristics & IMAGE_FILE_LOCAL_SYMS_STRIPPED) {
-        StringCchCatA(String, cchDest, "LOCAL_SYMS_STRIPPED ");
-    }
-
-    if (Characteristics & IMAGE_FILE_AGGRESIVE_WS_TRIM) {
-        StringCchCatA(String, cchDest, "AGGRESIVE_WS_TRIM ");
-    }
-
-    if (Characteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE) {
-        StringCchCatA(String, cchDest, "LARGE_ADDRESS_AWARE ");
-    }
-
-    if (Characteristics & IMAGE_FILE_BYTES_REVERSED_LO) {
-        StringCchCatA(String, cchDest, "BYTES_REVERSED_LO ");
-    }
-
-    if (Characteristics & IMAGE_FILE_32BIT_MACHINE) {
-        StringCchCatA(String, cchDest, "32BIT_MACHINE ");
-    }
-
-    if (Characteristics & IMAGE_FILE_DEBUG_STRIPPED) {
-        StringCchCatA(String, cchDest, "DEBUG_STRIPPED ");
-    }
-
-    if (Characteristics & IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP) {
-        StringCchCatA(String, cchDest, "REMOVABLE_RUN_FROM_SWAP ");
-    }
-
-    if (Characteristics & IMAGE_FILE_NET_RUN_FROM_SWAP) {
-        StringCchCatA(String, cchDest, "NET_RUN_FROM_SWAP ");
-    }
-
-    if (Characteristics & IMAGE_FILE_SYSTEM) {
-        StringCchCatA(String, cchDest, "SYSTEM ");
-    }
-
-    if (Characteristics & IMAGE_FILE_DLL) {
-        StringCchCatA(String, cchDest, "DLL ");
-    }
-
-    if (Characteristics & IMAGE_FILE_UP_SYSTEM_ONLY) {
-        StringCchCatA(String, cchDest, "UP_SYSTEM_ONLY ");
-    }
-
-    if (Characteristics & IMAGE_FILE_BYTES_REVERSED_HI) {
-        StringCchCatA(String, cchDest, "BYTES_REVERSED_HI ");
-    }
+    AppendFlags(Characteristics, FileFlags, _countof(FileFlags), String, cchDest);
 }
 
 
 PCSTR GetMachine(_In_ WORD Machine)
 {
-    PCSTR MachineString = NULL;
+    struct MachineEntry
+    {
+        WORD    Value;
+        PCSTR   Name;
+    };
 
-    switch (Machine) {
-    case IMAGE_FILE_MACHINE_UNKNOWN:
-        MachineString = "适用于任何类型处理器";
-        break;
-    case IMAGE_FILE_MACHINE_TARGET_HOST:
-        MachineString = "Useful for indicating we want to interact with the host and not a WoW guest";
-        break;
-    case IMAGE_FILE_MACHINE_I386:
-        MachineString = "Intel 386";
-        break;
-    case IMAGE_FILE_MACHINE_R3000:
-        MachineString = "MIPS little-endian, 0x160 big-endian";
-        break;
-    case IMAGE_FILE_MACHINE_R4000:
-        MachineString = "MIPS little-endian";
-        break;
-    case IMAGE_FILE_MACHINE_R10000:
-        MachineString = "MIPS little-endian";
-        break;
-    case IMAGE_FILE_MACHINE_WCEMIPSV2:
-        MachineString = "MIPS little-endian WCE v2";
-        break;
-    case IMAGE_FILE_MACHINE_ALPHA:
-        MachineString = "Alpha_AXP";
-        break;
-    case IMAGE_FILE_MACHINE_SH3:
-        MachineString = "SH3 little-endian";
-        break;
-    case IMAGE_FILE_MACHINE_SH3DSP:
-        MachineString = "IMAGE_FILE_MACHINE_SH3DSP";
-        break;
-    case IMAGE_FILE_MACHINE_SH3E:
-        MachineString = "SH3E little-endian";
-        break;
-    case IMAGE_FILE_MACHINE_SH4:
-        MachineString = "SH4 little-endian";
-        break;
-    case IMAGE_FILE_MACHINE_SH5:
-        MachineString = "SH5";
-        break;
-    case IMAGE_FILE_MACHINE_ARM:
-        MachineString = "ARM Little-Endian";
-        break;
-    case IMAGE_FILE_MACHINE_THUMB:
-        MachineString = "ARM Thumb/Thumb-2 Little-Endian";
-        break;
-    case IMAGE_FILE_MACHINE_ARMNT:
-        MachineString = "ARM Thumb-2 Little-Endian";
-        break;
-    case IMAGE_FILE_MACHINE_AM33:
-        MachineString = "IMAGE_FILE_MACHINE_AM33";
-        break;
-    case IMAGE_FILE_MACHINE_POWERPC:
-        MachineString = "IBM PowerPC Little-Endian";
-        break;
-    case IMAGE_FILE_MACHINE_POWERPCFP:
-        MachineString = "IMAGE_FILE_MACHINE_POWERPCFP";
-        break;
-    case IMAGE_FILE_MACHINE_IA64:
-        MachineString = "Intel 64";
-        break;
-    case IMAGE_FILE_MACHINE_MIPS16:
-        MachineString = "MIPS";
-        break;
-    case IMAGE_FILE_MACHINE_ALPHA64:
-        MachineString = "ALPHA64";
-        break;
-    case IMAGE_FILE_MACHINE_MIPSFPU:
-        MachineString = "MIPS";
-        break;
-    case IMAGE_FILE_MACHINE_MIPSFPU16:
-        MachineString = "MIPS";
-        break;
-    case IMAGE_FILE_MACHINE_TRICORE:
-        MachineString = "Infineon";
-        break;
-    case IMAGE_FILE_MACHINE_CEF:
-        MachineString = "IMAGE_FILE_MACHINE_CEF";
-        break;
-    case IMAGE_FILE_MACHINE_EBC:
-        MachineString = "EFI Byte Code";
-        break;
-    case IMAGE_FILE_MACHINE_AMD64:
-        MachineString = "AMD64 (K8)";
-        break;
-    case IMAGE_FILE_MACHINE_M32R:
-        MachineString = "M32R little-endian";
-        break;
-    case IMAGE_FILE_MACHINE_ARM64:
-        MachineString = "ARM64 Little-Endian";
-        break;
-    case IMAGE_FILE_MACHINE_CEE:
-        MachineString = "IMAGE_FILE_MACHINE_CEE";
-        break;
-    default:
-        LOGA(ERROR_LEVEL, "Machine:%#X", Machine);
-        MachineString = "未知";
-        break;
+    static const MachineEntry Table[] = {
+        {IMAGE_FILE_MACHINE_UNKNOWN,    "适用于任何类型处理器"},
+        {IMAGE_FILE_MACHINE_TARGET_HOST,"Useful for indicating we want to interact with the host and not a WoW guest"},
+        {IMAGE_FILE_MACHINE_I386,       "Intel 386"},
+        {IMAGE_FILE_MACHINE_R3000,      "MIPS little-endian, 0x160 big-endian"},
+        {IMAGE_FILE_MACHINE_R4000,      "MIPS little-endian"},
+        {IMAGE_FILE_MACHINE_R10000,     "MIPS little-endian"},
+        {IMAGE_FILE_MACHINE_WCEMIPSV2,  "MIPS little-endian WCE v2"},
+        {IMAGE_FILE_MACHINE_ALPHA,      "Alpha_AXP"},
+        {IMAGE_FILE_MACHINE_SH3,        "SH3 little-endian"},
+        {IMAGE_FILE_MACHINE_SH3DSP,     "IMAGE_FILE_MACHINE_SH3DSP"},
+        {IMAGE_FILE_MACHINE_SH3E,       "SH3E little-endian"},
+        {IMAGE_FILE_MACHINE_SH4,        "SH4 little-endian"},
+        {IMAGE_FILE_MACHINE_SH5,        "SH5"},
+        {IMAGE_FILE_MACHINE_ARM,        "ARM Little-Endian"},
+        {IMAGE_FILE_MACHINE_THUMB,      "ARM Thumb/Thumb-2 Little-Endian"},
+        {IMAGE_FILE_MACHINE_ARMNT,      "ARM Thumb-2 Little-Endian"},
+        {IMAGE_FILE_MACHINE_AM33,       "IMAGE_FILE_MACHINE_AM33"},
+        {IMAGE_FILE_MACHINE_POWERPC,    "IBM PowerPC Little-Endian"},
+        {IMAGE_FILE_MACHINE_POWERPCFP,  "IMAGE_FILE_MACHINE_POWERPCFP"},
+        {IMAGE_FILE_MACHINE_IA64,       "Intel 64"},
+        {IMAGE_FILE_MACHINE_MIPS16,     "MIPS"},
+        {IMAGE_FILE_MACHINE_ALPHA64,    "ALPHA64"},
+        {IMAGE_FILE_MACHINE_MIPSFPU,    "MIPS"},
+        {IMAGE_FILE_MACHINE_MIPSFPU16,  "MIPS"},
+        {IMAGE_FILE_MACHINE_TRICORE,    "Infineon"},
+        {IMAGE_FILE_MACHINE_CEF,        "IMAGE_FILE_MACHINE_CEF"},
+        {IMAGE_FILE_MACHINE_EBC,        "EFI Byte Code"},
+        {IMAGE_FILE_MACHINE_AMD64,      "AMD64 (K8)"},
+        {IMAGE_FILE_MACHINE_M32R,       "M32R little-endian"},
+        {IMAGE_FILE_MACHINE_ARM64,      "ARM64 Little-Endian"},
+        {IMAGE_FILE_MACHINE_CEE,        "IMAGE_FILE_MACHINE_CEE"},
+    };
+
+    for (size_t i = 0; i < _countof(Table); i++) {
+        if (Table[i].Value == Machine) {
+            return Table[i].Name;
+        }
     }
 
-    return MachineString;
+    LOGA(ERROR_LEVEL, "Machine:%#X", Machine);
+    return "未知";
 }
 
 
 BOOL IsWow64()
 {
-    BOOL bIsWow64 = FALSE;
-
 #ifdef _WIN64
-    // 64-bit code, obviously not running in a 32-bit process
-    return false;
-#endif
-
-#pragma warning(push)
-#pragma warning(disable:4702)
-    HMODULE ModuleHandle = GetModuleHandle(TEXT("kernel32"));
-    if (NULL != ModuleHandle) {
-        LPFN_ISWOW64PROCESS fnIsWow64Process = (LPFN_ISWOW64PROCESS)GetProcAddress(ModuleHandle, "IsWow64Process");
-        if (NULL != fnIsWow64Process) {
-            if (!fnIsWow64Process(GetCurrentProcess(), &bIsWow64)) {
-                // handle error
-            }
-        }
+    return FALSE;
+#else
+    BOOL bIsWow64 = FALSE;
+    if (!IsWow64Process(GetCurrentProcess(), &bIsWow64)) {
+        bIsWow64 = FALSE;
     }
-
     return bIsWow64;
-#pragma warning(pop)
+#endif
 }
 
 
@@ -616,6 +356,10 @@ bool IsValidPE(_In_ PBYTE Data, _In_ DWORD Size)
         }
 
         PIMAGE_NT_HEADERS NtHeader = ImageNtHeader(Data);
+        if (NtHeader == NULL) {
+            __leave;
+        }
+
         switch (NtHeader->Signature) {
         case IMAGE_OS2_SIGNATURE:
             LOGA(ERROR_LEVEL, "恭喜你:发现一个NE文件!");
