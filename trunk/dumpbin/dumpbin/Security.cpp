@@ -8,6 +8,43 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+static void PrintWin32Error(_In_opt_z_ LPCWSTR FileName, _In_z_ PCSTR Operation)
+{
+    printf("%s failed. FileName:%ls, GetLastError:%#x\n",
+        Operation,
+        FileName != NULL ? FileName : L"",
+        GetLastError());
+}
+
+
+static void PrintHexBytes(_In_reads_bytes_(Length) const BYTE * Data, _In_ DWORD Length, _In_ bool Reverse = false)
+{
+    if (Data == NULL) {
+        return;
+    }
+
+    for (DWORD n = 0; n < Length; n++) {
+        DWORD index = Reverse ? (Length - (n + 1)) : n;
+        _tprintf(_T("%02x "), Data[index]);
+    }
+}
+
+
+static void PrintAsn1StringValue(_In_ const asn1_tree * list)
+{
+    LPSTR pws = (LPSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (SIZE_T)list->length + 2);
+    _ASSERTE(pws);
+    if (pws == NULL) {
+        return;
+    }
+
+    RtlCopyMemory(pws, list->data, list->length);
+    printf("Value: %s\n", pws);
+
+    HeapFree(GetProcessHeap(), 0, pws);
+}
+
+
 static DWORD GetCertificateBlobLength(_In_ const WIN_CERTIFICATE * certificate)
 {
     if (certificate == NULL || certificate->dwLength < FIELD_OFFSET(WIN_CERTIFICATE, bCertificate)) {
@@ -94,17 +131,13 @@ void DumpCertInfo(PCERT_INFO CertInfo)
 
     _tprintf(_T("公钥参数: "));
     DWORD dwData = CertInfo->SignatureAlgorithm.Parameters.cbData;
-    for (DWORD n = 0; n < dwData; n++) {
-        _tprintf(_T("%02x "), CertInfo->SignatureAlgorithm.Parameters.pbData[n]);
-    }
+    PrintHexBytes(CertInfo->SignatureAlgorithm.Parameters.pbData, dwData);
     _tprintf(_T("\n"));
 
     // Print Serial Number.
     _tprintf(_T("序列号: "));
     dwData = CertInfo->SerialNumber.cbData;
-    for (DWORD n = 0; n < dwData; n++) {
-        _tprintf(_T("%02x "), CertInfo->SerialNumber.pbData[dwData - (n + 1)]);
-    }
+    PrintHexBytes(CertInfo->SerialNumber.pbData, dwData, true);
     _tprintf(_T("\n"));
 
     char NotBefore[MAX_PATH] = {0};
@@ -119,17 +152,13 @@ void DumpCertInfo(PCERT_INFO CertInfo)
 
     _tprintf(_T("SubjectPublicKey Algorithm Parameters: "));
     dwData = CertInfo->SubjectPublicKeyInfo.Algorithm.Parameters.cbData;
-    for (DWORD n = 0; n < dwData; n++) {
-        _tprintf(_T("%02x "), CertInfo->SubjectPublicKeyInfo.Algorithm.Parameters.pbData[dwData - (n + 1)]);
-    }
+    PrintHexBytes(CertInfo->SubjectPublicKeyInfo.Algorithm.Parameters.pbData, dwData, true);
     _tprintf(_T("\n"));
 
     _tprintf(_T("UnusedBits:%d.\n"), CertInfo->SubjectPublicKeyInfo.PublicKey.cUnusedBits);
     _tprintf(_T("公钥: "));
     dwData = CertInfo->SubjectPublicKeyInfo.PublicKey.cbData;
-    for (DWORD n = 0; n < dwData; n++) {
-        _tprintf(_T("%02x "), CertInfo->SubjectPublicKeyInfo.PublicKey.pbData[n]);
-    }
+    PrintHexBytes(CertInfo->SubjectPublicKeyInfo.PublicKey.pbData, dwData);
     _tprintf(_T("\n"));
 
     //还有IssuerUniqueId，SubjectUniqueId，cExtension等信息。
@@ -140,9 +169,7 @@ void DumpCertInfo(PCERT_INFO CertInfo)
         _tprintf(_T("Extension fCritical:%d.\n"), CertInfo->rgExtension->fCritical);
         _tprintf(_T("Extension Value: "));
         dwData = CertInfo->rgExtension->Value.cbData;
-        for (DWORD n = 0; n < dwData; n++) {
-            _tprintf(_T("%02x "), CertInfo->rgExtension->Value.pbData[n]);
-        }
+        PrintHexBytes(CertInfo->rgExtension->Value.pbData, dwData);
         _tprintf(_T("\n"));
     } else {
         _tprintf(_T("Extension: 无.\n"));
@@ -373,13 +400,13 @@ BOOL VerifyEmbeddedSignature(IN LPCTSTR filename, OUT wchar_t * signer_file)
 {
     HCATADMIN cat_admin_handle = NULL;
     if (!CryptCATAdminAcquireContext(&cat_admin_handle, NULL, 0)) {
-        printf("FileName:%ls, GetLastError:%#x", filename, GetLastError());
+        PrintWin32Error(filename, "CryptCATAdminAcquireContext");
         return FALSE;
     }
 
     HANDLE hFile = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, NULL);
     if (INVALID_HANDLE_VALUE == hFile) {
-        printf("FileName:%ls, GetLastError:%#x", filename, GetLastError());
+        PrintWin32Error(filename, "CreateFileW");
         CryptCATAdminReleaseContext(cat_admin_handle, 0);
         return FALSE;
     }
@@ -387,6 +414,7 @@ BOOL VerifyEmbeddedSignature(IN LPCTSTR filename, OUT wchar_t * signer_file)
     DWORD hash_count = 100;
     BYTE hash_data[100];
     if (!CryptCATAdminCalcHashFromFileHandle(hFile, &hash_count, hash_data, 0)) {
+        PrintWin32Error(filename, "CryptCATAdminCalcHashFromFileHandle");
         CloseHandle(hFile);
         CryptCATAdminReleaseContext(cat_admin_handle, 0);
         return FALSE;
@@ -394,6 +422,7 @@ BOOL VerifyEmbeddedSignature(IN LPCTSTR filename, OUT wchar_t * signer_file)
     CloseHandle(hFile);
 
     std::wstring member_tag;
+    member_tag.reserve(hash_count * 2);
     for (DWORD dw = 0; dw < hash_count; dw++) {
         member_tag += L"0123456789ABCDEF"[(hash_data[dw] >> 4) & 0x0f];
         member_tag += L"0123456789ABCDEF"[hash_data[dw] & 0x0f];
@@ -470,26 +499,26 @@ BOOL GetSignerInfo(IN WCHAR * FileName)
             &hMsg,
             NULL);
         if (!fResult) {
-            printf("FileName:%ls, GetLastError:%#x", FileName, GetLastError());
+            PrintWin32Error(FileName, "CryptQueryObject");
             __leave;
         }
 
         DWORD dwSignerInfo = 0;
         fResult = CryptMsgGetParam(hMsg, CMSG_SIGNER_INFO_PARAM, 0, NULL, &dwSignerInfo);// Get signer information size.
         if (!fResult) {
-            printf("FileName:%ls, GetLastError:%#x", FileName, GetLastError());
+            PrintWin32Error(FileName, "CryptMsgGetParam");
             __leave;
         }
 
         pSignerInfo = (PCMSG_SIGNER_INFO)LocalAlloc(LPTR, dwSignerInfo);// Allocate memory for signer information.
         if (!pSignerInfo) {
-            printf("FileName:%ls, GetLastError:%#x", FileName, GetLastError());
+            PrintWin32Error(FileName, "LocalAlloc");
             __leave;
         }
 
         fResult = CryptMsgGetParam(hMsg, CMSG_SIGNER_INFO_PARAM, 0, (PVOID)pSignerInfo, &dwSignerInfo);// Get Signer Information.
         if (!fResult) {
-            printf("FileName:%ls, GetLastError:%#x", FileName, GetLastError());
+            PrintWin32Error(FileName, "CryptMsgGetParam");
             __leave;
         }
 
@@ -499,7 +528,7 @@ BOOL GetSignerInfo(IN WCHAR * FileName)
         CertInfo.SerialNumber = pSignerInfo->SerialNumber;
         pCertContext = CertFindCertificateInStore(hStore, X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, 0, CERT_FIND_SUBJECT_CERT, (PVOID)&CertInfo, NULL);
         if (!pCertContext) {
-            printf("FileName:%ls, GetLastError:%#x", FileName, GetLastError());
+            PrintWin32Error(FileName, "CertFindCertificateInStore");
             fResult = FALSE;
             __leave;
         }
@@ -565,7 +594,7 @@ void ParseCertificateInfo2()
     __try {
         hfile = CreateFile(FileName, FILE_READ_DATA, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
         if (hfile == INVALID_HANDLE_VALUE) {
-            int x = GetLastError();
+            PrintWin32Error(FileName, "CreateFile");
             __leave;
         }
 
@@ -574,7 +603,7 @@ void ParseCertificateInfo2()
         DWORD  IndexCount = ARRAYSIZE(Indices);
         BOOL ret = ImageEnumerateCertificates(hfile, CERT_SECTION_TYPE_ANY, &CertificateCount, Indices, IndexCount);
         if (!ret) {
-            int x = GetLastError();
+            PrintWin32Error(FileName, "ImageEnumerateCertificates");
             __leave;
         }
 
@@ -582,6 +611,9 @@ void ParseCertificateInfo2()
             WIN_CERTIFICATE Certificateheader = {0};
             ret = ImageGetCertificateHeader(hfile, i, &Certificateheader);
             if (!ret || Certificateheader.dwLength < sizeof(WIN_CERTIFICATE)) {
+                if (!ret) {
+                    PrintWin32Error(FileName, "ImageGetCertificateHeader");
+                }
                 continue;
             }
 
@@ -589,9 +621,14 @@ void ParseCertificateInfo2()
 
             buffer = (LPWIN_CERTIFICATE)HeapAlloc(GetProcessHeap(), 0, RequiredLength);
             _ASSERTE(buffer);
+            if (buffer == NULL) {
+                PrintWin32Error(FileName, "HeapAlloc");
+                continue;
+            }
 
             ret = ImageGetCertificateData(hfile, i, buffer, &RequiredLength);
             if (!ret) {
+                PrintWin32Error(FileName, "ImageGetCertificateData");
                 HeapFree(GetProcessHeap(), 0, buffer);
                 buffer = NULL;
                 continue;
@@ -639,8 +676,7 @@ void ParseCertificateInfo2()
             DIGEST_HANDLE DigestHandle = NULL;
             ret = ImageGetDigestStream(hfile, i, DigestFunction, &DigestHandle);
             if (!ret) {
-                int x = GetLastError();
-                UNREFERENCED_PARAMETER(x);
+                PrintWin32Error(FileName, "ImageGetDigestStream");
             }
 
             HeapFree(GetProcessHeap(), 0, buffer);
@@ -787,13 +823,7 @@ https://learn.microsoft.com/zh-cn/windows/win32/seccertenroll/about-encoded-tag-
     case 0x17://UTCTime
     case 0x18://GeneralizedTime
     {
-        LPSTR pws = (LPSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (SIZE_T)list->length + 2);
-        _ASSERTE(pws);
-
-        RtlCopyMemory(pws, list->data, list->length);
-        printf("Value: %s\n", pws);
-
-        HeapFree(GetProcessHeap(), 0, pws);
+        PrintAsn1StringValue(list);
         break;
     }
     case 0x14://TeletexString
