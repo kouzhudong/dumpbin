@@ -465,8 +465,11 @@ BOOL VerifyEmbeddedSignature(IN LPCTSTR filename, OUT wchar_t * signer_file)
 
     GUID action = WINTRUST_ACTION_GENERIC_VERIFY_V2;
     HRESULT hr = WinVerifyTrust(NULL, &action, &wd);
-    Sleep(1);
     BOOL retval = SUCCEEDED(hr);
+
+    // Clean up WinVerifyTrust state.
+    wd.dwStateAction = WTD_STATEACTION_CLOSE;
+    WinVerifyTrust(NULL, &action, &wd);
 
     if (NULL != cat_admin_info) {
         CryptCATAdminReleaseCatalogContext(cat_admin_handle, cat_admin_info, 0);
@@ -523,7 +526,7 @@ BOOL GetSignerInfo(IN WCHAR * FileName)
         }
 
         // Search for the signer certificate in the temporary certificate store.
-        CERT_INFO CertInfo;
+        CERT_INFO CertInfo = {};
         CertInfo.Issuer = pSignerInfo->Issuer;
         CertInfo.SerialNumber = pSignerInfo->SerialNumber;
         pCertContext = CertFindCertificateInStore(hStore, X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, 0, CERT_FIND_SUBJECT_CERT, (PVOID)&CertInfo, NULL);
@@ -645,6 +648,12 @@ void ParseCertificateInfo2()
                 CERT_ENHKEY_USAGE keyUsage;
                 keyUsage.cUsageIdentifier = 1;
                 keyUsage.rgpszUsageIdentifier = (LPSTR *)LocalAlloc(0, sizeof(LPSTR));
+                if (keyUsage.rgpszUsageIdentifier == NULL) {
+                    CertCloseStore(hStore, CERT_CLOSE_STORE_FORCE_FLAG);
+                    HeapFree(GetProcessHeap(), 0, buffer);
+                    buffer = NULL;
+                    continue;
+                }
                 keyUsage.rgpszUsageIdentifier[0] = &szCodeSigningOID[0];
 
                 // Find certificates that contain the Code Signing Enhanced Key Usage
@@ -690,9 +699,9 @@ void ParseCertificateInfo2()
         if (INVALID_HANDLE_VALUE != hfile) {
             CloseHandle(hfile);
         }
-    }
 
-    free((void *)FileName);
+        free((void *)FileName);
+    }
 }
 
 
@@ -745,6 +754,7 @@ void ParseCertificateInfo4(PIMAGE_DATA_DIRECTORY DataDirectory, LPWIN_CERTIFICAT
     }
 
     DumpPKCS7(pkcs7);
+    PKCS7_free(pkcs7);
 }
 
 
@@ -919,14 +929,14 @@ void ParseCertificateInfo5(PIMAGE_DATA_DIRECTORY DataDirectory, LPWIN_CERTIFICAT
 
     asn1_tree * encrypted_data = content_type->next != NULL ? content_type->next->child : NULL;
     if (encrypted_data == NULL || encrypted_data->type != ASN1_TYPE_SEQUENCE) {
-        fprintf(stderr, "ERROR: EncryptedData not availavble.\n");
+        fprintf(stderr, "ERROR: EncryptedData not available.\n");
         free(asn1_objects);
         return;
     }
 
     asn1_tree * cms_version = encrypted_data->child;
     if (cms_version == NULL || cms_version->type != ASN1_TYPE_INTEGER || cms_version->length != 1) {
-        fprintf(stderr, "ERROR: CMSVersion not availavble.\n");
+        fprintf(stderr, "ERROR: CMSVersion not available.\n");
         free(asn1_objects);
         return;
     }
