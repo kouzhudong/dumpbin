@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #include "pch.h"
 #include "Public.h"
@@ -12,9 +12,9 @@
 http://www.debuginfo.com/articles/debuginfomatch.html
 */
 #pragma warning(push)
-#pragma warning(disable : 4200) //Ê¹ÓÃÁË·Ç±ê×¼À©Õ¹: ½á¹¹/ÁªºÏÖĞµÄÁã´óĞ¡Êı×é
+#pragma warning(disable : 4200) //ä½¿ç”¨äº†éæ ‡å‡†æ‰©å±•: ç»“æ„/è”åˆä¸­çš„é›¶å¤§å°æ•°ç»„
 struct CV_INFO_PDB70 {
-    DWORD  CvSignature;//equal to ¡°RSDS¡±
+    DWORD  CvSignature;//equal to â€œRSDSâ€
     GUID Signature;
     DWORD Age;
     BYTE PdbFileName[];

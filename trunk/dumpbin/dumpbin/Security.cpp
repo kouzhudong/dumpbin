@@ -1,6 +1,7 @@
-#include "pch.h"
+ï»¿#include "pch.h"
 #include "Security.h"
 #include "Public.h"
+#include "log.h"
 #include "openssl.h"
 #include "..\lib\tiny-asn1\src\tiny-asn1.h"
 
@@ -55,21 +56,12 @@ static DWORD GetCertificateBlobLength(_In_ const WIN_CERTIFICATE * certificate)
 }
 
 
-static LPCWSTR GetInputFileNameFromCommandLine()
+// å½“å‰æ­£åœ¨è¢«è§£æçš„ PE æ–‡ä»¶è·¯å¾„ï¼Œç”± Security(LPCWSTR) åœ¨ MapFile ä¹‹å‰è®¾ç½®ã€‚
+static LPCWSTR g_currentFileName = NULL;
+
+static LPCWSTR GetInputFileName()
 {
-    int Args = 0;
-    LPWSTR * Arglist = CommandLineToArgvW(GetCommandLineW(), &Args);
-    if (Arglist == NULL) {
-        return NULL;
-    }
-
-    LPCWSTR FileName = NULL;
-    if (Args > 2) {
-        FileName = _wcsdup(Arglist[2]);
-    }
-
-    LocalFree(Arglist);
-    return FileName;
+    return g_currentFileName;
 }
 
 
@@ -91,7 +83,7 @@ PCSTR GetCertificateType(_In_ WORD CertificateType)
         CertificateTypeStr = "TS_STACK_SIGNED";
         break;
     default:
-        CertificateTypeStr = "Î´Öª";
+        CertificateTypeStr = "æœªçŸ¥";
         break;
     }
 
@@ -111,7 +103,7 @@ PCSTR GetCertRevision(_In_ WORD wRevision)
         string = "2_0";
         break;
     default:
-        string = "Î´Öª";
+        string = "æœªçŸ¥";
         break;
     }
 
@@ -125,28 +117,28 @@ void DumpCertInfo(PCERT_INFO CertInfo)
         return;
     }
 
-    _tprintf(_T("°æ±¾:%d.\n"), CertInfo->dwVersion + 1);
+    _tprintf(_T("ç‰ˆæœ¬:%d.\n"), CertInfo->dwVersion + 1);
 
     _tprintf(_T("ObjId:%hs.\n"), CertInfo->SignatureAlgorithm.pszObjId);
 
-    _tprintf(_T("¹«Ô¿²ÎÊı: "));
+    _tprintf(_T("å…¬é’¥å‚æ•°: "));
     DWORD dwData = CertInfo->SignatureAlgorithm.Parameters.cbData;
     PrintHexBytes(CertInfo->SignatureAlgorithm.Parameters.pbData, dwData);
     _tprintf(_T("\n"));
 
     // Print Serial Number.
-    _tprintf(_T("ĞòÁĞºÅ: "));
+    _tprintf(_T("åºåˆ—å·: "));
     dwData = CertInfo->SerialNumber.cbData;
     PrintHexBytes(CertInfo->SerialNumber.pbData, dwData, true);
     _tprintf(_T("\n"));
 
     char NotBefore[MAX_PATH] = {0};
     FileTimeToLocalTimeA(&CertInfo->NotBefore, NotBefore);
-    printf("ÓĞĞ§ÆÚ´Ó:%s", NotBefore);
+    printf("æœ‰æ•ˆæœŸä»:%s", NotBefore);
 
     char NotAfter[MAX_PATH] = {0};
     FileTimeToLocalTimeA(&CertInfo->NotAfter, NotAfter);
-    printf("µ½:%s\n", NotAfter);
+    printf("åˆ°:%s\n", NotAfter);
 
     _tprintf(_T("SubjectPublicKey Algorithm ObjId:%hs.\n"), CertInfo->SubjectPublicKeyInfo.Algorithm.pszObjId);
 
@@ -156,12 +148,12 @@ void DumpCertInfo(PCERT_INFO CertInfo)
     _tprintf(_T("\n"));
 
     _tprintf(_T("UnusedBits:%d.\n"), CertInfo->SubjectPublicKeyInfo.PublicKey.cUnusedBits);
-    _tprintf(_T("¹«Ô¿: "));
+    _tprintf(_T("å…¬é’¥: "));
     dwData = CertInfo->SubjectPublicKeyInfo.PublicKey.cbData;
     PrintHexBytes(CertInfo->SubjectPublicKeyInfo.PublicKey.pbData, dwData);
     _tprintf(_T("\n"));
 
-    //»¹ÓĞIssuerUniqueId£¬SubjectUniqueId£¬cExtensionµÈĞÅÏ¢¡£
+    //è¿˜æœ‰IssuerUniqueIdï¼ŒSubjectUniqueIdï¼ŒcExtensionç­‰ä¿¡æ¯ã€‚
 
     _tprintf(_T("cExtension:%d.\n"), CertInfo->cExtension);
     if (CertInfo->cExtension > 0 && CertInfo->rgExtension != NULL) {
@@ -172,7 +164,7 @@ void DumpCertInfo(PCERT_INFO CertInfo)
         PrintHexBytes(CertInfo->rgExtension->Value.pbData, dwData);
         _tprintf(_T("\n"));
     } else {
-        _tprintf(_T("Extension: ÎŞ.\n"));
+        _tprintf(_T("Extension: æ— .\n"));
     }
 }
 
@@ -188,8 +180,8 @@ BOOL PrintCertContext(PCCERT_CONTEXT pCertContext)
             __leave;
         }
 
-        //ÓÃopensslµÄ·½Ê½´¦ÀípCertContext->cbCertEncoded + pCertContext->pbCertEncoded¡£
-        //¾­²âÊÔ£¬ÕâÖÖ°ì·¨ÓĞĞ§¿ÉĞĞÕıÈ·¡£
+        //ç”¨opensslçš„æ–¹å¼å¤„ç†pCertContext->cbCertEncoded + pCertContext->pbCertEncodedã€‚
+        //ç»æµ‹è¯•ï¼Œè¿™ç§åŠæ³•æœ‰æ•ˆå¯è¡Œæ­£ç¡®ã€‚
         if (false) {
             const unsigned char * p = (const unsigned char *)pCertContext->pbCertEncoded;
             X509 * x509 = d2i_X509(NULL, &p, pCertContext->cbCertEncoded);
@@ -197,9 +189,9 @@ BOOL PrintCertContext(PCCERT_CONTEXT pCertContext)
             X509_free(x509);
         }
 
-        //¿ÉÒÔ¿¼ÂÇ¸ù¾İpCertContext->hCertStore»ñÈ¡¸ü¶àµÄĞÅÏ¢¡£
+        //å¯ä»¥è€ƒè™‘æ ¹æ®pCertContext->hCertStoreè·å–æ›´å¤šçš„ä¿¡æ¯ã€‚
 
-        _tprintf(_T("Ö¤Êé±àÂëÀàĞÍ:%d.\n"), pCertContext->dwCertEncodingType);
+        _tprintf(_T("è¯ä¹¦ç¼–ç ç±»å‹:%d.\n"), pCertContext->dwCertEncodingType);
 
         DumpCertInfo(pCertContext->pCertInfo);
 
@@ -219,7 +211,7 @@ BOOL PrintCertContext(PCCERT_CONTEXT pCertContext)
             __leave;
         }
 
-        _tprintf(_T("°ä·¢Õß: %s\n"), szName);// print Issuer name.
+        _tprintf(_T("é¢å‘è€…: %s\n"), szName);// print Issuer name.
         LocalFree(szName);
         szName = NULL;
 
@@ -239,7 +231,7 @@ BOOL PrintCertContext(PCCERT_CONTEXT pCertContext)
             __leave;
         }
 
-        _tprintf(_T("Ê¹ÓÃÕßµÄCN: %s\n"), szName);// Print Subject Name.
+        _tprintf(_T("ä½¿ç”¨è€…çš„CN: %s\n"), szName);// Print Subject Name.
 
         DWORD dwStrType = CERT_X500_NAME_STR;
         DWORD dwCount = CertGetNameString(pCertContext, CERT_NAME_RDN_TYPE, 0, &dwStrType, NULL, 0);
@@ -247,7 +239,7 @@ BOOL PrintCertContext(PCCERT_CONTEXT pCertContext)
             LPTSTR szSubjectRDN = (LPTSTR)LocalAlloc(0, dwCount * sizeof(TCHAR));
             dwCount = CertGetNameString(pCertContext, CERT_NAME_RDN_TYPE, 0, &dwStrType, szSubjectRDN, dwCount);
             if (dwCount) {
-                _tprintf(_T("Ê¹ÓÃÕß£º%s\n"), szSubjectRDN);
+                _tprintf(_T("ä½¿ç”¨è€…ï¼š%s\n"), szSubjectRDN);
             }
 
             LocalFree(szSubjectRDN);
@@ -265,7 +257,7 @@ BOOL PrintCertContext(PCCERT_CONTEXT pCertContext)
 
 void DecodeCertificate(PBYTE Certificate, DWORD Length)
 /*
-¹¦ÄÜ£ºÓÃCryptDecodeObjectEx½âÂëPKCS#7 SignedDataµÄASN1½á¹¹¡£
+åŠŸèƒ½ï¼šç”¨CryptDecodeObjectExè§£ç PKCS#7 SignedDataçš„ASN1ç»“æ„ã€‚
 */
 {
     //  Get the length needed for the decoded buffer.
@@ -296,7 +288,7 @@ void DecodeCertificate(PBYTE Certificate, DWORD Length)
     //                             szSubject,
     //                             sizeof(szSubject));
     //if (cbSize > 1) {//  If it returns one, the name is an empty string.
-    //    ///printf("szSubject£º%ls\n", szSubject);//ÄÚÈİÎª¿Õ¡£
+    //    ///printf("szSubjectï¼š%ls\n", szSubject);//å†…å®¹ä¸ºç©ºã€‚
     //} else {
     //    _ASSERTE(false);
     //}
@@ -335,30 +327,30 @@ void PrintSecurity(LPWIN_CERTIFICATE SecurityDirectory)
     printf("CertificateType:%d(%s).\r\n", SecurityDirectory->wCertificateType, GetCertificateType(SecurityDirectory->wCertificateType));
 
     switch (SecurityDirectory->wCertificateType) {
-    case WIN_CERT_TYPE_X509://bCertificate °üº¬µÄÊÇ X.509 Ö¤Êé
-        _ASSERTE(false);
+    case WIN_CERT_TYPE_X509://bCertificate åŒ…å«çš„æ˜¯ X.509 è¯ä¹¦
+        LOGA(WARNING_LEVEL, "WIN_CERT_TYPE_X509 not handled");
         break;
-    case WIN_CERT_TYPE_PKCS_SIGNED_DATA://bCertificate °üº¬µÄÊÇ PKCS#7 SignedData ½á¹¹
+    case WIN_CERT_TYPE_PKCS_SIGNED_DATA://bCertificate åŒ…å«çš„æ˜¯ PKCS#7 SignedData ç»“æ„
     {
         DWORD CertificateLength = GetCertificateBlobLength(SecurityDirectory);
         if (CertificateLength == 0) {
-            _ASSERTE(false);
+            LOGA(WARNING_LEVEL, "CertificateLength == 0");
             break;
         }
 
-        //Õâ¸öÊı¾İÊÇÉ¶½á¹¹ÄØ£¿
-        //ÒÔÇ°µÄ¾­ÑéÊÇSecurityDirectory->bCertificateÀïÃæÓĞutf8±àÂë¡£
+        //è¿™ä¸ªæ•°æ®æ˜¯å•¥ç»“æ„å‘¢ï¼Ÿ
+        //ä»¥å‰çš„ç»éªŒæ˜¯SecurityDirectory->bCertificateé‡Œé¢æœ‰utf8ç¼–ç ã€‚
 
         /*
-        ÕâÀïµÄÊı¾İ¿ÉÓÃCryptDecodeObjectEx½âÎö²»£¿
-        ÕâÓ¦¸ÃÊÇASN¸ñÊ½µÄ¡£
-        ×¢Òâ£ºÊı¾İ½á¹¹CERT_ALT_NAME_ENTRY¡£
+        è¿™é‡Œçš„æ•°æ®å¯ç”¨CryptDecodeObjectExè§£æä¸ï¼Ÿ
+        è¿™åº”è¯¥æ˜¯ASNæ ¼å¼çš„ã€‚
+        æ³¨æ„ï¼šæ•°æ®ç»“æ„CERT_ALT_NAME_ENTRYã€‚
 
-        ÕâÀïµÄÊı¾İ¿ÉÒÔÓÃopensslµÄº¯Êı½âÎö£¬Èç£ºd2i_PKCS7µÈ¡£
-        ²Î¿¼£ºhttps://github.com/ajkhoury/CertDump.git
+        è¿™é‡Œçš„æ•°æ®å¯ä»¥ç”¨opensslçš„å‡½æ•°è§£æï¼Œå¦‚ï¼šd2i_PKCS7ç­‰ã€‚
+        å‚è€ƒï¼šhttps://github.com/ajkhoury/CertDump.git
         */
 
-        //¾­²âÊÔ£¬ÕâÖÖ°ì·¨ÓĞĞ§¿ÉĞĞÕıÈ·¡£
+        //ç»æµ‹è¯•ï¼Œè¿™ç§åŠæ³•æœ‰æ•ˆå¯è¡Œæ­£ç¡®ã€‚
         if (false) {
             unsigned char * CertData = (unsigned char *)SecurityDirectory->bCertificate;
             long CertDataLength = CertificateLength;
@@ -370,14 +362,14 @@ void PrintSecurity(LPWIN_CERTIFICATE SecurityDirectory)
 
         break;
     }
-    case WIN_CERT_TYPE_RESERVED_1://±£Áô¡£ 
-        _ASSERTE(false);
+    case WIN_CERT_TYPE_RESERVED_1://ä¿ç•™ã€‚ 
+        LOGA(WARNING_LEVEL, "WIN_CERT_TYPE_RESERVED_1");
         break;
-    case WIN_CERT_TYPE_TS_STACK_SIGNED://ÖÕ¶Ë·şÎñÆ÷Ğ­ÒéÕ»Ö¤ÊéÇ©Ãû
-        _ASSERTE(false);
+    case WIN_CERT_TYPE_TS_STACK_SIGNED://ç»ˆç«¯æœåŠ¡å™¨åè®®æ ˆè¯ä¹¦ç­¾å
+        LOGA(WARNING_LEVEL, "WIN_CERT_TYPE_TS_STACK_SIGNED not handled");
         break;
     default:
-        _ASSERTE(false);
+        LOGA(WARNING_LEVEL, "unknown wCertificateType:%u", SecurityDirectory->wCertificateType);
         break;
     }
 
@@ -386,7 +378,7 @@ void PrintSecurity(LPWIN_CERTIFICATE SecurityDirectory)
 
 
 BOOL WINAPI DigestFunction(DIGEST_HANDLE refdata, PBYTE pData, DWORD dwLength)
-//Õâ¸ö»á±»µ÷ÓÃ¶à´Î¡£
+//è¿™ä¸ªä¼šè¢«è°ƒç”¨å¤šæ¬¡ã€‚
 {
     UNREFERENCED_PARAMETER(refdata);
     UNREFERENCED_PARAMETER(pData);
@@ -396,7 +388,7 @@ BOOL WINAPI DigestFunction(DIGEST_HANDLE refdata, PBYTE pData, DWORD dwLength)
 }
 
 
-BOOL VerifyEmbeddedSignature(IN LPCTSTR filename, OUT wchar_t * signer_file)
+BOOL VerifyEmbeddedSignature(IN LPCTSTR filename, OUT wchar_t * signer_file, IN size_t signer_file_cch)
 {
     HCATADMIN cat_admin_handle = NULL;
     if (!CryptCATAdminAcquireContext(&cat_admin_handle, NULL, 0)) {
@@ -441,7 +433,7 @@ BOOL VerifyEmbeddedSignature(IN LPCTSTR filename, OUT wchar_t * signer_file)
         wd.dwUIChoice = WTD_UI_NONE;
         wd.dwProvFlags = WTD_SAFER_FLAG;
 
-        lstrcpy(signer_file, filename);
+        StringCchCopyW(signer_file, signer_file_cch, filename);
     } else {
         CATALOG_INFO ci = {0};
         CryptCATCatalogInfoFromContext(cat_admin_info, &ci, 0);
@@ -460,7 +452,7 @@ BOOL VerifyEmbeddedSignature(IN LPCTSTR filename, OUT wchar_t * signer_file)
         wd.dwUIChoice = WTD_UI_NONE;
         wd.fdwRevocationChecks = WTD_REVOKE_WHOLECHAIN;
 
-        lstrcpy(signer_file, ci.wszCatalogFile);
+        StringCchCopyW(signer_file, signer_file_cch, ci.wszCatalogFile);
     }
 
     GUID action = WINTRUST_ACTION_GENERIC_VERIFY_V2;
@@ -562,31 +554,29 @@ BOOL GetSignerInfo(IN WCHAR * FileName)
 
 void ParseCertificateInfo1()
 {
-    LPCWSTR FileName = GetInputFileNameFromCommandLine();
+    LPCWSTR FileName = GetInputFileName();
     if (FileName == NULL) {
         return;
     }
 
     wchar_t signer_file[MAX_PATH] = {0};
-    if (VerifyEmbeddedSignature(FileName, signer_file)) {
-        printf("%lsµÄÇ©ÃûĞÅÏ¢ËùÔÚµÄÎÄ¼şÊÇ:%ls\n", FileName, signer_file);
+    if (VerifyEmbeddedSignature(FileName, signer_file, _countof(signer_file))) {
+        printf("%lsçš„ç­¾åä¿¡æ¯æ‰€åœ¨çš„æ–‡ä»¶æ˜¯:%ls\n", FileName, signer_file);
         if (GetSignerInfo(signer_file)) {
-            printf("%ls¾ßÓĞºÏ·¨µÄÇ©Ãû\n", FileName);
+            printf("%lså…·æœ‰åˆæ³•çš„ç­¾å\n", FileName);
         }
     }
-
-    free((void *)FileName);
 }
 
 
 void ParseCertificateInfo2()
 /*
-ÓÃÏµÍ³µÄAPI½âÎöÏÂÖ¤ÊéµÄĞÅÏ¢£¬ÒÔ±ãºÍ×Ô¼º½âÎöµÄ¶Ô±È¡£
+ç”¨ç³»ç»Ÿçš„APIè§£æä¸‹è¯ä¹¦çš„ä¿¡æ¯ï¼Œä»¥ä¾¿å’Œè‡ªå·±è§£æçš„å¯¹æ¯”ã€‚
 
-ÕâÖÖ·½Ê½Ã»ÓĞ·ÖÎöPEÎÄ¼şµÄDataDirectory¡£
+è¿™ç§æ–¹å¼æ²¡æœ‰åˆ†æPEæ–‡ä»¶çš„DataDirectoryã€‚
 */
 {
-    LPCWSTR FileName = GetInputFileNameFromCommandLine();
+    LPCWSTR FileName = GetInputFileName();
     if (FileName == NULL) {
         return;
     }
@@ -699,8 +689,6 @@ void ParseCertificateInfo2()
         if (INVALID_HANDLE_VALUE != hfile) {
             CloseHandle(hfile);
         }
-
-        free((void *)FileName);
     }
 }
 
@@ -708,9 +696,9 @@ void ParseCertificateInfo2()
 void ParseCertificateInfo3(PIMAGE_DATA_DIRECTORY DataDirectory, LPWIN_CERTIFICATE SecurityDirectory)
 /*
 
-´Ë·½Ê½µÄĞ§¹ûÀàËÆ£ºsigntool.exe verify /pa /a /v c:\windows\notepad.exe£¬µ«±ÈÕâ¸ö¸üÇ¿¸ü¶à¡£
+æ­¤æ–¹å¼çš„æ•ˆæœç±»ä¼¼ï¼šsigntool.exe verify /pa /a /v c:\windows\notepad.exeï¼Œä½†æ¯”è¿™ä¸ªæ›´å¼ºæ›´å¤šã€‚
 
-´Ó·ÖÎöPEÎÄ¼şµÄDataDirectory¿ªÊ¼£¬Ò»²½Ò»²½µÄ½âÎö¡£
+ä»åˆ†æPEæ–‡ä»¶çš„DataDirectoryå¼€å§‹ï¼Œä¸€æ­¥ä¸€æ­¥çš„è§£æã€‚
 */
 {
     DWORD index = 0;
@@ -718,9 +706,15 @@ void ParseCertificateInfo3(PIMAGE_DATA_DIRECTORY DataDirectory, LPWIN_CERTIFICAT
     DWORD offset = 0;
 
     while (offset < DataDirectory->Size) {
+        // è¾¹ç•Œæ£€æŸ¥ï¼šé¿å…ç•¸å½¢ dwLength å¼•å‘æ­»å¾ªç¯æˆ–è¶Šç•Œã€‚
+        if (DataDirectory->Size - offset < sizeof(WIN_CERTIFICATE)) {
+            break;
+        }
+
         LPWIN_CERTIFICATE entry = LPWIN_CERTIFICATE(base + offset);
 
-        if (entry->dwLength < sizeof(WIN_CERTIFICATE)) {
+        if (entry->dwLength < sizeof(WIN_CERTIFICATE) ||
+            entry->dwLength > DataDirectory->Size - offset) {
             break;
         }
 
@@ -730,6 +724,9 @@ void ParseCertificateInfo3(PIMAGE_DATA_DIRECTORY DataDirectory, LPWIN_CERTIFICAT
 
         // WIN_CERTIFICATE entries are aligned to 8-byte boundaries.
         DWORD aligned = (entry->dwLength + 7) & ~7u;
+        if (aligned < entry->dwLength) { // æº¢å‡ºä¿æŠ¤
+            break;
+        }
         offset += aligned;
     }
 }
@@ -737,7 +734,7 @@ void ParseCertificateInfo3(PIMAGE_DATA_DIRECTORY DataDirectory, LPWIN_CERTIFICAT
 
 void ParseCertificateInfo4(PIMAGE_DATA_DIRECTORY DataDirectory, LPWIN_CERTIFICATE SecurityDirectory)
 /*
-ÓÃopenssl½âÎöPEµÄÖ¤Êé¡£
+ç”¨opensslè§£æPEçš„è¯ä¹¦ã€‚
 */
 {
     UNREFERENCED_PARAMETER(DataDirectory);
@@ -785,28 +782,28 @@ void print_hex(const uint8_t * data, unsigned int len)
 void dumpdata(const asn1_tree * list, int depth)
 /*
 
-»ù±¾ÀàĞÍ
+åŸºæœ¬ç±»å‹
 
-ÌÖÂÛÒÔÏÂÊı¾İÀàĞÍ£º
+è®¨è®ºä»¥ä¸‹æ•°æ®ç±»å‹ï¼š
 
 BIT STRING
 BOOLEAN
 INTEGER
 NULL
-¶ÔÏó±êÊ¶·û
-°Ë½øÖÆ×Ö·û´®
-×Ö·û´®ÀàĞÍ
+å¯¹è±¡æ ‡è¯†ç¬¦
+å…«è¿›åˆ¶å­—ç¬¦ä¸²
+å­—ç¬¦ä¸²ç±»å‹
 
-ÌÖÂÛÒÔÏÂ×Ö·û´®ÀàĞÍ£º
+è®¨è®ºä»¥ä¸‹å­—ç¬¦ä¸²ç±»å‹ï¼š
 
 BMPString
 IA5String
 PrintableString
 TeletexString
 UTF8String
-¹¹ÔìÀàĞÍ
+æ„é€ ç±»å‹
 
-ÌÖÂÛ¿É°üº¬»ù±¾ÀàĞÍ¡¢×Ö·û´®ÀàĞÍ»òÆäËû¹¹ÔìÀàĞÍµÄ ASN.1 Êı¾İÀàĞÍ¡£
+è®¨è®ºå¯åŒ…å«åŸºæœ¬ç±»å‹ã€å­—ç¬¦ä¸²ç±»å‹æˆ–å…¶ä»–æ„é€ ç±»å‹çš„ ASN.1 æ•°æ®ç±»å‹ã€‚
 
 https://learn.microsoft.com/zh-cn/windows/win32/seccertenroll/about-asn-1-type-system
 https://learn.microsoft.com/zh-cn/windows/win32/seccertenroll/about-string-types
@@ -879,9 +876,9 @@ void print_asn1(const asn1_tree * list, int depth)
 
 void ParseCertificateInfo5(PIMAGE_DATA_DIRECTORY DataDirectory, LPWIN_CERTIFICATE SecurityDirectory)
 /*
-ÓÃASN½âÎöPEµÄÖ¤Êé¡£
+ç”¨ASNè§£æPEçš„è¯ä¹¦ã€‚
 
-½ö½ö²âÊÔ´úÂë¡£
+ä»…ä»…æµ‹è¯•ä»£ç ã€‚
 */
 {
     UNREFERENCED_PARAMETER(DataDirectory);
@@ -949,7 +946,7 @@ void ParseCertificateInfo5(PIMAGE_DATA_DIRECTORY DataDirectory, LPWIN_CERTIFICAT
 
 DWORD Security(_In_ PBYTE Data, _In_ DWORD Size)
 /*
-²Î¿¼£º\win2k\trunk\private\sdktools\imagehlp\dice.cxxµÄFindCertificateº¯Êı¡£
+å‚è€ƒï¼š\win2k\trunk\private\sdktools\imagehlp\dice.cxxçš„FindCertificateå‡½æ•°ã€‚
 */
 {
     DWORD ret = ERROR_SUCCESS;
@@ -959,14 +956,14 @@ DWORD Security(_In_ PBYTE Data, _In_ DWORD Size)
     }
 
     printf("----------------------------------------------------------------------------------\n");
-    printf("½âÎö·½Ê½Ò»£º\n");
+    printf("è§£ææ–¹å¼ä¸€ï¼š\n");
     ParseCertificateInfo1();
 
     IMAGE_DATA_DIRECTORY DataDirectory = {0};
     GetDataDirectory(Data, Size, IMAGE_DIRECTORY_ENTRY_SECURITY, &DataDirectory);
 
     if (0 == DataDirectory.VirtualAddress) {
-        printf("´ËÎÄ¼şÃ»ÓĞSecurity.\r\n");
+        printf("æ­¤æ–‡ä»¶æ²¡æœ‰Security.\r\n");
         return ret;
     }
 
@@ -979,7 +976,7 @@ DWORD Security(_In_ PBYTE Data, _In_ DWORD Size)
     //PIMAGE_SECTION_HEADER FoundHeader = NULL;
     //LPWIN_CERTIFICATE SecurityDirectory = (LPWIN_CERTIFICATE)
     //    ImageDirectoryEntryToDataEx(Data,
-    //                                FALSE,//×Ô¼ºÓ³ÉäµÄÓÃFALSE£¬²Ù×÷ÏµÍ³¼ÓÔØµÄÓÃTRUE¡£ 
+    //                                FALSE,//è‡ªå·±æ˜ å°„çš„ç”¨FALSEï¼Œæ“ä½œç³»ç»ŸåŠ è½½çš„ç”¨TRUEã€‚ 
     //                                IMAGE_DIRECTORY_ENTRY_SECURITY,
     //                                &size,
     //                                &FoundHeader);
@@ -992,19 +989,19 @@ DWORD Security(_In_ PBYTE Data, _In_ DWORD Size)
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     printf("----------------------------------------------------------------------------------\n");
-    printf("½âÎö·½Ê½¶ş£º\n");
+    printf("è§£ææ–¹å¼äºŒï¼š\n");
     ParseCertificateInfo2();
 
     printf("----------------------------------------------------------------------------------\n");
-    printf("½âÎö·½Ê½Èı£º\n");
+    printf("è§£ææ–¹å¼ä¸‰ï¼š\n");
     ParseCertificateInfo3(&DataDirectory, SecurityDirectory);
 
     printf("----------------------------------------------------------------------------------\n");
-    printf("½âÎö·½Ê½ËÄ£º\n");
+    printf("è§£ææ–¹å¼å››ï¼š\n");
     ParseCertificateInfo4(&DataDirectory, SecurityDirectory);
 
     printf("----------------------------------------------------------------------------------\n");
-    printf("½âÎö·½Ê½Îå£º\n");
+    printf("è§£ææ–¹å¼äº”ï¼š\n");
     ParseCertificateInfo5(&DataDirectory, SecurityDirectory);
 
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -1018,5 +1015,8 @@ DWORD Security(_In_ PBYTE Data, _In_ DWORD Size)
 
 DWORD Security(_In_ LPCWSTR FileName)
 {
-    return MapFile(FileName, Security);
+    g_currentFileName = FileName;
+    DWORD ret = MapFile(FileName, Security);
+    g_currentFileName = NULL;
+    return ret;
 }

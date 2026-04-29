@@ -1,4 +1,4 @@
-#include "pch.h"
+ï»¿#include "pch.h"
 #include "PrintBinary.h"
 #include "Public.h"
 #include "log.h"
@@ -27,7 +27,7 @@ void BinaryToStringA(BYTE * lpMapAddress, DWORD dwFileSize)
             return;
         }
 
-        //×¢Òâµ¥×Ö·ûºÍ¿í×Ö·ûµÄ±àÂëÊÇ²»Ò»ÑùµÄ¡£
+        //æ³¨æ„å•å­—ç¬¦å’Œå®½å­—ç¬¦çš„ç¼–ç æ˜¯ä¸ä¸€æ ·çš„ã€‚
         B = CryptBinaryToStringA((BYTE *)lpMapAddress, dwFileSize, dwFlags, pszString2, &pcchString);
         if (B == false) {
             HeapFree(GetProcessHeap(), 0, pszString2);
@@ -39,7 +39,7 @@ void BinaryToStringA(BYTE * lpMapAddress, DWORD dwFileSize)
         HeapFree(GetProcessHeap(), 0, pszString2);
         return;
     } __except (GetExceptionCode() == EXCEPTION_IN_PAGE_ERROR ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH) {
-        _tprintf(TEXT("·¢ÉúÒì³£ÁË£¡\n"));
+        _tprintf(TEXT("å‘ç”Ÿå¼‚å¸¸äº†ï¼\n"));
     }
 }
 
@@ -63,7 +63,7 @@ void BinaryToStringW(BYTE * lpMapAddress, DWORD dwFileSize)
             return;
         }
 
-        //×¢Òâµ¥×Ö·ûºÍ¿í×Ö·ûµÄ±àÂëÊÇ²»Ò»ÑùµÄ¡£
+        //æ³¨æ„å•å­—ç¬¦å’Œå®½å­—ç¬¦çš„ç¼–ç æ˜¯ä¸ä¸€æ ·çš„ã€‚
         B = CryptBinaryToStringW(lpMapAddress, dwFileSize, dwFlags, String, &pcchString);
         if (B == false) {
             HeapFree(GetProcessHeap(), 0, String);
@@ -75,14 +75,14 @@ void BinaryToStringW(BYTE * lpMapAddress, DWORD dwFileSize)
         HeapFree(GetProcessHeap(), 0, String);
         return;
     } __except (GetExceptionCode() == EXCEPTION_IN_PAGE_ERROR ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH) {
-        _tprintf(TEXT("·¢ÉúÒì³£ÁË£¡\n"));
+        _tprintf(TEXT("å‘ç”Ÿå¼‚å¸¸äº†ï¼\n"));
     }
 }
 
 
 DWORD PrintBinary(_In_ PBYTE Data, _In_ DWORD Size, _In_ DWORD Address, _In_ DWORD Length)
 /*
-AddressÓ¦¸Ã½ĞOffset.
+Addressåº”è¯¥å«Offset.
 */
 {
     DWORD ret = ERROR_SUCCESS;
@@ -99,7 +99,7 @@ AddressÓ¦¸Ã½ĞOffset.
         return ret;
     }
 
-    //·´ÕıÊÇÔÚÒì³£´¦ÀíÀïµÄ£¬¶¼²»¼ì²éÁË¡£
+    //åæ­£æ˜¯åœ¨å¼‚å¸¸å¤„ç†é‡Œçš„ï¼Œéƒ½ä¸æ£€æŸ¥äº†ã€‚
 
     BinaryToStringA(Data + Address, Length);
 
@@ -131,7 +131,7 @@ DWORD PrintBinary(_In_ LPCWSTR FileName, _In_ LPCWSTR AddressString, _In_ LPCWST
     HANDLE hMapFile = NULL;
     PBYTE FileContent = NULL;
 
-    if (IsWow64()) {//ÔÚwow64ÏÂ¹Ø±ÕÎÄ¼şÖØ¶¨Ïò¡£
+    if (IsWow64()) {//åœ¨wow64ä¸‹å…³é—­æ–‡ä»¶é‡å®šå‘ã€‚
         BOOLEAN bRet = Wow64EnableWow64FsRedirection(FALSE);
         _ASSERTE(bRet);
     }
@@ -153,19 +153,19 @@ DWORD PrintBinary(_In_ LPCWSTR FileName, _In_ LPCWSTR AddressString, _In_ LPCWST
             __leave;
         }
 
-        if (0 == FileSize.QuadPart) {//Èç¹ûÎÄ¼ş´óĞ¡Îª0.
+        if (0 == FileSize.QuadPart) {//å¦‚æœæ–‡ä»¶å¤§å°ä¸º0.
             LastError = ERROR_EMPTY;
             LOGA(ERROR_LEVEL, "LastError:%#d", LastError);
             __leave;
         }
 
-        if (FileSize.HighPart) {//ÔİÊ±²»Ö§³Ö´óÓÚ4GµÄÎÄ¼ş¡£
+        if (FileSize.HighPart) {//æš‚æ—¶ä¸æ”¯æŒå¤§äº4Gçš„æ–‡ä»¶ã€‚
             LastError = ERROR_EMPTY;
             LOGA(ERROR_LEVEL, "LastError:%#d", LastError);
             __leave;
         }
 
-        hMapFile = CreateFileMapping(hFile, NULL, PAGE_READONLY, NULL, NULL, NULL); /* ¿ÕÎÄ¼şÔò·µ»ØÊ§°Ü */
+        hMapFile = CreateFileMapping(hFile, NULL, PAGE_READONLY, NULL, NULL, NULL); /* ç©ºæ–‡ä»¶åˆ™è¿”å›å¤±è´¥ */
         if (hMapFile == NULL) {
             LastError = GetLastError();
             LOGA(ERROR_LEVEL, "LastError:%#d", LastError);
@@ -173,7 +173,7 @@ DWORD PrintBinary(_In_ LPCWSTR FileName, _In_ LPCWSTR AddressString, _In_ LPCWST
             __leave;
         }
 
-        FileContent = (PBYTE)MapViewOfFile(hMapFile, SECTION_MAP_READ, NULL, NULL, 0/*Ó³ÉäËùÓĞ*/);
+        FileContent = (PBYTE)MapViewOfFile(hMapFile, SECTION_MAP_READ, NULL, NULL, 0/*æ˜ å°„æ‰€æœ‰*/);
         if (FileContent == NULL) {
             LastError = GetLastError();
             LOGA(ERROR_LEVEL, "LastError:%#d", LastError);

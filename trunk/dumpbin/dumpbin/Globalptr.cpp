@@ -1,4 +1,4 @@
-#include "pch.h"
+ï»¿#include "pch.h"
 #include "Globalptr.h"
 
 
@@ -7,7 +7,7 @@
 
 DWORD Globalptr(_In_ PBYTE Data, _In_ DWORD Size)
 /*
-ÓĞ´ı²âÊÔ¡£
+æœ‰å¾…æµ‹è¯•ã€‚
 
 
 */
@@ -22,7 +22,7 @@ DWORD Globalptr(_In_ PBYTE Data, _In_ DWORD Size)
     GetDataDirectory(Data, Size, IMAGE_DIRECTORY_ENTRY_GLOBALPTR, &DataDirectory);
 
     if (0 == DataDirectory.VirtualAddress) {
-        printf("´ËÎÄ¼şÃ»ÓĞGlobalptr.\r\n");
+        printf("æ­¤æ–‡ä»¶æ²¡æœ‰Globalptr.\r\n");
         return ret;
     }
 
@@ -32,7 +32,7 @@ DWORD Globalptr(_In_ PBYTE Data, _In_ DWORD Size)
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
     LONG_PTR GlobalptrDirectory = (LONG_PTR)
         ImageDirectoryEntryToDataEx(Data,
-                                    FALSE,//Ó³Éä£¨MapViewOfFile£©µÄÓÃFALSE£¬Ô­Ê¼¶ÁÈ¡(Èç£ºReadFile)µÄÓÃTRUE¡£ 
+                                    FALSE,//æ˜ å°„ï¼ˆMapViewOfFileï¼‰çš„ç”¨FALSEï¼ŒåŸå§‹è¯»å–(å¦‚ï¼šReadFile)çš„ç”¨TRUEã€‚ 
                                     IMAGE_DIRECTORY_ENTRY_GLOBALPTR,
                                     &size, &FoundHeader);
 

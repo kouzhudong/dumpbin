@@ -1,4 +1,4 @@
-#include "pch.h"
+Ôªø#include "pch.h"
 #include "PeHeader.h"
 
 
@@ -38,7 +38,7 @@ DWORD DosHeader(_In_ PBYTE Data, _In_ DWORD Size)
     for (int i = 0; i < _ARRAYSIZE(DosHeader->e_res); i++) {
         wsprintfA(&e_res[i * 4], "%04X", DosHeader->e_res[i]);
     }
-    printf("e_res[4]:0X%s(WORDœ‘ æ£¨∑«BYTEœ‘ æ).\r\n", e_res);
+    printf("e_res[4]:0X%s(WORDÊòæÁ§∫ÔºåÈùûBYTEÊòæÁ§∫).\r\n", e_res);
 
     printf("e_oemid:%#06X.\r\n", DosHeader->e_oemid);
     printf("e_oeminfo:%#06X.\r\n", DosHeader->e_oeminfo);
@@ -47,7 +47,7 @@ DWORD DosHeader(_In_ PBYTE Data, _In_ DWORD Size)
     for (int i = 0; i < _ARRAYSIZE(DosHeader->e_res2); i++) {
         wsprintfA(&e_res2[i * 4], "%04X", DosHeader->e_res2[i]);
     }
-    printf("e_res2[10]:0X%s(WORDœ‘ æ£¨∑«BYTEœ‘ æ).\r\n", e_res2);
+    printf("e_res2[10]:0X%s(WORDÊòæÁ§∫ÔºåÈùûBYTEÊòæÁ§∫).\r\n", e_res2);
 
     printf("e_lfanew:%#010X.\r\n", DosHeader->e_lfanew);
 
@@ -69,13 +69,13 @@ DWORD FileHeader(_In_ PBYTE Data, _In_ DWORD Size)
 
     printf("File Header Information:\r\n");
 
-    printf("Machine:%#06X, Ω‚ Õ£∫%s.\r\n", FileHeader->Machine, GetMachine(FileHeader->Machine));
+    printf("Machine:%#06X, Ëß£ÈáäÔºö%s.\r\n", FileHeader->Machine, GetMachine(FileHeader->Machine));
 
     printf("NumberOfSections:%#06X.\r\n", FileHeader->NumberOfSections);
 
     CHAR TimeDateStamp[MAX_PATH] = {0};
     GetTimeDateStamp(FileHeader->TimeDateStamp, TimeDateStamp);
-    printf("TimeDateStamp:%d(%#010X), ±‡“Î ±º‰£∫%s.\r\n", FileHeader->TimeDateStamp, FileHeader->TimeDateStamp, TimeDateStamp);
+    printf("TimeDateStamp:%d(%#010X), ÁºñËØëÊó∂Èó¥Ôºö%s.\r\n", FileHeader->TimeDateStamp, FileHeader->TimeDateStamp, TimeDateStamp);
 
     printf("PointerToSymbolTable:%#010X.\r\n", FileHeader->PointerToSymbolTable);
     printf("NumberOfSymbols:%#010X.\r\n", FileHeader->NumberOfSymbols);
@@ -89,7 +89,7 @@ DWORD FileHeader(_In_ PBYTE Data, _In_ DWORD Size)
 }
 
 
-DWORD OptionlHeader(_In_ PBYTE Data, _In_ DWORD Size)
+DWORD OptionalHeader(_In_ PBYTE Data, _In_ DWORD Size)
 {
     DWORD ret = ERROR_SUCCESS;
 
@@ -139,7 +139,7 @@ DWORD OptionlHeader(_In_ PBYTE Data, _In_ DWORD Size)
         printf("LoaderFlags:%#010X.\r\n", OptionalHeader->LoaderFlags);
         printf("NumberOfRvaAndSizes:%#010X.\r\n", OptionalHeader->NumberOfRvaAndSizes);
 
-        //DataDirectory¡ÌÕ‚¥Ú”°°£
+        //DataDirectoryÂè¶Â§ñÊâìÂç∞„ÄÇ
         break;
     }
     case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
@@ -174,11 +174,11 @@ DWORD OptionlHeader(_In_ PBYTE Data, _In_ DWORD Size)
         printf("LoaderFlags:%#010X.\r\n", OptionalHeader->LoaderFlags);
         printf("NumberOfRvaAndSizes:%#010X.\r\n", OptionalHeader->NumberOfRvaAndSizes);
 
-        //DataDirectory¡ÌÕ‚¥Ú”°°£
+        //DataDirectoryÂè¶Â§ñÊâìÂç∞„ÄÇ
         break;
     }
     case IMAGE_ROM_OPTIONAL_HDR_MAGIC:
-        LOGA(ERROR_LEVEL, "πßœ≤ƒ„:∑¢œ÷“ª∏ˆROM”≥œÒ!");
+        LOGA(ERROR_LEVEL, "ÊÅ≠Âñú‰Ω†:ÂèëÁé∞‰∏Ä‰∏™ROMÊò†ÂÉè!");
         break;
     default:
         LOGA(ERROR_LEVEL, "Magic:%#X!", NtHeader->OptionalHeader.Magic);
@@ -300,7 +300,7 @@ DWORD SectionHeader(_In_ PBYTE Data, _In_ DWORD Size)
     _ASSERTE(NtHeader);
     PIMAGE_FILE_HEADER FileHeader = (PIMAGE_FILE_HEADER)&NtHeader->FileHeader;
     PIMAGE_OPTIONAL_HEADER OptionalHeader = (PIMAGE_OPTIONAL_HEADER)&NtHeader->OptionalHeader;
-    PIMAGE_SECTION_HEADER SectionHeader = (PIMAGE_SECTION_HEADER)((PBYTE)OptionalHeader + FileHeader->SizeOfOptionalHeader);//±ÿ–Îº”(ULONG),≤ª»ª≥ˆ¥Ì.
+    PIMAGE_SECTION_HEADER SectionHeader = (PIMAGE_SECTION_HEADER)((PBYTE)OptionalHeader + FileHeader->SizeOfOptionalHeader);//ÂøÖÈ°ªÂä†(ULONG),‰∏çÁÑ∂Âá∫Èîô.
 
     printf("Section Header Information:\r\n");
 
@@ -344,9 +344,9 @@ DWORD FileHeader(_In_ LPCWSTR FileName)
 }
 
 
-DWORD OptionlHeader(_In_ LPCWSTR FileName)
+DWORD OptionalHeader(_In_ LPCWSTR FileName)
 {
-    return MapFile(FileName, OptionlHeader);
+    return MapFile(FileName, OptionalHeader);
 }
 
 

@@ -1,4 +1,4 @@
-#include "pch.h"
+ï»¿#include "pch.h"
 #include "Import.h"
 #include "Public.h"
 
@@ -76,7 +76,7 @@ DWORD Import(_In_ PBYTE Data, _In_ DWORD Size)
     GetDataDirectory(Data, Size, IMAGE_DIRECTORY_ENTRY_IMPORT, &DataDirectory);
 
     if (0 == DataDirectory.VirtualAddress) {
-        printf("´ËÎÄ¼şÃ»ÓĞImport.\r\n");
+        printf("æ­¤æ–‡ä»¶æ²¡æœ‰Import.\r\n");
         return ret;
     }
 
@@ -84,7 +84,7 @@ DWORD Import(_In_ PBYTE Data, _In_ DWORD Size)
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
     PIMAGE_IMPORT_DESCRIPTOR ImportDirectory = (PIMAGE_IMPORT_DESCRIPTOR)
         ImageDirectoryEntryToDataEx(Data,
-            FALSE,//Ó³Éä£¨MapViewOfFile£©µÄÓÃFALSE£¬Ô­Ê¼¶ÁÈ¡(Èç£ºReadFile)µÄÓÃTRUE¡£ 
+            FALSE,//æ˜ å°„ï¼ˆMapViewOfFileï¼‰çš„ç”¨FALSEï¼ŒåŸå§‹è¯»å–(å¦‚ï¼šReadFile)çš„ç”¨TRUEã€‚ 
             IMAGE_DIRECTORY_ENTRY_IMPORT,
             &size, &FoundHeader);
 

@@ -1,4 +1,4 @@
-#include "pch.h"
+ï»¿#include "pch.h"
 #include "Architecture.h"
 
 
@@ -7,9 +7,9 @@
 
 DWORD Architecture(_In_ PBYTE Data, _In_ DWORD Size)
 /*
-ÓĞ´ı²âÊÔ¡£
+æœ‰å¾…æµ‹è¯•ã€‚
 
-²Î¿¼£º\win2k\trunk\private\ntos\dll\ldrsnap.cµÄAlphaFindArchitectureFixups¡£
+å‚è€ƒï¼š\win2k\trunk\private\ntos\dll\ldrsnap.cçš„AlphaFindArchitectureFixupsã€‚
 
 PIMAGE_ARCHITECTURE_ENTRY
 */
@@ -24,7 +24,7 @@ PIMAGE_ARCHITECTURE_ENTRY
     GetDataDirectory(Data, Size, IMAGE_DIRECTORY_ENTRY_ARCHITECTURE, &DataDirectory);
 
     if (0 == DataDirectory.VirtualAddress) {
-        printf("´ËÎÄ¼şÃ»ÓĞArchitecture.\r\n");
+        printf("æ­¤æ–‡ä»¶æ²¡æœ‰Architecture.\r\n");
         return ret;
     }
 
@@ -34,7 +34,7 @@ PIMAGE_ARCHITECTURE_ENTRY
     PIMAGE_SECTION_HEADER FoundHeader = NULL; 
     PIMAGE_ARCHITECTURE_HEADER BoundImportDirectory = (PIMAGE_ARCHITECTURE_HEADER)
         ImageDirectoryEntryToDataEx(Data,
-                                    FALSE,//Ó³Éä£¨MapViewOfFile£©µÄÓÃFALSE£¬Ô­Ê¼¶ÁÈ¡(Èç£ºReadFile)µÄÓÃTRUE¡£ 
+                                    FALSE,//æ˜ å°„ï¼ˆMapViewOfFileï¼‰çš„ç”¨FALSEï¼ŒåŸå§‹è¯»å–(å¦‚ï¼šReadFile)çš„ç”¨TRUEã€‚ 
                                     IMAGE_DIRECTORY_ENTRY_ARCHITECTURE,
                                     &size, &FoundHeader);
 
@@ -43,7 +43,7 @@ PIMAGE_ARCHITECTURE_ENTRY
     printf("Size:%#010X.\r\n", DataDirectory.Size);
     printf("\r\n");
 
-    //ÓĞ¼¸¸öIMAGE_ARCHITECTURE_HEADER½á¹¹ÄØ£¿
+    //æœ‰å‡ ä¸ªIMAGE_ARCHITECTURE_HEADERç»“æ„å‘¢ï¼Ÿ
 
 
 

@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 //#define _WIN32_WINNT 0x0501
 //#define _WINSOCK_DEPRECATED_NO_WARNINGS
@@ -34,7 +34,7 @@
 #include <ws2tcpip.h>
 #include <fwpsu.h>
 #include <atlbase.h>
-//#include <mbnapi.h> //²»ÉÙÃû³Æ±»±ê¼ÇÎª #pragma deprecated
+//#include <mbnapi.h> //ä¸å°‘åç§°è¢«æ ‡è®°ä¸º #pragma deprecated
 #include <iostream>
 #include <netfw.h>
 #include <objbase.h>
@@ -56,7 +56,7 @@
 #pragma comment(lib, "Version.lib") 
 //#pragma comment (lib,"Url.lib")
 
-#include <imagehlp.h>//ºÍDbgHelp.hÓĞÖØ¸´µÄ¶¨Òå¡£
+#include <imagehlp.h>//å’ŒDbgHelp.hæœ‰é‡å¤çš„å®šä¹‰ã€‚
 #pragma comment(lib, "imagehlp.lib")
 
 #include <bcrypt.h>

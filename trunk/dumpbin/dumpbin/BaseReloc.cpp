@@ -1,4 +1,4 @@
-#include "pch.h"
+ï»¿#include "pch.h"
 #include "BaseReloc.h"
 #include "Public.h"
 
@@ -46,7 +46,7 @@ PCSTR GetBaseRelocType(_In_ WORD Type)
         break;    
     default:
         LOGA(ERROR_LEVEL, "Type:%#X", Type);
-        TypeString = "Î´¶¨Òå";
+        TypeString = "æœªå®šä¹‰";
         break;
     }
 
@@ -66,7 +66,7 @@ DWORD BaseReloc(_In_ PBYTE Data, _In_ DWORD Size)
     GetDataDirectory(Data, Size, IMAGE_DIRECTORY_ENTRY_BASERELOC, &DataDirectory);
 
     if (0 == DataDirectory.VirtualAddress) {
-        printf("´ËÎÄ¼şÃ»ÓĞBaseReloc.\r\n");
+        printf("æ­¤æ–‡ä»¶æ²¡æœ‰BaseReloc.\r\n");
         return ret;
     }
 
@@ -74,7 +74,7 @@ DWORD BaseReloc(_In_ PBYTE Data, _In_ DWORD Size)
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
     PIMAGE_BASE_RELOCATION BaseRelocDirectory = (PIMAGE_BASE_RELOCATION)
         ImageDirectoryEntryToDataEx(Data,
-                                    FALSE,//Ó³Éä£¨MapViewOfFile£©µÄÓÃFALSE£¬Ô­Ê¼¶ÁÈ¡(Èç£ºReadFile)µÄÓÃTRUE¡£ 
+                                    FALSE,//æ˜ å°„ï¼ˆMapViewOfFileï¼‰çš„ç”¨FALSEï¼ŒåŸå§‹è¯»å–(å¦‚ï¼šReadFile)çš„ç”¨TRUEã€‚ 
                                     IMAGE_DIRECTORY_ENTRY_BASERELOC,
                                     &size, &FoundHeader);
 
@@ -85,7 +85,7 @@ DWORD BaseReloc(_In_ PBYTE Data, _In_ DWORD Size)
 
     PIMAGE_BASE_RELOCATION temp = (PIMAGE_BASE_RELOCATION)BaseRelocDirectory;
 
-    //¿ÉÒÔ¸øÏÂÃæµÄĞÅÏ¢¼ÓÉÏË÷ÒıĞòºÅ¡£
+    //å¯ä»¥ç»™ä¸‹é¢çš„ä¿¡æ¯åŠ ä¸Šç´¢å¼•åºå·ã€‚
 
     for (DWORD Len = 0; Len < DataDirectory.Size; Len += temp->SizeOfBlock) {
 
@@ -99,7 +99,7 @@ DWORD BaseReloc(_In_ PBYTE Data, _In_ DWORD Size)
         for (DWORD i = 0; i < SizeOfBlock; i++) {
             printf("\tType:%#06X, %s, Offset:%#06X.\r\n", 
                    BaseRelocBit->Type, 
-                   GetBaseRelocType(BaseRelocBit->Type), //¾­²âÊÔ£¬Õâ¸öÖµ¶¼ÔÚºÏÀíµÄ·¶Î§ÄÚ£¬ËµÃ÷Õâ¸ö½âÎö²»´í¡£
+                   GetBaseRelocType(BaseRelocBit->Type), //ç»æµ‹è¯•ï¼Œè¿™ä¸ªå€¼éƒ½åœ¨åˆç†çš„èŒƒå›´å†…ï¼Œè¯´æ˜è¿™ä¸ªè§£æä¸é”™ã€‚
                    BaseRelocBit->Offset);
   
             BaseRelocBit++;

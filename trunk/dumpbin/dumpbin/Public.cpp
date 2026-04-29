@@ -1,4 +1,4 @@
-#include "pch.h"
+ï»¿#include "pch.h"
 #include "Public.h"
 #include "log.h"
 
@@ -25,7 +25,7 @@ static void AppendFlags(_In_ DWORD Value, _In_reads_(Count) const FlagEntry * Ta
 
 LPWSTR UTF8ToWide(IN PCHAR utf8)
 /*
-µÃµ½µÄÄÚ´æÓĞµ÷ÓÃÕßÊÍ·Å¡£
+å¾—åˆ°çš„å†…å­˜æœ‰è°ƒç”¨è€…é‡Šæ”¾ã€‚
 */
 {
     int cchWideChar = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, 0, 0);
@@ -54,20 +54,31 @@ void GetDataDirectory(_In_ PBYTE Data, _In_ DWORD Size, _In_ BYTE index, _Out_ P
         return;
     }
 
-    _ASSERTE(index < IMAGE_NUMBEROF_DIRECTORY_ENTRIES);
+    if (index >= IMAGE_NUMBEROF_DIRECTORY_ENTRIES) {
+        LOGA(ERROR_LEVEL, "DataDirectory index out of range: %u", index);
+        return;
+    }
 
     PIMAGE_NT_HEADERS NtHeader = ImageNtHeader(Data);
-    _ASSERTE(NtHeader);
+    if (NtHeader == NULL) {
+        return;
+    }
 
-    PIMAGE_DATA_DIRECTORY directory_entry;
+    PIMAGE_DATA_DIRECTORY directory_entry = NULL;
+    DWORD numberOfRvaAndSizes = 0;
     if (IsPE32Ex(Data, Size)) {
         PIMAGE_OPTIONAL_HEADER64 opt = (PIMAGE_OPTIONAL_HEADER64)&NtHeader->OptionalHeader;
-        _ASSERTE(IMAGE_NUMBEROF_DIRECTORY_ENTRIES == opt->NumberOfRvaAndSizes);
+        numberOfRvaAndSizes = opt->NumberOfRvaAndSizes;
         directory_entry = opt->DataDirectory;
     } else {
         PIMAGE_OPTIONAL_HEADER32 opt = (PIMAGE_OPTIONAL_HEADER32)&NtHeader->OptionalHeader;
-        _ASSERTE(IMAGE_NUMBEROF_DIRECTORY_ENTRIES == opt->NumberOfRvaAndSizes);
+        numberOfRvaAndSizes = opt->NumberOfRvaAndSizes;
         directory_entry = opt->DataDirectory;
+    }
+
+    // PE è§„èŒƒå…è®¸ NumberOfRvaAndSizes å°äº 16ï¼Œéœ€è¦åšè¾¹ç•Œæ£€æŸ¥ã€‚
+    if (index >= numberOfRvaAndSizes) {
+        return;
     }
 
     *DataDirectory = directory_entry[index];
@@ -76,7 +87,7 @@ void GetDataDirectory(_In_ PBYTE Data, _In_ DWORD Size, _In_ BYTE index, _Out_ P
 
 UINT Rva2Va(_In_ PBYTE Data, _In_ UINT rva)
 /*
-·µ»Ø0±íÊ¾Ê§°Ü£¬ÆäËûµÄÊÇÔÚÎÄ¼şÖĞµÄÆ«ÒÆ¡£
+è¿”å›0è¡¨ç¤ºå¤±è´¥ï¼Œå…¶ä»–çš„æ˜¯åœ¨æ–‡ä»¶ä¸­çš„åç§»ã€‚
 */
 {
     PIMAGE_NT_HEADERS NtHeader = ImageNtHeader(Data);
@@ -205,7 +216,7 @@ PCSTR GetSubsystem(_In_ WORD Subsystem)
     }
 
     LOGA(ERROR_LEVEL, "SUBSYSTEM:%#X", Subsystem);
-    return "Î´¶¨Òå";
+    return "æœªå®šä¹‰";
 }
 
 
@@ -222,7 +233,7 @@ void TimeStampToFileTime(INT64 timeStamp, FILETIME & fileTime)
 
 void FileTimeToLocalTimeA(PFILETIME ft, char * time)
 /*
-°ÑFileTime×ª»»Îª±¾µØÊ±¼ä´òÓ¡¡£
+æŠŠFileTimeè½¬æ¢ä¸ºæœ¬åœ°æ—¶é—´æ‰“å°ã€‚
 */
 {
     FILETIME lft;
@@ -236,7 +247,7 @@ void FileTimeToLocalTimeA(PFILETIME ft, char * time)
 
     //SystemTimeToTzSpecificLocalTime
 
-    //¸ñÊ½£º2016-07-11 17:35:54      
+    //æ ¼å¼ï¼š2016-07-11 17:35:54      
     wsprintfA(time, "%04d-%02d-%02d %02d:%02d:%02d", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
 
     //size_t cb = lstrlen(time) * sizeof(wchar_t);
@@ -287,7 +298,7 @@ PCSTR GetMachine(_In_ WORD Machine)
     };
 
     static const MachineEntry Table[] = {
-        {IMAGE_FILE_MACHINE_UNKNOWN,    "ÊÊÓÃÓÚÈÎºÎÀàĞÍ´¦ÀíÆ÷"},
+        {IMAGE_FILE_MACHINE_UNKNOWN,    "é€‚ç”¨äºä»»ä½•ç±»å‹å¤„ç†å™¨"},
         {IMAGE_FILE_MACHINE_TARGET_HOST,"Useful for indicating we want to interact with the host and not a WoW guest"},
         {IMAGE_FILE_MACHINE_I386,       "Intel 386"},
         {IMAGE_FILE_MACHINE_R3000,      "MIPS little-endian, 0x160 big-endian"},
@@ -327,7 +338,7 @@ PCSTR GetMachine(_In_ WORD Machine)
     }
 
     LOGA(ERROR_LEVEL, "Machine:%#X", Machine);
-    return "Î´Öª";
+    return "æœªçŸ¥";
 }
 
 
@@ -362,10 +373,10 @@ bool IsValidPE(_In_ PBYTE Data, _In_ DWORD Size)
 
         switch (NtHeader->Signature) {
         case IMAGE_OS2_SIGNATURE:
-            LOGA(ERROR_LEVEL, "¹§Ï²Äã:·¢ÏÖÒ»¸öNEÎÄ¼ş!");
+            LOGA(ERROR_LEVEL, "æ­å–œä½ :å‘ç°ä¸€ä¸ªNEæ–‡ä»¶!");
             break;
         case IMAGE_OS2_SIGNATURE_LE://IMAGE_VXD_SIGNATURE
-            LOGA(ERROR_LEVEL, "¹§Ï²Äã:·¢ÏÖÒ»¸öLEÎÄ¼ş!");
+            LOGA(ERROR_LEVEL, "æ­å–œä½ :å‘ç°ä¸€ä¸ªLEæ–‡ä»¶!");
             break;
         case IMAGE_NT_SIGNATURE:
             ret = true;
@@ -381,13 +392,13 @@ bool IsValidPE(_In_ PBYTE Data, _In_ DWORD Size)
         ntSignature = *(ULONG *)ntSignature;
 
         if (IMAGE_OS2_SIGNATURE == other) {
-            LOGA(ERROR_LEVEL, "¹§Ï²Äã:·¢ÏÖÒ»¸öNEÎÄ¼ş!");
+            LOGA(ERROR_LEVEL, "æ­å–œä½ :å‘ç°ä¸€ä¸ªNEæ–‡ä»¶!");
             __leave;
         }
 
         if (IMAGE_OS2_SIGNATURE_LE == other) //IMAGE_VXD_SIGNATURE
         {
-            LOGA(ERROR_LEVEL, "¹§Ï²Äã:·¢ÏÖÒ»¸öLEÎÄ¼ş!");
+            LOGA(ERROR_LEVEL, "æ­å–œä½ :å‘ç°ä¸€ä¸ªLEæ–‡ä»¶!");
             __leave;
         }
 
@@ -421,18 +432,18 @@ bool IsPE32Ex(_In_ PBYTE Data, _In_ DWORD Size)
         _ASSERTE(NtHeader);
 
         /*
-        ¶ÔÓÚ¿ÉÑ¡Í·µÄ±ê×¼Óò(ÅÅ³ı×îºóÒ»¸öBaseOfData)À´Ëµ£¬ÊÇ32Î»µÄ¿ÉÑ¡Í·ºÍ64Î»µÄ¿ÉÑ¡Í·ÎŞËùÎ½£¬ÒòÎªÆ«ÒÆ¶¼ÊÇÒ»ÑùµÄ¡£
+        å¯¹äºå¯é€‰å¤´çš„æ ‡å‡†åŸŸ(æ’é™¤æœ€åä¸€ä¸ªBaseOfData)æ¥è¯´ï¼Œæ˜¯32ä½çš„å¯é€‰å¤´å’Œ64ä½çš„å¯é€‰å¤´æ— æ‰€è°“ï¼Œå› ä¸ºåç§»éƒ½æ˜¯ä¸€æ ·çš„ã€‚
         */
         PIMAGE_OPTIONAL_HEADER OptionalHeader = (PIMAGE_OPTIONAL_HEADER)&NtHeader->OptionalHeader;
         switch (OptionalHeader->Magic) {
         case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
-            //ÕâÊÇÒ»¸öÆÕÍ¨µÄPEÎÄ¼ş
+            //è¿™æ˜¯ä¸€ä¸ªæ™®é€šçš„PEæ–‡ä»¶
             break;
         case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
-            ret = true;//ÕâÊÇÒ»¸öµÄPE32+ÎÄ¼ş
+            ret = true;//è¿™æ˜¯ä¸€ä¸ªçš„PE32+æ–‡ä»¶
             break;
         case IMAGE_ROM_OPTIONAL_HDR_MAGIC:
-            LOGA(ERROR_LEVEL, "¹§Ï²Äã:·¢ÏÖÒ»¸öROMÓ³Ïñ!");
+            LOGA(ERROR_LEVEL, "æ­å–œä½ :å‘ç°ä¸€ä¸ªROMæ˜ åƒ!");
             break;
         default:
             LOGA(ERROR_LEVEL, "Magic:%#X!", OptionalHeader->Magic);
@@ -461,7 +472,7 @@ DWORD MapFile(_In_ LPCWSTR FileName, _In_opt_ PeCallBack CallBack)
         return ERROR_INVALID_PARAMETER;
     }
 
-    if (IsWow64()) {//ÔÚwow64ÏÂ¹Ø±ÕÎÄ¼şÖØ¶¨Ïò¡£
+    if (IsWow64()) {//åœ¨wow64ä¸‹å…³é—­æ–‡ä»¶é‡å®šå‘ã€‚
         Wow64FsRedirectionDisabled = Wow64DisableWow64FsRedirection(&Wow64OldValue);
         _ASSERTE(Wow64FsRedirectionDisabled);
     }
@@ -489,7 +500,7 @@ DWORD MapFile(_In_ LPCWSTR FileName, _In_opt_ PeCallBack CallBack)
             __leave;
         }
 
-        if (FileSize.HighPart != 0) {//ÔİÊ±²»Ö§³Ö´óÓÚ4GµÄÎÄ¼ş¡£
+        if (FileSize.HighPart != 0) {//æš‚æ—¶ä¸æ”¯æŒå¤§äº4Gçš„æ–‡ä»¶ã€‚
             LastError = ERROR_FILE_TOO_LARGE;
             LOGA(ERROR_LEVEL, "file too large: %llu bytes", FileSize.QuadPart);
             __leave;

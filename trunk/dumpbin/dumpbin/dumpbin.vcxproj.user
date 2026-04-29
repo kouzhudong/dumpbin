@@ -12,5 +12,6 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerCommandArguments>Security C:\Users\Administrator\Desktop\test.exe</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerCommandArgumentsHistory>Security C:\Users\Administrator\Desktop\test.exe|</LocalDebuggerCommandArgumentsHistory>
   </PropertyGroup>
 </Project>

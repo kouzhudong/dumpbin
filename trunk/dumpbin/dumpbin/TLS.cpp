@@ -1,4 +1,4 @@
-#include "pch.h"
+ï»¿#include "pch.h"
 #include "TLS.h"
 
 
@@ -6,7 +6,7 @@
 
 
 DWORD TLS(_In_ PBYTE Data, _In_ DWORD Size)
-//ÓÐ´ý²âÊÔ¡£
+//æœ‰å¾…æµ‹è¯•ã€‚
 {
     DWORD ret = ERROR_SUCCESS;
 
@@ -18,7 +18,7 @@ DWORD TLS(_In_ PBYTE Data, _In_ DWORD Size)
     GetDataDirectory(Data, Size, IMAGE_DIRECTORY_ENTRY_TLS, &DataDirectory);
 
     if (0 == DataDirectory.VirtualAddress) {
-        printf("´ËÎÄ¼þÃ»ÓÐTLS.\r\n");
+        printf("æ­¤æ–‡ä»¶æ²¡æœ‰TLS.\r\n");
         return ret;
     }
 
@@ -26,7 +26,7 @@ DWORD TLS(_In_ PBYTE Data, _In_ DWORD Size)
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
     PIMAGE_TLS_DIRECTORY TLSDirectory = (PIMAGE_TLS_DIRECTORY)
         ImageDirectoryEntryToDataEx(Data,
-                                    FALSE,//Ó³Éä£¨MapViewOfFile£©µÄÓÃFALSE£¬Ô­Ê¼¶ÁÈ¡(Èç£ºReadFile)µÄÓÃTRUE¡£ 
+                                    FALSE,//æ˜ å°„ï¼ˆMapViewOfFileï¼‰çš„ç”¨FALSEï¼ŒåŽŸå§‹è¯»å–(å¦‚ï¼šReadFile)çš„ç”¨TRUEã€‚ 
                                     IMAGE_DIRECTORY_ENTRY_TLS,
                                     &size, &FoundHeader);
 
@@ -35,7 +35,7 @@ DWORD TLS(_In_ PBYTE Data, _In_ DWORD Size)
     printf("Size:%#010X.\r\n", DataDirectory.Size);
     printf("\r\n");
 
-    //ÓÐ¼¸¸öIMAGE_TLS_DIRECTORY½á¹¹ÄØ£¿
+    //æœ‰å‡ ä¸ªIMAGE_TLS_DIRECTORYç»“æž„å‘¢ï¼Ÿ
 
     if (IsPE32Ex(Data, Size)) {
         PIMAGE_TLS_DIRECTORY64 TLSDirectory64 = (PIMAGE_TLS_DIRECTORY64)TLSDirectory;
@@ -46,7 +46,7 @@ DWORD TLS(_In_ PBYTE Data, _In_ DWORD Size)
         printf("AddressOfCallBacks:%#016llX.\r\n", TLSDirectory64->AddressOfCallBacks);
 
         PIMAGE_TLS_CALLBACK * TlsCallback = (PIMAGE_TLS_CALLBACK *)TLSDirectory64->AddressOfCallBacks;
-        //»Øµ÷º¯ÊýµÄµØÖ·ºÍÊýÁ¿Ò²×îºÃ´òÓ¡³öÀ´¡£
+        //å›žè°ƒå‡½æ•°çš„åœ°å€å’Œæ•°é‡ä¹Ÿæœ€å¥½æ‰“å°å‡ºæ¥ã€‚
 
         printf("SizeOfZeroFill:%#010X.\r\n", TLSDirectory64->SizeOfZeroFill);
 
@@ -64,7 +64,7 @@ DWORD TLS(_In_ PBYTE Data, _In_ DWORD Size)
         printf("AddressOfCallBacks:%#010X.\r\n", TLSDirectory32->AddressOfCallBacks);
 
         PIMAGE_TLS_CALLBACK * TlsCallback = (PIMAGE_TLS_CALLBACK *)ULongToHandle(TLSDirectory32->AddressOfCallBacks);
-        //»Øµ÷º¯ÊýµÄµØÖ·ºÍÊýÁ¿Ò²×îºÃ´òÓ¡³öÀ´¡£
+        //å›žè°ƒå‡½æ•°çš„åœ°å€å’Œæ•°é‡ä¹Ÿæœ€å¥½æ‰“å°å‡ºæ¥ã€‚
 
         printf("SizeOfZeroFill:%#010X.\r\n", TLSDirectory32->SizeOfZeroFill);
 

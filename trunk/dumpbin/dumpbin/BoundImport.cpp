@@ -1,4 +1,4 @@
-#include "pch.h"
+ï»¿#include "pch.h"
 #include "BoundImport.h"
 
 
@@ -6,7 +6,7 @@
 
 
 DWORD BoundImport(_In_ PBYTE Data, _In_ DWORD Size)
-//ÓÐ´ý²âÊÔ¡£
+//æœ‰å¾…æµ‹è¯•ã€‚
 {
     DWORD ret = ERROR_SUCCESS;
 
@@ -18,7 +18,7 @@ DWORD BoundImport(_In_ PBYTE Data, _In_ DWORD Size)
     GetDataDirectory(Data, Size, IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT, &DataDirectory);
 
     if (0 == DataDirectory.VirtualAddress) {
-        printf("´ËÎÄ¼þÃ»ÓÐBoundImport.\r\n");
+        printf("æ­¤æ–‡ä»¶æ²¡æœ‰BoundImport.\r\n");
         return ret;
     }
 
@@ -26,7 +26,7 @@ DWORD BoundImport(_In_ PBYTE Data, _In_ DWORD Size)
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
     PIMAGE_BOUND_IMPORT_DESCRIPTOR BoundImportDirectory = (PIMAGE_BOUND_IMPORT_DESCRIPTOR)
         ImageDirectoryEntryToDataEx(Data,
-            FALSE,//Ó³Éä£¨MapViewOfFile£©µÄÓÃFALSE£¬Ô­Ê¼¶ÁÈ¡(Èç£ºReadFile)µÄÓÃTRUE¡£ 
+            FALSE,//æ˜ å°„ï¼ˆMapViewOfFileï¼‰çš„ç”¨FALSEï¼ŒåŽŸå§‹è¯»å–(å¦‚ï¼šReadFile)çš„ç”¨TRUEã€‚ 
             IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT,
             &size, &FoundHeader);
 
@@ -35,13 +35,13 @@ DWORD BoundImport(_In_ PBYTE Data, _In_ DWORD Size)
     printf("Size:%#010X.\r\n", DataDirectory.Size);
     printf("\r\n");
 
-    //ÓÐ¼¸¸öIMAGE_BOUND_IMPORT_DESCRIPTOR½á¹¹ÄØ£¿
+    //æœ‰å‡ ä¸ªIMAGE_BOUND_IMPORT_DESCRIPTORç»“æž„å‘¢ï¼Ÿ
 
     CHAR TimeDateStamp[MAX_PATH] = {0};
     GetTimeDateStamp(BoundImportDirectory->TimeDateStamp, TimeDateStamp);
-    printf("TimeDateStamp:%d(%#010X), Ê±¼ä´Á£º%s.\r\n", BoundImportDirectory->TimeDateStamp, BoundImportDirectory->TimeDateStamp, TimeDateStamp);
+    printf("TimeDateStamp:%d(%#010X), æ—¶é—´æˆ³ï¼š%s.\r\n", BoundImportDirectory->TimeDateStamp, BoundImportDirectory->TimeDateStamp, TimeDateStamp);
 
-    printf("OffsetModuleName:%#06X.\r\n", BoundImportDirectory->OffsetModuleName);//Õâ¸öÓ¦¸ÃÊÇ×Ö·û´®¡£
+    printf("OffsetModuleName:%#06X.\r\n", BoundImportDirectory->OffsetModuleName);//è¿™ä¸ªåº”è¯¥æ˜¯å­—ç¬¦ä¸²ã€‚
 
     BoundImportDirectory++;
     PIMAGE_BOUND_FORWARDER_REF BoundForwarderRef = (PIMAGE_BOUND_FORWARDER_REF)BoundImportDirectory;
@@ -49,9 +49,9 @@ DWORD BoundImport(_In_ PBYTE Data, _In_ DWORD Size)
     for (WORD i = 0; i < BoundImportDirectory->NumberOfModuleForwarderRefs; i++) {
         CHAR TimeDateStamp[MAX_PATH] = {0};
         GetTimeDateStamp(BoundForwarderRef->TimeDateStamp, TimeDateStamp);
-        printf("\tTimeDateStamp:%d(%#010X), Ê±¼ä´Á£º%s.\r\n", BoundForwarderRef->TimeDateStamp, BoundForwarderRef->TimeDateStamp, TimeDateStamp);
+        printf("\tTimeDateStamp:%d(%#010X), æ—¶é—´æˆ³ï¼š%s.\r\n", BoundForwarderRef->TimeDateStamp, BoundForwarderRef->TimeDateStamp, TimeDateStamp);
 
-        printf("\tSize:%#06X.\r\n", BoundForwarderRef->OffsetModuleName);//Õâ¸öÓ¦¸ÃÊÇ×Ö·û´®¡£
+        printf("\tSize:%#06X.\r\n", BoundForwarderRef->OffsetModuleName);//è¿™ä¸ªåº”è¯¥æ˜¯å­—ç¬¦ä¸²ã€‚
         printf("\tReserved:%#06X.\r\n", BoundForwarderRef->Reserved);
 
         printf("\r\n");

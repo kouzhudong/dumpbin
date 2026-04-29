@@ -1,4 +1,4 @@
-#include "pch.h"
+ï»¿#include "pch.h"
 #include "LoadConfig.h"
 #include "Public.h"
 
@@ -11,7 +11,7 @@ void PrintLoadConfig64(_In_ PIMAGE_LOAD_CONFIG_DIRECTORY64 LoadConfigDirectory64
     printf("Size:%#010X.\r\n", LoadConfigDirectory64->Size);
     CHAR TimeDateStamp[MAX_PATH] = {0};
     GetTimeDateStamp(LoadConfigDirectory64->TimeDateStamp, TimeDateStamp);
-    printf("TimeDateStamp:%d(%#010X), Ê±¼ä´Á£º%s.\r\n", LoadConfigDirectory64->TimeDateStamp, LoadConfigDirectory64->TimeDateStamp, TimeDateStamp);
+    printf("TimeDateStamp:%d(%#010X), æ—¶é—´æˆ³ï¼š%s.\r\n", LoadConfigDirectory64->TimeDateStamp, LoadConfigDirectory64->TimeDateStamp, TimeDateStamp);
 
     printf("Version:%d.%d.\r\n", LoadConfigDirectory64->MajorVersion, LoadConfigDirectory64->MinorVersion);
 
@@ -78,7 +78,7 @@ void PrintLoadConfig32(_In_ PIMAGE_LOAD_CONFIG_DIRECTORY32 LoadConfigDirectory32
     printf("Size:%#010X.\r\n", LoadConfigDirectory32->Size);
     CHAR TimeDateStamp[MAX_PATH] = {0};
     GetTimeDateStamp(LoadConfigDirectory32->TimeDateStamp, TimeDateStamp);
-    printf("TimeDateStamp:%d(%#010X), Ê±¼ä´Á£º%s.\r\n", LoadConfigDirectory32->TimeDateStamp, LoadConfigDirectory32->TimeDateStamp, TimeDateStamp);
+    printf("TimeDateStamp:%d(%#010X), æ—¶é—´æˆ³ï¼š%s.\r\n", LoadConfigDirectory32->TimeDateStamp, LoadConfigDirectory32->TimeDateStamp, TimeDateStamp);
 
     printf("Version:%d.%d.\r\n", LoadConfigDirectory32->MajorVersion, LoadConfigDirectory32->MinorVersion);
 
@@ -146,7 +146,7 @@ DWORD LoadConfig(_In_ PBYTE Data, _In_ DWORD Size)
     GetDataDirectory(Data, Size, IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG, &DataDirectory);
 
     if (0 == DataDirectory.VirtualAddress) {
-        printf("´ËÎÄ¼şÃ»ÓĞLoadConfig.\r\n");
+        printf("æ­¤æ–‡ä»¶æ²¡æœ‰LoadConfig.\r\n");
         return ret;
     }
 
@@ -154,7 +154,7 @@ DWORD LoadConfig(_In_ PBYTE Data, _In_ DWORD Size)
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
     PIMAGE_LOAD_CONFIG_DIRECTORY LoadConfigDirectory = (PIMAGE_LOAD_CONFIG_DIRECTORY)
         ImageDirectoryEntryToDataEx(Data,
-            FALSE,//Ó³Éä£¨MapViewOfFile£©µÄÓÃFALSE£¬Ô­Ê¼¶ÁÈ¡(Èç£ºReadFile)µÄÓÃTRUE¡£ 
+            FALSE,//æ˜ å°„ï¼ˆMapViewOfFileï¼‰çš„ç”¨FALSEï¼ŒåŸå§‹è¯»å–(å¦‚ï¼šReadFile)çš„ç”¨TRUEã€‚ 
             IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG,
             &size, &FoundHeader);
 
@@ -166,7 +166,7 @@ DWORD LoadConfig(_In_ PBYTE Data, _In_ DWORD Size)
     printf("Size:%#010X.\r\n", DataDirectory.Size);
     printf("\r\n");
 
-    //Ò»ÏÂÊı¾İµÄÓĞĞ©³ÉÔ±ÊÇÁ´±í/Êı×é£¬ÓĞ´ı½øÒ»²½µÄ½âÎö¡£
+    //ä¸€ä¸‹æ•°æ®çš„æœ‰äº›æˆå‘˜æ˜¯é“¾è¡¨/æ•°ç»„ï¼Œæœ‰å¾…è¿›ä¸€æ­¥çš„è§£æã€‚
 
     if (IsPE32Ex(Data, Size)) {
         PIMAGE_LOAD_CONFIG_DIRECTORY64 LoadConfigDirectory64 = (PIMAGE_LOAD_CONFIG_DIRECTORY64)LoadConfigDirectory;

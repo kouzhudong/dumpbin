@@ -1,4 +1,4 @@
-#pragma once
+Ôªø#pragma once
 
 #include "pch.h"
 #include "Public.h"
@@ -10,7 +10,7 @@
 
 typedef struct _BaseRelocBit {
     WORD Offset : 12;
-    WORD Type : 4;//∏ﬂ4Œª°£    
+    WORD Type : 4;//È´ò4‰Ωç„ÄÇ    
 } BaseRelocBit, * PBaseRelocBit;
 
 

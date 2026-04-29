@@ -1,4 +1,4 @@
-#include "pch.h"
+ï»¿#include "pch.h"
 #include "Debug.h"
 #include "Public.h"
 
@@ -67,7 +67,7 @@ PCSTR GetDebugType(_In_ DWORD Type)
         break;
     default:
         LOGA(ERROR_LEVEL, "Type:%#X", Type);
-        TypeString = "Î´¶¨Òå";
+        TypeString = "æœªå®šä¹‰";
         break;
     }
 
@@ -80,19 +80,19 @@ void PrintDebug(_In_ PBYTE Data, _In_ PIMAGE_DEBUG_DIRECTORY DebugDirectory)
     PIMAGE_NT_HEADERS NtHeaders = ImageNtHeader(Data);
     _ASSERTE(NtHeaders);
 
-    printf("Characteristics:%#010X.\r\n", DebugDirectory->Characteristics);//±£Áô£¬±ØĞëÎª 0¡£
+    printf("Characteristics:%#010X.\r\n", DebugDirectory->Characteristics);//ä¿ç•™ï¼Œå¿…é¡»ä¸º 0ã€‚
 
     CHAR TimeDateStamp[MAX_PATH] = {0};
     GetTimeDateStamp(DebugDirectory->TimeDateStamp, TimeDateStamp);
-    printf("TimeDateStamp:%d(%#010X), Ê±¼ä´Á£º%s.\r\n", DebugDirectory->TimeDateStamp, DebugDirectory->TimeDateStamp, TimeDateStamp);
+    printf("TimeDateStamp:%d(%#010X), æ—¶é—´æˆ³ï¼š%s.\r\n", DebugDirectory->TimeDateStamp, DebugDirectory->TimeDateStamp, TimeDateStamp);
 
     printf("Version:%d.%d.\r\n", DebugDirectory->MajorVersion, DebugDirectory->MinorVersion);
 
     printf("Type:%#010X, %s.\r\n", DebugDirectory->Type, GetDebugType(DebugDirectory->Type));
 
     printf("SizeOfData:%#010X.\r\n", DebugDirectory->SizeOfData);
-    printf("AddressOfRawData:%#010X.\r\n", DebugDirectory->AddressOfRawData);//Ğè½øÒ»²½µÄ½âÎö¡£
-    printf("PointerToRawData:%#010X.\r\n", DebugDirectory->PointerToRawData);//Ğè½øÒ»²½µÄ½âÎö¡£
+    printf("AddressOfRawData:%#010X.\r\n", DebugDirectory->AddressOfRawData);//éœ€è¿›ä¸€æ­¥çš„è§£æã€‚
+    printf("PointerToRawData:%#010X.\r\n", DebugDirectory->PointerToRawData);//éœ€è¿›ä¸€æ­¥çš„è§£æã€‚
 
     switch (DebugDirectory->Type) {
     case IMAGE_DEBUG_TYPE_UNKNOWN:
@@ -100,7 +100,7 @@ void PrintDebug(_In_ PBYTE Data, _In_ PIMAGE_DEBUG_DIRECTORY DebugDirectory)
         break;
     case IMAGE_DEBUG_TYPE_COFF:
     {
-        //¹Ù·½¶¨ÒåµÄÊı¾İ½á¹¹ÊÇPIMAGE_COFF_SYMBOLS_HEADER
+        //å®˜æ–¹å®šä¹‰çš„æ•°æ®ç»“æ„æ˜¯PIMAGE_COFF_SYMBOLS_HEADER
 
         PIMAGE_COFF_SYMBOLS_HEADER CoffSymbolsHeader = (PIMAGE_COFF_SYMBOLS_HEADER)(Data + DebugDirectory->PointerToRawData);
 
@@ -117,7 +117,7 @@ void PrintDebug(_In_ PBYTE Data, _In_ PIMAGE_DEBUG_DIRECTORY DebugDirectory)
     }
     case IMAGE_DEBUG_TYPE_CODEVIEW:
     {
-        CV_INFO_PDB70 * temp = (CV_INFO_PDB70 *)(Data + DebugDirectory->AddressOfRawData);//²»¿É·ÃÎÊ¡£
+        CV_INFO_PDB70 * temp = (CV_INFO_PDB70 *)(Data + DebugDirectory->AddressOfRawData);//ä¸å¯è®¿é—®ã€‚
         CV_INFO_PDB70 * temp2 = (CV_INFO_PDB70 *)(Data + DebugDirectory->PointerToRawData);
 
         LPWSTR PdbFileName = UTF8ToWide((PCHAR)temp2->PdbFileName);
@@ -128,7 +128,7 @@ void PrintDebug(_In_ PBYTE Data, _In_ PIMAGE_DEBUG_DIRECTORY DebugDirectory)
     }
     case IMAGE_DEBUG_TYPE_FPO:
     {
-        //¹Ù·½¶¨ÒåµÄÊı¾İ½á¹¹ÊÇPFPO_DATA
+        //å®˜æ–¹å®šä¹‰çš„æ•°æ®ç»“æ„æ˜¯PFPO_DATA
 
         PFPO_DATA fpo = (PFPO_DATA)(Data + DebugDirectory->PointerToRawData);
 
@@ -149,7 +149,7 @@ void PrintDebug(_In_ PBYTE Data, _In_ PIMAGE_DEBUG_DIRECTORY DebugDirectory)
     }
     case IMAGE_DEBUG_TYPE_MISC:
     {
-        //¹Ù·½¶¨ÒåµÄÊı¾İ½á¹¹ÊÇPIMAGE_DEBUG_MISC
+        //å®˜æ–¹å®šä¹‰çš„æ•°æ®ç»“æ„æ˜¯PIMAGE_DEBUG_MISC
 
         PIMAGE_DEBUG_MISC misc = (PIMAGE_DEBUG_MISC)(Data + DebugDirectory->PointerToRawData);
 
@@ -160,7 +160,7 @@ void PrintDebug(_In_ PBYTE Data, _In_ PIMAGE_DEBUG_DIRECTORY DebugDirectory)
 
         printf("Reserved[3]:%#04X%#04X%#04X.\r\n", misc->Reserved[0], misc->Reserved[1], misc->Reserved[2]);
 
-        printf("Data[1]:%#04X.\r\n", misc->Data[0]);//Õâ¸öµÄÊı¾İÓ¦¸ÃÓĞ¸ö³¤¶ÈÖ¸Ê¾¡£
+        printf("Data[1]:%#04X.\r\n", misc->Data[0]);//è¿™ä¸ªçš„æ•°æ®åº”è¯¥æœ‰ä¸ªé•¿åº¦æŒ‡ç¤ºã€‚
 
         break;
     }
@@ -188,17 +188,17 @@ void PrintDebug(_In_ PBYTE Data, _In_ PIMAGE_DEBUG_DIRECTORY DebugDirectory)
     case IMAGE_DEBUG_TYPE_VC_FEATURE:
     {
         /*
-        * Î¢ÈíµÄdumpbinÏÔÊ¾µÄÈçÏÂ£º
+        * å¾®è½¯çš„dumpbinæ˜¾ç¤ºçš„å¦‚ä¸‹ï¼š
             5F685417 feat          14 0013C000    E4200    Counts: Pre-VC++ 11.00=0, C/C++=252, /GS=252, /sdl=19, guardN=233
         */
 
-        PVOID temp = (PVOID)(Data + DebugDirectory->AddressOfRawData);//²»¿É·ÃÎÊ¡£
+        PVOID temp = (PVOID)(Data + DebugDirectory->AddressOfRawData);//ä¸å¯è®¿é—®ã€‚
         PVOID temp2 = (PVOID)(Data + DebugDirectory->PointerToRawData);
 
         PVOID temp3 = ImageRvaToVa(NtHeaders, Data, DebugDirectory->AddressOfRawData, NULL);
-        _ASSERTE(temp3 == temp2);//¾¹È»·¢ÏÖÕâ¸ö¡£
+        _ASSERTE(temp3 == temp2);//ç«Ÿç„¶å‘ç°è¿™ä¸ªã€‚
 
-        PVOID temp4 = ImageRvaToVa(NtHeaders, Data, DebugDirectory->PointerToRawData, NULL);//¿É·ÃÎÊ£¬µ«²»ÖªÊı¾İ¸ñÊ½¡£
+        PVOID temp4 = ImageRvaToVa(NtHeaders, Data, DebugDirectory->PointerToRawData, NULL);//å¯è®¿é—®ï¼Œä½†ä¸çŸ¥æ•°æ®æ ¼å¼ã€‚
 
 
         break;
@@ -206,19 +206,19 @@ void PrintDebug(_In_ PBYTE Data, _In_ PIMAGE_DEBUG_DIRECTORY DebugDirectory)
     case IMAGE_DEBUG_TYPE_POGO:
     {
         /*
-        Î¢ÈíµÄdumpbinÏÔÊ¾£ºA371A2E9 coffgrp     1500 000401E8    3F9E8    50475500 (PGU)
-        Ã»ÓĞÕÒµ½Ïà¹ØµÄÊı¾İ½á¹¹¡£
+        å¾®è½¯çš„dumpbinæ˜¾ç¤ºï¼šA371A2E9 coffgrp     1500 000401E8    3F9E8    50475500 (PGU)
+        æ²¡æœ‰æ‰¾åˆ°ç›¸å…³çš„æ•°æ®ç»“æ„ã€‚
 
-        Çë¿´¹Ù×ĞÏ¸¹Û²ìÏÂÃæµÄ¼¸¸öµØÖ·µÄÀïµÄÊı¾İ£¬ÕÒ³öÊı¾İ¸ñÊ½»òÊı¾İ¶¨Òå¡£
+        è¯·çœ‹å®˜ä»”ç»†è§‚å¯Ÿä¸‹é¢çš„å‡ ä¸ªåœ°å€çš„é‡Œçš„æ•°æ®ï¼Œæ‰¾å‡ºæ•°æ®æ ¼å¼æˆ–æ•°æ®å®šä¹‰ã€‚
         */
 
-        PVOID temp = (PVOID)(Data + DebugDirectory->AddressOfRawData);//¿É·ÃÎÊ¡£
+        PVOID temp = (PVOID)(Data + DebugDirectory->AddressOfRawData);//å¯è®¿é—®ã€‚
         PVOID temp2 = (PVOID)(Data + DebugDirectory->PointerToRawData);
 
         PVOID temp3 = ImageRvaToVa(NtHeaders, Data, DebugDirectory->AddressOfRawData, NULL);
-        _ASSERTE(temp3 == temp2);//¾¹È»·¢ÏÖÕâ¸ö¡£
+        _ASSERTE(temp3 == temp2);//ç«Ÿç„¶å‘ç°è¿™ä¸ªã€‚
 
-        PVOID temp4 = ImageRvaToVa(NtHeaders, Data, DebugDirectory->PointerToRawData, NULL);//¿É·ÃÎÊ£¬µ«²»ÖªÊı¾İ¸ñÊ½¡£
+        PVOID temp4 = ImageRvaToVa(NtHeaders, Data, DebugDirectory->PointerToRawData, NULL);//å¯è®¿é—®ï¼Œä½†ä¸çŸ¥æ•°æ®æ ¼å¼ã€‚
 
 
 
@@ -234,26 +234,26 @@ void PrintDebug(_In_ PBYTE Data, _In_ PIMAGE_DEBUG_DIRECTORY DebugDirectory)
     case IMAGE_DEBUG_TYPE_REPRO:
     {
         /*
-        Î¢ÈíµÄdumpbinÏÔÊ¾£º
+        å¾®è½¯çš„dumpbinæ˜¾ç¤ºï¼š
         A371A2E9 repro         24 00041710    40F10    C5 55 1F 64 20 92 CC 1D 4F 59 FA CC 72 EA 54 DA 1A 20 04 75 03 C7 0A E4 CC 5C 9A BB E9 A2 71 A3
-        Ã»ÓĞÕÒµ½Ïà¹ØµÄÊı¾İ½á¹¹¡£
+        æ²¡æœ‰æ‰¾åˆ°ç›¸å…³çš„æ•°æ®ç»“æ„ã€‚
 
-        Çë¿´¹Ù×ĞÏ¸¹Û²ìÏÂÃæµÄ¼¸¸öµØÖ·µÄÀïµÄÊı¾İ£¬ÕÒ³öÊı¾İ¸ñÊ½»òÊı¾İ¶¨Òå¡£
+        è¯·çœ‹å®˜ä»”ç»†è§‚å¯Ÿä¸‹é¢çš„å‡ ä¸ªåœ°å€çš„é‡Œçš„æ•°æ®ï¼Œæ‰¾å‡ºæ•°æ®æ ¼å¼æˆ–æ•°æ®å®šä¹‰ã€‚
 
-        temp2µÄÊı¾İÈçÏÂ£º
+        temp2çš„æ•°æ®å¦‚ä¸‹ï¼š
         0x02DE0F10  20 00 00 00 c5 55 1f 64 20 92 cc 1d 4f 59 fa cc   ...?U.d ??.OY??
         0x02DE0F20  72 ea 54 da 1a 20 04 75 03 c7 0a e4 cc 5c 9a bb  r?T?. .u.?.??\??
         0x02DE0F30  e9 a2 71 a3 00 00 00 00
-        ¿ÉÒÔ¿´µ½Ç°ÃæµÄ0x20ÊÇ³¤¶È¡£
+        å¯ä»¥çœ‹åˆ°å‰é¢çš„0x20æ˜¯é•¿åº¦ã€‚
         */
 
-        PVOID temp = (PVOID)(Data + DebugDirectory->AddressOfRawData);//¿É·ÃÎÊ¡£
+        PVOID temp = (PVOID)(Data + DebugDirectory->AddressOfRawData);//å¯è®¿é—®ã€‚
         PVOID temp2 = (PVOID)(Data + DebugDirectory->PointerToRawData);
 
         PVOID temp3 = ImageRvaToVa(NtHeaders, Data, DebugDirectory->AddressOfRawData, NULL);
-        _ASSERTE(temp3 == temp2);//¾¹È»·¢ÏÖÕâ¸ö¡£
+        _ASSERTE(temp3 == temp2);//ç«Ÿç„¶å‘ç°è¿™ä¸ªã€‚
 
-        PVOID temp4 = ImageRvaToVa(NtHeaders, Data, DebugDirectory->PointerToRawData, NULL);//¿É·ÃÎÊ£¬µ«²»ÖªÊı¾İ¸ñÊ½¡£
+        PVOID temp4 = ImageRvaToVa(NtHeaders, Data, DebugDirectory->PointerToRawData, NULL);//å¯è®¿é—®ï¼Œä½†ä¸çŸ¥æ•°æ®æ ¼å¼ã€‚
 
         break;
     }
@@ -281,7 +281,7 @@ DWORD Debug(_In_ PBYTE Data, _In_ DWORD Size)
     GetDataDirectory(Data, Size, IMAGE_DIRECTORY_ENTRY_DEBUG, &DataDirectory);
 
     if (0 == DataDirectory.VirtualAddress) {
-        printf("´ËÎÄ¼şÃ»ÓĞDebug.\r\n");
+        printf("æ­¤æ–‡ä»¶æ²¡æœ‰Debug.\r\n");
         return ret;
     }
 
@@ -289,7 +289,7 @@ DWORD Debug(_In_ PBYTE Data, _In_ DWORD Size)
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
     PIMAGE_DEBUG_DIRECTORY DebugDirectory = (PIMAGE_DEBUG_DIRECTORY)
         ImageDirectoryEntryToDataEx(Data,
-            FALSE,//Ó³Éä£¨MapViewOfFile£©µÄÓÃFALSE£¬Ô­Ê¼¶ÁÈ¡(Èç£ºReadFile)µÄÓÃTRUE¡£ 
+            FALSE,//æ˜ å°„ï¼ˆMapViewOfFileï¼‰çš„ç”¨FALSEï¼ŒåŸå§‹è¯»å–(å¦‚ï¼šReadFile)çš„ç”¨TRUEã€‚ 
             IMAGE_DIRECTORY_ENTRY_DEBUG,
             &size, &FoundHeader);
 

@@ -6,11 +6,10 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-/*
-ÈÕÖ¾µÄ¼¶±ð¡£
-°´Î»¶¨Òå£¬×î´óÓÐÐ§ÊýÊÇULONGµÄÎ»Êý¡£
-×¢Òâ£ºÎ»ÊýÊÇ´ÓÁã¿ªÊ¼µÄ£¬¼ì²éÎ»µÄº¯ÊýÒ²ÊÇÕâÑùµÄ¡£
-*/
+//
+// æ—¥å¿—çº§åˆ«ã€‚æŒ‰ä½å®šä¹‰ï¼Œæœ€å¤§æœ‰æ•ˆä¸ªæ•° = ULONG çš„ä½æ•°ã€‚
+// æ³¨æ„ï¼šä½æ˜¯ä»Ž 0 å¼€å§‹çš„ï¼Œæœ€ä½Žä½çš„å«ä¹‰ä¹Ÿæ˜¯æœ€é‡çš„ã€‚
+//
 typedef enum _LOG_LEVEL {
     ERROR_LEVEL = 0,
     WARNING_LEVEL = 1,
@@ -23,7 +22,7 @@ typedef enum _LOG_LEVEL {
 } LOG_LEVEL;
 
 
-#define DEFAULT_LOG_LEVEL (1 << ERROR_LEVEL | 1 << WARNING_LEVEL | 1 << IMPORTANT_INFO_LEVEL)
+#define DEFAULT_LOG_LEVEL ((1u << ERROR_LEVEL) | (1u << WARNING_LEVEL) | (1u << IMPORTANT_INFO_LEVEL))
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -35,30 +34,17 @@ extern ULONG g_log_level;
 
 void LogA(IN LOG_LEVEL Level, IN char const * Format, ...);
 void LogW(IN LOG_LEVEL Level, IN wchar_t const * Format, ...);
+void LogApiErrMsg(PCSTR Api);
 
 
-#define __FILENAME__ (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
+#define __FILENAME__  (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
 #define __FILENAMEW__ (wcsrchr(_CRT_WIDE(__FILE__), L'\\') ? wcsrchr(_CRT_WIDE(__FILE__), L'\\') + 1 : _CRT_WIDE(__FILE__))
 
 
-/*
-½ö½öÖ§³Ö¿í×Ö·û£¬²»Ö§³Öµ¥×Ö·û²ÎÊý¡£
-×¢Òâ£ºµÚ¶þ¸ö²ÎÊýÊÇµ¥×Ö·û£¬¿ÉÒÔÎª¿Õ£¬µ«²»ÒªÎªNULL£¬¸ü²»ÄÜÊ¡ÂÔ¡£
-*/
+// LOGW: è¾“å‡ºå®½å­—ç¬¦æ—¥å¿—ã€‚Format å¿…é¡»æ˜¯å­—ç¬¦ä¸²å­—é¢é‡ã€‚
 #define LOGW(Level, Format, ...) \
-{LogW(Level, L"FILE:%ls, LINE:%d, "##Format, __FILENAMEW__, __LINE__, __VA_ARGS__);} //\r\n
+    do { LogW((Level), L"FILE:%ls, LINE:%d, " Format, __FILENAMEW__, __LINE__, ##__VA_ARGS__); } while (0)
 
-/*
-¼ÈÖ§³Öµ¥×Ö·ûÒ²Ö§³Ö¿í×Ö·û¡£
-×¢Òâ£ºµÚ¶þ¸ö²ÎÊýÊÇµ¥×Ö·û£¬¿ÉÒÔÎª¿Õ£¬µ«²»ÒªÎªNULL£¬¸ü²»ÄÜÊ¡ÂÔ¡£
-
-ÓÃ%ls´òÓ¡¿í×Ö·û£¬Óöµ½ÌØÊâ×Ö·û»á½Ø¶Ï¡£
-
-\r\nÔÚÎÄ±¾ÏÂ¶Ô´òÓ¡¶àÓàµÄ»»ÐÐ¡£
-\nÈ´²»»á¡£
-*/
+// LOGA: è¾“å‡ºå¤šå­—èŠ‚æ—¥å¿—ã€‚Format å¿…é¡»æ˜¯å­—ç¬¦ä¸²å­—é¢é‡ã€‚
 #define LOGA(Level, Format, ...) \
-{LogA(Level, "FILE:%s, LINE:%d, "##Format, __FILENAME__, __LINE__, __VA_ARGS__);} //\r\n
-
-
-void LogApiErrMsg(PCSTR Api);
+    do { LogA((Level), "FILE:%s, LINE:%d, " Format, __FILENAME__, __LINE__, ##__VA_ARGS__); } while (0)

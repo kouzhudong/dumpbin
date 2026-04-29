@@ -1,4 +1,4 @@
-#include "pch.h"
+ï»¿#include "pch.h"
 #include "Exception.h"
 #include "Public.h"
 
@@ -12,7 +12,7 @@ PCSTR GetUnwFlag(_In_ BYTE Flags)
 
     switch (Flags) {
     case 0:
-        FlagsString = "None";//Î¢ÈíµÄdumpbinÏÔÊ¾µÄÊÇÕâ¸ö¡£
+        FlagsString = "None";//å¾®è½¯çš„dumpbinæ˜¾ç¤ºçš„æ˜¯è¿™ä¸ªã€‚
         break;
     case UNW_FLAG_EHANDLER:
         FlagsString = "EHANDLER";
@@ -24,7 +24,7 @@ PCSTR GetUnwFlag(_In_ BYTE Flags)
         FlagsString = "CHAININFO";
         break;
     default:
-        FlagsString = "Î´Öª";
+        FlagsString = "æœªçŸ¥";
         break;
     }
 
@@ -56,7 +56,7 @@ PCSTR GetUnwOpCodes(_In_ BYTE UnwindOp)
         UnwOpCodes = "SAVE_NONVOL_FAR";
         break;
     case UWOP_SPARE_CODE1:
-        UnwOpCodes = "EPILOG";//Î¢ÈíµÄdumpbinÏÔÊ¾µÄÊÇÕâ¸ö¡£
+        UnwOpCodes = "EPILOG";//å¾®è½¯çš„dumpbinæ˜¾ç¤ºçš„æ˜¯è¿™ä¸ªã€‚
         break;
     case UWOP_SPARE_CODE2:
         UnwOpCodes = "SPARE_CODE2";
@@ -71,7 +71,7 @@ PCSTR GetUnwOpCodes(_In_ BYTE UnwindOp)
         UnwOpCodes = "PUSH_MACHFRAME";
         break;
     default:
-        UnwOpCodes = "Î´Öª";
+        UnwOpCodes = "æœªçŸ¥";
         break;
     }
 
@@ -155,7 +155,7 @@ DWORD Exception(_In_ PBYTE Data, _In_ DWORD Size)
     GetDataDirectory(Data, Size, IMAGE_DIRECTORY_ENTRY_EXCEPTION, &DataDirectory);
 
     if (0 == DataDirectory.VirtualAddress) {
-        printf("´ËÎÄ¼şÃ»ÓĞException.\r\n");
+        printf("æ­¤æ–‡ä»¶æ²¡æœ‰Exception.\r\n");
         return ret;
     }
 
@@ -164,7 +164,7 @@ DWORD Exception(_In_ PBYTE Data, _In_ DWORD Size)
     //PRUNTIME_FUNCTION
     PIMAGE_RUNTIME_FUNCTION_ENTRY ExceptionDirectory = (PIMAGE_RUNTIME_FUNCTION_ENTRY)
         ImageDirectoryEntryToDataEx(Data,
-            FALSE,//Ó³Éä£¨MapViewOfFile£©µÄÓÃFALSE£¬Ô­Ê¼¶ÁÈ¡(Èç£ºReadFile)µÄÓÃTRUE¡£ 
+            FALSE,//æ˜ å°„ï¼ˆMapViewOfFileï¼‰çš„ç”¨FALSEï¼ŒåŸå§‹è¯»å–(å¦‚ï¼šReadFile)çš„ç”¨TRUEã€‚ 
             IMAGE_DIRECTORY_ENTRY_EXCEPTION,
             &size,
             &FoundHeader);

@@ -1,4 +1,4 @@
-#include "pch.h"
+ï»¿#include "pch.h"
 #include "IAT.h"
 #include "Public.h"
 
@@ -18,7 +18,7 @@ DWORD IAT(_In_ PBYTE Data, _In_ DWORD Size)
     GetDataDirectory(Data, Size, IMAGE_DIRECTORY_ENTRY_IAT, &DataDirectory);
 
     if (0 == DataDirectory.VirtualAddress) {
-        printf("´ËÎÄ¼şÃ»ÓĞIAT.\r\n");
+        printf("æ­¤æ–‡ä»¶æ²¡æœ‰IAT.\r\n");
         return ret;
     }
 
@@ -26,7 +26,7 @@ DWORD IAT(_In_ PBYTE Data, _In_ DWORD Size)
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
     PULONG_PTR IATBase = (PULONG_PTR)
         ImageDirectoryEntryToDataEx(Data,
-                                    FALSE,//Ó³Éä£¨MapViewOfFile£©µÄÓÃFALSE£¬Ô­Ê¼¶ÁÈ¡(Èç£ºReadFile)µÄÓÃTRUE¡£ 
+                                    FALSE,//æ˜ å°„ï¼ˆMapViewOfFileï¼‰çš„ç”¨FALSEï¼ŒåŸå§‹è¯»å–(å¦‚ï¼šReadFile)çš„ç”¨TRUEã€‚ 
                                     IMAGE_DIRECTORY_ENTRY_IAT,
                                     &size, &FoundHeader);
 
@@ -37,7 +37,7 @@ DWORD IAT(_In_ PBYTE Data, _In_ DWORD Size)
 
     printf("IAT Directory Numbers:%zd.\r\n", DataDirectory.Size/ sizeof(ULONG));
 
-    //ÕâĞ©Êı¾İµÄÒâÒåÓĞ´ı½øÒ»²½µÄ¿¼²ì¡£
+    //è¿™äº›æ•°æ®çš„æ„ä¹‰æœ‰å¾…è¿›ä¸€æ­¥çš„è€ƒå¯Ÿã€‚
 
     for (DWORD i = 0; i * sizeof(ULONG) < DataDirectory.Size; i++) {
         ULONG_PTR ImportThunk = IATBase[i];

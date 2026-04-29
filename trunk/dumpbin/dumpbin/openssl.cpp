@@ -1,4 +1,4 @@
-#include "pch.h"
+ï»¿#include "pch.h"
 #include "openssl.h"
 
 
@@ -7,7 +7,7 @@
 
 const char * GetLnByNid(int nid)
 {
-    const char * ln = "ÓĞ´ı´¦Àí";
+    const char * ln = "æœ‰å¾…å¤„ç†";
 
     switch (nid) {
     case NID_rsaEncryption:
@@ -39,10 +39,10 @@ const char * GetLnByNid(int nid)
 void DumpX509(X509 * x509)
 {
     long version = X509_get_version(x509);
-    printf("°æ±¾:V%d.\n", version + 1);
+    printf("ç‰ˆæœ¬:V%d.\n", version + 1);
 
     ASN1_INTEGER * serialNumber = X509_get_serialNumber(x509);
-    printf("ĞòÁĞºÅ:");
+    printf("åºåˆ—å·:");
     for (int i = 0; i < serialNumber->length; i++) {
         printf("%02x", serialNumber->data[i]);
     }
@@ -59,7 +59,7 @@ void DumpX509(X509 * x509)
         }
         name += (char *)data->data;
     }
-    printf("°ä·¢Õß:%s.\n", name.c_str());
+    printf("é¢å‘è€…:%s.\n", name.c_str());
     name.clear();
 
     X509_NAME * subject_name = X509_get_subject_name(x509);
@@ -72,43 +72,43 @@ void DumpX509(X509 * x509)
         }
         name += (char *)data->data;
     }
-    printf("Ê¹ÓÃÕß:%s.\n", name.c_str());//ÕâÊÇUTF8±àÂë¡£ºº×Ö»áÏÔÊ¾ÂÒÂë£¬Ğè×ª»»¡£
+    printf("ä½¿ç”¨è€…:%s.\n", name.c_str());//è¿™æ˜¯UTF8ç¼–ç ã€‚æ±‰å­—ä¼šæ˜¾ç¤ºä¹±ç ï¼Œéœ€è½¬æ¢ã€‚
 
     const ASN1_TIME * notBefore = X509_get0_notBefore(x509);
     struct tm tm;
     int ret = ASN1_TIME_to_tm(notBefore, &tm);
-    printf("ÓĞĞ§ÆÚ´Ó£º%04dÄê%02dÔÂ%02dÈÕ %02d:%02d:%02d.\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+    printf("æœ‰æ•ˆæœŸä»ï¼š%04då¹´%02dæœˆ%02dæ—¥ %02d:%02d:%02d.\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
 
     const ASN1_TIME * notAfter = X509_get0_notAfter(x509);
     ret = ASN1_TIME_to_tm(notAfter, &tm);
-    printf("µ½£º%04dÄê%02dÔÂ%02dÈÕ %02d:%02d:%02d.\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+    printf("åˆ°ï¼š%04då¹´%02dæœˆ%02dæ—¥ %02d:%02d:%02d.\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
 
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     int signature_type = X509_get_signature_type(x509);
 
     int secbits;
-    int nid; //È¡Öµ£¬Èç£ºNID_md5WithRSAEncryption
-    int pknid;//È¡Öµ£¬Èç£ºNID_rsaEncryption 
+    int nid; //å–å€¼ï¼Œå¦‚ï¼šNID_md5WithRSAEncryption
+    int pknid;//å–å€¼ï¼Œå¦‚ï¼šNID_rsaEncryption 
     X509_get_signature_info(x509, &nid, &pknid, &secbits, NULL);
 
-    printf("Ç©ÃûËã·¨:%s.\n", GetLnByNid(pknid));
-    printf("Ç©Ãû¹şÏ£Ëã·¨:%s.\n", GetLnByNid(nid));
+    printf("ç­¾åç®—æ³•:%s.\n", GetLnByNid(pknid));
+    printf("ç­¾åå“ˆå¸Œç®—æ³•:%s.\n", GetLnByNid(nid));
 
-    nid = X509_get_signature_nid(x509);//Õâ¸öµÃµ½µÄ¾¹È»ºÍÉÏÃæµÄ²»Ò»Ñù¡£
-    //printf("Ç©Ãû¹şÏ£Ëã·¨:%s.\n", GetLnByNid(nid));//µ«ÊÇºÍÏÂÃæµÄÒ»Ñù¡£    
+    nid = X509_get_signature_nid(x509);//è¿™ä¸ªå¾—åˆ°çš„ç«Ÿç„¶å’Œä¸Šé¢çš„ä¸ä¸€æ ·ã€‚
+    //printf("ç­¾åå“ˆå¸Œç®—æ³•:%s.\n", GetLnByNid(nid));//ä½†æ˜¯å’Œä¸‹é¢çš„ä¸€æ ·ã€‚    
 
     const X509_ALGOR * sig_alg;
     const ASN1_BIT_STRING * sig;
     X509_get0_signature(&sig, &sig_alg, x509);
 
-    char oid[128] = {0};//ĞÎÈç£º1.2.840.113549.1.1.11
+    char oid[128] = {0};//å½¢å¦‚ï¼š1.2.840.113549.1.1.11
     OBJ_obj2txt(oid, 128, sig_alg->algorithm, 1);
 
     nid = OBJ_obj2nid(sig_alg->algorithm);//NID_md5WithRSAEncryption
-    printf("Ç©ÃûËã·¨(Signature Algorithm):%s.\n", GetLnByNid(nid));
+    printf("ç­¾åç®—æ³•(Signature Algorithm):%s.\n", GetLnByNid(nid));
 
-    //printf("¹«Ô¿²ÎÊı:%d.\n", sig_alg->parameter->type);//Õâ¸öÖµµÄ×Ö½ÚĞòºÃÏñ²»¶Ô¡£
+    //printf("å…¬é’¥å‚æ•°:%d.\n", sig_alg->parameter->type);//è¿™ä¸ªå€¼çš„å­—èŠ‚åºå¥½åƒä¸å¯¹ã€‚
 
     //////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -116,7 +116,7 @@ void DumpX509(X509 * x509)
     AUTHORITY_KEYID * akeyid = NULL;
     akeyid = (AUTHORITY_KEYID *)X509_get_ext_d2i(x509, NID_authority_key_identifier, &crit, NULL);
     if (akeyid) {
-        printf("ÊÚÈ¨ÃÜÔ¿±êÊ¶·û:");
+        printf("æˆæƒå¯†é’¥æ ‡è¯†ç¬¦:");
         for (int i = 0; i < akeyid->keyid->length; i++) {
             printf("%02x", akeyid->keyid->data[i]);
         }
@@ -126,7 +126,7 @@ void DumpX509(X509 * x509)
     ASN1_OCTET_STRING * skid = NULL;
     skid = (ASN1_OCTET_STRING *)X509_get_ext_d2i(x509, NID_subject_key_identifier, &crit, NULL);
     if (skid) {
-        printf("Ê¹ÓÃÕßÃÜÔ¿±êÊ¶·û:");
+        printf("ä½¿ç”¨è€…å¯†é’¥æ ‡è¯†ç¬¦:");
         for (int i = 0; i < skid->length; i++) {
             printf("%02x", skid->data[i]);
         }
@@ -136,7 +136,7 @@ void DumpX509(X509 * x509)
     BASIC_CONSTRAINTS * bc;
     bc = (BASIC_CONSTRAINTS *)X509_get_ext_d2i(x509, NID_basic_constraints, NULL, NULL);
     if (bc) {
-        printf("»ù±¾Ô¼Êø£ºSubject Type=%d.", bc->ca);//Õâ¸öÊı¾ßÌå´ú±íÉ¶¶¨Òå£¬ÓĞ´ıÉîÈë¡£
+        printf("åŸºæœ¬çº¦æŸï¼šSubject Type=%d.", bc->ca);//è¿™ä¸ªæ•°å…·ä½“ä»£è¡¨å•¥å®šä¹‰ï¼Œæœ‰å¾…æ·±å…¥ã€‚
         if (bc->pathlen) {
             printf("Basic Constraints:");
             for (int i = 0; i < bc->pathlen->length; i++) {
@@ -148,8 +148,8 @@ void DumpX509(X509 * x509)
         }
     }
 
-    //NID_key_usage.ÃÜÔ¿ÓÃÍ¾¡£
-    //NID_subject_alt_name.ÓòÃû¡£
+    //NID_key_usage.å¯†é’¥ç”¨é€”ã€‚
+    //NID_subject_alt_name.åŸŸåã€‚
 
     //////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -159,7 +159,7 @@ void DumpX509(X509 * x509)
 
     X509_digest(x509, fprint_type, fprint, &fprint_size);
 
-    printf("Ö¸ÎÆ:");
+    printf("æŒ‡çº¹:");
     for (unsigned int i = 0; i < fprint_size; i++) {
         printf("%02x", fprint[i]);
     }
@@ -178,22 +178,22 @@ void DumpX509(X509 * x509)
 
     switch (keyid) {
     case EVP_PKEY_RSA:
-        printf("¹«Ô¿ÀàĞÍ:RSA\n");
+        printf("å…¬é’¥ç±»å‹:RSA\n");
         break;
     case EVP_PKEY_DSA:
-        printf("¹«Ô¿ÀàĞÍ:DSA\n");
+        printf("å…¬é’¥ç±»å‹:DSA\n");
         break;
     default:
-        printf("¹«Ô¿ÀàĞÍ:ÓĞ´ı²¹³ä\n");
+        printf("å…¬é’¥ç±»å‹:æœ‰å¾…è¡¥å……\n");
         break;
     }
 
-    printf("¹«Ô¿³¤¶È:%d bits\n", EVP_PKEY_bits(pkey));
+    printf("å…¬é’¥é•¿åº¦:%d bits\n", EVP_PKEY_bits(pkey));
 
     int len = i2d_X509_PUBKEY(PUBKEY, NULL);
     //char * key = (char *)HeapAlloc(GetProcessHeap(), 0, len);
     //char * key = new char[len]();
-    char * key = NULL;//ÕâÀï»ñÈ¡µÄÄÚÈİºÃÏñ²»¶Ô¡£
+    char * key = NULL;//è¿™é‡Œè·å–çš„å†…å®¹å¥½åƒä¸å¯¹ã€‚
     len = i2d_X509_PUBKEY(PUBKEY, (unsigned char **)&key);
 
     const unsigned char * pp = NULL;
@@ -205,9 +205,9 @@ void DumpX509(X509 * x509)
 
     X509_PUBKEY_get0_param(NULL, &pp, &pklen, &palg, PUBKEY);
     X509_ALGOR_get0(NULL, &ptype, &pval, palg);
-    //d2i_X509_ALGOR(&palg, &pp, pklen);//Õâ¸ö»áµ¼ÖÂ½ø³ÌÍË³öÒì³£¡£
+    //d2i_X509_ALGOR(&palg, &pp, pklen);//è¿™ä¸ªä¼šå¯¼è‡´è¿›ç¨‹é€€å‡ºå¼‚å¸¸ã€‚
 
-    //printf("¹«Ô¿²ÎÊı:%d.\n", ptype);//Õâ¸öÖµµÄ×Ö½ÚĞòºÃÏñ²»¶Ô¡£
+    //printf("å…¬é’¥å‚æ•°:%d.\n", ptype);//è¿™ä¸ªå€¼çš„å­—èŠ‚åºå¥½åƒä¸å¯¹ã€‚
 
     //HeapFree(GetProcessHeap(), 0, key);
     //delete [] key;
@@ -220,23 +220,23 @@ void DumpX509(X509 * x509)
     unsigned char * p = tem;
     len = i2d_PublicKey(pubkey, &p);
 
-    printf("¹«Ô¿:");
+    printf("å…¬é’¥:");
     for (int i = 0; i < len; i++) {
         unsigned char t = tem[i];
         printf("%02x", t);
     }
     printf("\n");
 
-    BIGNUM * n = NULL, * e = NULL;  // ¸ù¾İĞèÒªÈ¡
+    BIGNUM * n = NULL, * e = NULL;  // æ ¹æ®éœ€è¦å–
     EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_N, &n);
     EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_E, &e);
 
     printf("Modulus:%s\n", BN_bn2hex(n));
     printf("Exponent:%s\n", BN_bn2hex(e));
 
-    //printf("¹«Ô¿³¤¶È:%d bits\n", RSA_size(rsa) * 8);
+    //printf("å…¬é’¥é•¿åº¦:%d bits\n", RSA_size(rsa) * 8);
 
-    //·ÏÆúµÄÓÃ·¨£º#pragma warning(disable:4996)
+    //åºŸå¼ƒçš„ç”¨æ³•ï¼š#pragma warning(disable:4996)
     //RSA * rsa = EVP_PKEY_get1_RSA(pubkey);
     //char * Modulus = BN_bn2hex(RSA_get0_n(rsa));
     //char * Exponent = BN_bn2hex(RSA_get0_e(rsa));
@@ -279,7 +279,7 @@ void DumpPKCS7(PKCS7 * pkcs7)
     for (int CertIndex = 0; CertIndex < sk_X509_num(X509Certs); CertIndex++) {
         X509 * X509Cert = sk_X509_value(X509Certs, CertIndex);
 
-        printf("µÚ:%d¸öÖ¤ÊéµÄĞÅÏ¢£º\n", CertIndex + 1);
+        printf("ç¬¬:%dä¸ªè¯ä¹¦çš„ä¿¡æ¯ï¼š\n", CertIndex + 1);
 
         DumpX509(X509Cert);
 

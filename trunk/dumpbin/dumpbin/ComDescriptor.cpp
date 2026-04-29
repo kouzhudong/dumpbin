@@ -1,4 +1,4 @@
-#include "pch.h"
+Ôªø#include "pch.h"
 #include "ComDescriptor.h"
 
 
@@ -72,8 +72,8 @@ The IMAGE_COR20_HEADER is pointed to by the IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR
 Figure 10 shows the fields of an IMAGE_COR20_HEADER.
 The format of the metadata, method IL, and other things pointed to by the IMAGE_COR20_HEADER will be described in a subsequent article.
 
-≤Œøº£∫
-1.\WindowsResearchKernel-WRK\WRK-v1.2\base\ntos\rtl\lookup.cµƒRtlCaptureImageExceptionValues
+ÂèÇËÄÉÔºö
+1.\WindowsResearchKernel-WRK\WRK-v1.2\base\ntos\rtl\lookup.cÁöÑRtlCaptureImageExceptionValues
 2.https://docs.microsoft.com/en-us/archive/msdn-magazine/2002/march/inside-windows-an-in-depth-look-into-the-win32-portable-executable-file-format-part-2
 3.https://github.com/zodiacon/PEExplorerV2.git
 4.PEBrowse
@@ -90,7 +90,7 @@ The format of the metadata, method IL, and other things pointed to by the IMAGE_
     GetDataDirectory(Data, Size, IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, &DataDirectory);
 
     if (0 == DataDirectory.VirtualAddress) {
-        printf("¥ÀŒƒº˛√ª”–ComDescriptor.\r\n");
+        printf("Ê≠§Êñá‰ª∂Ê≤°ÊúâComDescriptor.\r\n");
         return ret;
     }
 
@@ -103,7 +103,7 @@ The format of the metadata, method IL, and other things pointed to by the IMAGE_
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
     PIMAGE_COR20_HEADER ComDescriptorDirectory = (PIMAGE_COR20_HEADER)
         ImageDirectoryEntryToDataEx(Data,
-                                    FALSE,//”≥…‰£®MapViewOfFile£©µƒ”√FALSE£¨‘≠ º∂¡»°(»Á£∫ReadFile)µƒ”√TRUE°£ 
+                                    FALSE,//Êò†Â∞ÑÔºàMapViewOfFileÔºâÁöÑÁî®FALSEÔºåÂéüÂßãËØªÂèñ(Â¶ÇÔºöReadFile)ÁöÑÁî®TRUE„ÄÇ 
                                     IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR,
                                     &size, &FoundHeader);
 

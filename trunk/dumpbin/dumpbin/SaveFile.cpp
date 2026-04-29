@@ -1,4 +1,4 @@
-#include "pch.h"
+ï»¿#include "pch.h"
 #include "SaveFile.h"
 
 
@@ -7,7 +7,7 @@
 
 DWORD SaveFile(_In_ PBYTE Data, _In_ DWORD Size, _In_ DWORD Address, _In_ DWORD Length, _In_ LPCWSTR NewFileName)
 /*
-AddressÓ¦¸Ã½ĞOffset.
+Addressåº”è¯¥å«Offset.
 */
 {
     DWORD ret = ERROR_SUCCESS;
@@ -24,7 +24,7 @@ AddressÓ¦¸Ã½ĞOffset.
         return ret;
     }
 
-    //·´ÕıÊÇÔÚÒì³£´¦ÀíÀïµÄ£¬¶¼²»¼ì²éÁË¡£
+    //åæ­£æ˜¯åœ¨å¼‚å¸¸å¤„ç†é‡Œçš„ï¼Œéƒ½ä¸æ£€æŸ¥äº†ã€‚
 
     HANDLE hFile = CreateFile(NewFileName, FILE_ALL_ACCESS, FILE_SHARE_DELETE | FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
     if (INVALID_HANDLE_VALUE == hFile) {
@@ -60,7 +60,7 @@ DWORD SaveFile(_In_ LPCWSTR FileName, _In_ LPCWSTR AddressString, _In_ LPCWSTR L
     HANDLE hMapFile = NULL;
     PBYTE FileContent = NULL;
 
-    if (IsWow64()) {//ÔÚwow64ÏÂ¹Ø±ÕÎÄ¼şÖØ¶¨Ïò¡£
+    if (IsWow64()) {//åœ¨wow64ä¸‹å…³é—­æ–‡ä»¶é‡å®šå‘ã€‚
         BOOLEAN bRet = Wow64EnableWow64FsRedirection(FALSE);
         _ASSERTE(bRet);
     }
@@ -82,19 +82,19 @@ DWORD SaveFile(_In_ LPCWSTR FileName, _In_ LPCWSTR AddressString, _In_ LPCWSTR L
             __leave;
         }
 
-        if (0 == FileSize.QuadPart) {//Èç¹ûÎÄ¼ş´óĞ¡Îª0.
+        if (0 == FileSize.QuadPart) {//å¦‚æœæ–‡ä»¶å¤§å°ä¸º0.
             LastError = ERROR_EMPTY;
             LOGA(ERROR_LEVEL, "LastError:%#d", LastError);
             __leave;
         }
 
-        if (FileSize.HighPart) {//ÔİÊ±²»Ö§³Ö´óÓÚ4GµÄÎÄ¼ş¡£
+        if (FileSize.HighPart) {//æš‚æ—¶ä¸æ”¯æŒå¤§äº4Gçš„æ–‡ä»¶ã€‚
             LastError = ERROR_EMPTY;
             LOGA(ERROR_LEVEL, "LastError:%#d", LastError);
             __leave;
         }
 
-        hMapFile = CreateFileMapping(hFile, NULL, PAGE_READONLY, NULL, NULL, NULL); /* ¿ÕÎÄ¼şÔò·µ»ØÊ§°Ü */
+        hMapFile = CreateFileMapping(hFile, NULL, PAGE_READONLY, NULL, NULL, NULL); /* ç©ºæ–‡ä»¶åˆ™è¿”å›å¤±è´¥ */
         if (hMapFile == NULL) {
             LastError = GetLastError();
             LOGA(ERROR_LEVEL, "LastError:%#d", LastError);
@@ -102,7 +102,7 @@ DWORD SaveFile(_In_ LPCWSTR FileName, _In_ LPCWSTR AddressString, _In_ LPCWSTR L
             __leave;
         }
 
-        FileContent = (PBYTE)MapViewOfFile(hMapFile, SECTION_MAP_READ, NULL, NULL, 0/*Ó³ÉäËùÓĞ*/);
+        FileContent = (PBYTE)MapViewOfFile(hMapFile, SECTION_MAP_READ, NULL, NULL, 0/*æ˜ å°„æ‰€æœ‰*/);
         if (FileContent == NULL) {
             LastError = GetLastError();
             LOGA(ERROR_LEVEL, "LastError:%#d", LastError);

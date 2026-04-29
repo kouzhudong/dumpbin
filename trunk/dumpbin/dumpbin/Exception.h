@@ -1,16 +1,16 @@
-#pragma once
+ï»¿#pragma once
 
 #include "pch.h"
 #include "Public.h"
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-//Ò»ÏÂ´úÂëÕª×Ô£º
+//ä¸€ä¸‹ä»£ç æ‘˜è‡ªï¼š
 //https://docs.microsoft.com/en-us/cpp/build/exception-handling-x64?view=vs-2019
 //https://docs.microsoft.com/es-mx/cpp/build/exception-handling-x64?view=vs-2017
 
 
-typedef unsigned char UBYTE;//×Ô¼º¶¨Òå¡£
+typedef unsigned char UBYTE;//è‡ªå·±å®šä¹‰ã€‚
 
 
 typedef enum _UNWIND_OP_CODES {
@@ -20,8 +20,8 @@ typedef enum _UNWIND_OP_CODES {
     UWOP_SET_FPREG,       /* no info, FP = RSP + UNWIND_INFO.FPRegOffset*16 */
     UWOP_SAVE_NONVOL,     /* info == register number, offset in next slot */
     UWOP_SAVE_NONVOL_FAR, /* info == register number, offset in next 2 slots */
-    UWOP_SPARE_CODE1,     //Õª×Ô£º\WRK-v1.2\public\sdk\inc\ntamd64.h
-    UWOP_SPARE_CODE2,     //Õª×Ô£º\WRK-v1.2\public\sdk\inc\ntamd64.h
+    UWOP_SPARE_CODE1,     //æ‘˜è‡ªï¼š\WRK-v1.2\public\sdk\inc\ntamd64.h
+    UWOP_SPARE_CODE2,     //æ‘˜è‡ªï¼š\WRK-v1.2\public\sdk\inc\ntamd64.h
     UWOP_SAVE_XMM128 = 8, /* info == XMM reg number, offset in next slot */
     UWOP_SAVE_XMM128_FAR, /* info == XMM reg number, offset in next 2 slots */
     UWOP_PUSH_MACHFRAME   /* info == 0: no error-code, 1: error-code */
@@ -43,7 +43,7 @@ typedef union _UNWIND_CODE {
 #define UNW_FLAG_CHAININFO 0x04
 #endif
 
-typedef struct _UNWIND_INFO {//SDKÀïÃ»ÓĞ¶¨Òå£¬WDKÓĞ¶¨Òå¡£
+typedef struct _UNWIND_INFO {//SDKé‡Œæ²¡æœ‰å®šä¹‰ï¼ŒWDKæœ‰å®šä¹‰ã€‚
     UBYTE Version : 3;
     UBYTE Flags : 5;
     UBYTE SizeOfProlog;

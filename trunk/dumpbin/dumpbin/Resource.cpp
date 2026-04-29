@@ -1,4 +1,4 @@
-#include "pch.h"
+ï»¿#include "pch.h"
 #include "Resource.h"
 
 
@@ -7,7 +7,7 @@
 
 const char * GetResourceTypeString(_In_ WORD Id)
 {
-    const char * str = "Î´Öª";
+    const char * str = "æœªçŸ¥";
 
     switch (Id) {
     case (SIZE_T)RT_CURSOR:
@@ -105,10 +105,10 @@ DWORD Resource(_In_ PBYTE Data, _In_ DWORD Size)
 /*
 
 
-×¢ÊÍ£º
-pchunter64µÄ×ÊÔ´ÀàĞÍ³¬³öÏµÍ³¶¨ÒåµÄ·¶Î§(µ«²»ÊÇRCDATA)£¬
-µ«ÊÇÓĞNameIsString(KER)£¬
-ÆäÊµÕâÊÇ×Ô¶¨ÒåµÄ¶ş½øÖÆÎÄ¼ş£¨SYS)¡£
+æ³¨é‡Šï¼š
+pchunter64çš„èµ„æºç±»å‹è¶…å‡ºç³»ç»Ÿå®šä¹‰çš„èŒƒå›´(ä½†ä¸æ˜¯RCDATA)ï¼Œ
+ä½†æ˜¯æœ‰NameIsString(KER)ï¼Œ
+å…¶å®è¿™æ˜¯è‡ªå®šä¹‰çš„äºŒè¿›åˆ¶æ–‡ä»¶ï¼ˆSYS)ã€‚
 */
 {
     DWORD ret = ERROR_SUCCESS;
@@ -121,7 +121,7 @@ pchunter64µÄ×ÊÔ´ÀàĞÍ³¬³öÏµÍ³¶¨ÒåµÄ·¶Î§(µ«²»ÊÇRCDATA)£¬
     GetDataDirectory(Data, Size, IMAGE_DIRECTORY_ENTRY_RESOURCE, &DataDirectory);
 
     if (0 == DataDirectory.VirtualAddress) {
-        printf("´ËÎÄ¼şÃ»ÓĞResource.\r\n");
+        printf("æ­¤æ–‡ä»¶æ²¡æœ‰Resource.\r\n");
         return ret;
     }
 
@@ -131,13 +131,13 @@ pchunter64µÄ×ÊÔ´ÀàĞÍ³¬³öÏµÍ³¶¨ÒåµÄ·¶Î§(µ«²»ÊÇRCDATA)£¬
     printf("\r\n");
 
     //////////////////////////////////////////////////////////////////////////////////////////////
-    //´òÓ¡µÚÒ»²ãµÄPIMAGE_RESOURCE_DIRECTORYµÄÒ»Ğ©ĞÅÏ¢¡£
+    //æ‰“å°ç¬¬ä¸€å±‚çš„PIMAGE_RESOURCE_DIRECTORYçš„ä¸€äº›ä¿¡æ¯ã€‚
 
     ULONG size = 0;
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
     PIMAGE_RESOURCE_DIRECTORY ResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)
         ImageDirectoryEntryToDataEx(Data,
-            FALSE,//Ó³Éä£¨MapViewOfFile£©µÄÓÃFALSE£¬Ô­Ê¼¶ÁÈ¡(Èç£ºReadFile)µÄÓÃTRUE¡£ 
+            FALSE,//æ˜ å°„ï¼ˆMapViewOfFileï¼‰çš„ç”¨FALSEï¼ŒåŸå§‹è¯»å–(å¦‚ï¼šReadFile)çš„ç”¨TRUEã€‚ 
             IMAGE_DIRECTORY_ENTRY_RESOURCE,
             &size, &FoundHeader);
     if (FoundHeader) {
@@ -148,7 +148,7 @@ pchunter64µÄ×ÊÔ´ÀàĞÍ³¬³öÏµÍ³¶¨ÒåµÄ·¶Î§(µ«²»ÊÇRCDATA)£¬
 
     CHAR TimeDateStamp[MAX_PATH] = {0};
     GetTimeDateStamp(ResourceDirectory->TimeDateStamp, TimeDateStamp);
-    printf("TimeDateStamp:%d(%#010X), Ê±¼ä´Á£º%s.\r\n", ResourceDirectory->TimeDateStamp, ResourceDirectory->TimeDateStamp, TimeDateStamp);
+    printf("TimeDateStamp:%d(%#010X), æ—¶é—´æˆ³ï¼š%s.\r\n", ResourceDirectory->TimeDateStamp, ResourceDirectory->TimeDateStamp, TimeDateStamp);
 
     printf("Version:%d.%d.\r\n", ResourceDirectory->MajorVersion, ResourceDirectory->MinorVersion);
     printf("NumberOfNamedEntries:%#06X.\r\n", ResourceDirectory->NumberOfNamedEntries);
@@ -156,7 +156,7 @@ pchunter64µÄ×ÊÔ´ÀàĞÍ³¬³öÏµÍ³¶¨ÒåµÄ·¶Î§(µ«²»ÊÇRCDATA)£¬
     printf("\r\n");
 
     //////////////////////////////////////////////////////////////////////////////////////////////
-    //×¢Òâ£ºËùÓĞ²ãµÄPIMAGE_RESOURCE_DIRECTORY_ENTRYÆ«ÒÆ¶¼ÊÇÏà¶ÔÓÚµÚÒ»²ãµÄResourceDirectoryÀ´¼ÆËãµÄ¡£
+    //æ³¨æ„ï¼šæ‰€æœ‰å±‚çš„PIMAGE_RESOURCE_DIRECTORY_ENTRYåç§»éƒ½æ˜¯ç›¸å¯¹äºç¬¬ä¸€å±‚çš„ResourceDirectoryæ¥è®¡ç®—çš„ã€‚
 
     WORD NumberOfEntries = ResourceDirectory->NumberOfNamedEntries + ResourceDirectory->NumberOfIdEntries;
 
@@ -165,22 +165,22 @@ pchunter64µÄ×ÊÔ´ÀàĞÍ³¬³öÏµÍ³¶¨ÒåµÄ·¶Î§(µ«²»ÊÇRCDATA)£¬
     PIMAGE_NT_HEADERS NtHeaders = ImageNtHeader(Data);
     _ASSERTE(NtHeaders);
 
-    printf("ÒÔÏÂÊÇ×ÊÔ´µÄÏêÏ¸ĞÅÏ¢£º\r\n");
+    printf("ä»¥ä¸‹æ˜¯èµ„æºçš„è¯¦ç»†ä¿¡æ¯ï¼š\r\n");
     printf("\r\n");
 
-    for (int i = 0; i < NumberOfEntries; i++) {//Ò»¼¶´¦Àí£º´¦Àí×ÊÔ´ÀàĞÍ
-        if (ResourceDirectoryEntry->DataIsDirectory) {//µİ¹é´¦Àí¡£
+    for (int i = 0; i < NumberOfEntries; i++) {//ä¸€çº§å¤„ç†ï¼šå¤„ç†èµ„æºç±»å‹
+        if (ResourceDirectoryEntry->DataIsDirectory) {//é€’å½’å¤„ç†ã€‚
             auto ResourceDirectory2 = (PIMAGE_RESOURCE_DIRECTORY)((PCHAR)ResourceDirectory + ResourceDirectoryEntry->OffsetToDirectory);
             WORD NumberOfEntries2 = ResourceDirectory2->NumberOfNamedEntries + ResourceDirectory2->NumberOfIdEntries;
             auto ResourceDirectoryEntry2 = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)((PCHAR)ResourceDirectory2 + sizeof(IMAGE_RESOURCE_DIRECTORY));
 
-            for (int j = 0; j < NumberOfEntries2; j++) {//¶ş¼¶´¦Àí£º´¦Àí×ÊÔ´Ãû³Æ 
-                if (ResourceDirectoryEntry2->DataIsDirectory) {//µİ¹é´¦Àí¡£
+            for (int j = 0; j < NumberOfEntries2; j++) {//äºŒçº§å¤„ç†ï¼šå¤„ç†èµ„æºåç§° 
+                if (ResourceDirectoryEntry2->DataIsDirectory) {//é€’å½’å¤„ç†ã€‚
                     auto ResourceDirectory3 = (PIMAGE_RESOURCE_DIRECTORY)((PCHAR)ResourceDirectory + ResourceDirectoryEntry2->OffsetToDirectory);
                     WORD NumberOfEntries3 = ResourceDirectory3->NumberOfNamedEntries + ResourceDirectory3->NumberOfIdEntries;
                     auto ResourceDirectoryEntry3 = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)((PCHAR)ResourceDirectory3 + sizeof(IMAGE_RESOURCE_DIRECTORY));
 
-                    for (int k = 0; k < NumberOfEntries3; k++) {//Èı¼¶´¦Àí£º´¦Àí×ÊÔ´ÓïÑÔ
+                    for (int k = 0; k < NumberOfEntries3; k++) {//ä¸‰çº§å¤„ç†ï¼šå¤„ç†èµ„æºè¯­è¨€
                         if (ResourceDirectoryEntry3->DataIsDirectory) {
                             _ASSERTE(false);
                         } else {
@@ -192,7 +192,7 @@ pchunter64µÄ×ÊÔ´ÀàĞÍ³¬³öÏµÍ³¶¨ÒåµÄ·¶Î§(µ«²»ÊÇRCDATA)£¬
                             PrintNameString(ResourceDirectory, ResourceDirectoryEntry2);
                             PrintNameString(ResourceDirectory, ResourceDirectoryEntry3);
 
-                            printf("ÀàĞÍ£º%12s, Ãû³Æ£º%#06X, ÓïÑÔ£º%#06X, OffsetToData:%#010X, Size:%#010X(%d).\r\n",
+                            printf("ç±»å‹ï¼š%12s, åç§°ï¼š%#06X, è¯­è¨€ï¼š%#06X, OffsetToData:%#010X, Size:%#010X(%d).\r\n",
                                 GetResourceTypeString(ResourceDirectoryEntry->Id),
                                 ResourceDirectoryEntry2->Id,
                                 ResourceDirectoryEntry3->Id,
@@ -200,20 +200,20 @@ pchunter64µÄ×ÊÔ´ÀàĞÍ³¬³öÏµÍ³¶¨ÒåµÄ·¶Î§(µ«²»ÊÇRCDATA)£¬
                                 DataEntry->Size,
                                 DataEntry->Size);
 
-                            //printf("ÕâÊÇ¸öÒ¶×Ó¡£\r\n");
+                            //printf("è¿™æ˜¯ä¸ªå¶å­ã€‚\r\n");
                         }
 
                         ResourceDirectoryEntry3++;
                     }
                 } else {
-                    printf("ÕâÊÇ¸öÒ¶×Ó¡£\r\n");//ÕâÀï²»Ó¦¸Ã·¢Éú
+                    printf("è¿™æ˜¯ä¸ªå¶å­ã€‚\r\n");//è¿™é‡Œä¸åº”è¯¥å‘ç”Ÿ
                     _ASSERTE(false);
                 }
 
                 ResourceDirectoryEntry2++;
             }
         } else {
-            printf("ÕâÊÇ¸öÒ¶×Ó¡£\r\n");//ÕâÀï²»Ó¦¸Ã·¢Éú
+            printf("è¿™æ˜¯ä¸ªå¶å­ã€‚\r\n");//è¿™é‡Œä¸åº”è¯¥å‘ç”Ÿ
             _ASSERTE(false);
         }
 

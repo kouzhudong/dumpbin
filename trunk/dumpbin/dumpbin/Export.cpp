@@ -1,4 +1,4 @@
-#include "pch.h"
+ï»¿#include "pch.h"
 #include "Export.h"
 #include "Public.h"
 
@@ -18,40 +18,40 @@ DWORD Export(_In_ PBYTE Data, _In_ DWORD Size)
     GetDataDirectory(Data, Size, IMAGE_DIRECTORY_ENTRY_EXPORT, &DataDirectory);
 
     if (0 == DataDirectory.VirtualAddress) {
-        printf("´ËÎÄ¼şÃ»ÓĞEXPORT.\r\n");
+        printf("æ­¤æ–‡ä»¶æ²¡æœ‰EXPORT.\r\n");
         return ret;
     }
 
-    //»ñÈ¡µÄ·½·¨Ò»£º
+    //è·å–çš„æ–¹æ³•ä¸€ï¼š
     PIMAGE_EXPORT_DIRECTORY ExportDirectory = (PIMAGE_EXPORT_DIRECTORY)ULongToHandle(Rva2Va(Data, DataDirectory.VirtualAddress));
     ExportDirectory = (PIMAGE_EXPORT_DIRECTORY)(Data + (SIZE_T)ExportDirectory);
 
-    //»ñÈ¡µÄ·½·¨¶ş£º
+    //è·å–çš„æ–¹æ³•äºŒï¼š
     ULONG size = 0;
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
     PIMAGE_EXPORT_DIRECTORY ExportDirectory2 = (PIMAGE_EXPORT_DIRECTORY)
         ImageDirectoryEntryToDataEx(Data,
-            FALSE,//Ó³Éä£¨MapViewOfFile£©µÄÓÃFALSE£¬Ô­Ê¼¶ÁÈ¡(Èç£ºReadFile)µÄÓÃTRUE¡£ 
+            FALSE,//æ˜ å°„ï¼ˆMapViewOfFileï¼‰çš„ç”¨FALSEï¼ŒåŸå§‹è¯»å–(å¦‚ï¼šReadFile)çš„ç”¨TRUEã€‚ 
             IMAGE_DIRECTORY_ENTRY_EXPORT,
             &size, &FoundHeader);
     _ASSERTE(ExportDirectory == ExportDirectory2);
     _ASSERTE(size == DataDirectory.Size);
 
-    //»ñÈ¡µÄ·½·¨Èı£º
+    //è·å–çš„æ–¹æ³•ä¸‰ï¼š
     PIMAGE_NT_HEADERS NtHeaders = ImageNtHeader(Data);
     _ASSERTE(NtHeaders);
     PIMAGE_EXPORT_DIRECTORY ExportDirectory3 = (PIMAGE_EXPORT_DIRECTORY)ImageRvaToVa(NtHeaders, Data, DataDirectory.VirtualAddress, NULL);
     _ASSERTE(ExportDirectory == ExportDirectory3);
 
-    //»ñÈ¡Õâ¸öÊı¾İÔÚÄÄ¸öSECTIONÀï¡£
+    //è·å–è¿™ä¸ªæ•°æ®åœ¨å“ªä¸ªSECTIONé‡Œã€‚
     PIMAGE_SECTION_HEADER SectionHeader = ImageRvaToSection(NtHeaders, Data, DataDirectory.VirtualAddress);
 
     printf("Export Directory Information:\r\n");
 
-    printf("Characteristics:%#010X.\r\n", ExportDirectory->Characteristics);//±£Áô£¬±ØĞëÎª 0¡£ 
+    printf("Characteristics:%#010X.\r\n", ExportDirectory->Characteristics);//ä¿ç•™ï¼Œå¿…é¡»ä¸º 0ã€‚ 
     CHAR TimeDateStamp[MAX_PATH] = {0};
     GetTimeDateStamp(ExportDirectory->TimeDateStamp, TimeDateStamp);
-    printf("TimeDateStamp:%d(%#010X), Ê±¼ä´Á£º%s.\r\n", ExportDirectory->TimeDateStamp, ExportDirectory->TimeDateStamp, TimeDateStamp);
+    printf("TimeDateStamp:%d(%#010X), æ—¶é—´æˆ³ï¼š%s.\r\n", ExportDirectory->TimeDateStamp, ExportDirectory->TimeDateStamp, TimeDateStamp);
     printf("Version:%d.%d.\r\n", ExportDirectory->MajorVersion, ExportDirectory->MinorVersion);
     printf("Name:%#010X.\r\n", ExportDirectory->Name);
     printf("Base:%#010X.\r\n", ExportDirectory->Base);
@@ -64,13 +64,13 @@ DWORD Export(_In_ PBYTE Data, _In_ DWORD Size)
     PCHAR DllName = (PCHAR)ImageRvaToVa(NtHeaders, Data, (ULONG)ExportDirectory->Name, NULL);
     printf("Name:%s.\r\n", DllName);
 
-    printf("Ö»ÓĞĞòÊıÃ»ÓĞÃû×ÖµÄº¯ÊıµÄ¸öÊı:%d.\r\n", ExportDirectory->NumberOfFunctions - ExportDirectory->NumberOfNames);
+    printf("åªæœ‰åºæ•°æ²¡æœ‰åå­—çš„å‡½æ•°çš„ä¸ªæ•°:%d.\r\n", ExportDirectory->NumberOfFunctions - ExportDirectory->NumberOfNames);
 
     PULONG FunctionsTableBase = (PULONG)ImageRvaToVa(NtHeaders, Data, (ULONG)ExportDirectory->AddressOfFunctions, NULL);
     PULONG NameTableBase = (PULONG)ImageRvaToVa(NtHeaders, Data, (ULONG)ExportDirectory->AddressOfNames, NULL);
     PUSHORT OrdinalTableBase = (PUSHORT)ImageRvaToVa(NtHeaders, Data, (ULONG)ExportDirectory->AddressOfNameOrdinals, NULL);
 
-    //Ö»´òÓ¡ÓĞÃû×ÖµÄº¯Êı¡£
+    //åªæ‰“å°æœ‰åå­—çš„å‡½æ•°ã€‚
     for (DWORD i = 0; i < ExportDirectory->NumberOfNames; i++) {
         PCHAR ApiName = (PCHAR)ImageRvaToVa(NtHeaders, Data, (ULONG)NameTableBase[i], NULL);
         DWORD Ordinal = ExportDirectory->Base + OrdinalTableBase[i];

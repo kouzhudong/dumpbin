@@ -1,4 +1,4 @@
-#include "coff.h"
+п»ї#include "coff.h"
 
 
 DWORD coff(_In_ PBYTE Data, _In_ DWORD Size)
@@ -28,7 +28,7 @@ DWORD coff(_In_ PBYTE Data, _In_ DWORD Size)
 
 DWORD coff(_In_ LPCWSTR FileName)
 /*
-ЧЁГЕґ¦АнobjµДЈ¬І»ґ¦Анlib.
+дё“й—Ёе¤„зђ†objзљ„пјЊдёЌе¤„зђ†lib.
 */
 {
     return MapFile(FileName, coff);

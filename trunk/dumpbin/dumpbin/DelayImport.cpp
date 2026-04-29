@@ -1,4 +1,4 @@
-#include "pch.h"
+ï»¿#include "pch.h"
 #include "DelayImport.h"
 
 
@@ -7,7 +7,7 @@
 
 void PrintOneDelayImport(_In_ PBYTE Data, _In_ DWORD Size, _In_ PIMAGE_DELAYLOAD_DESCRIPTOR DelayImportDirectory)
 /*
-ÕâÀïµÄÊı¾İĞè½øÒ»²½µÄ½âÎö¡£
+è¿™é‡Œçš„æ•°æ®éœ€è¿›ä¸€æ­¥çš„è§£æã€‚
 
 */
 {
@@ -22,7 +22,7 @@ void PrintOneDelayImport(_In_ PBYTE Data, _In_ DWORD Size, _In_ PIMAGE_DELAYLOAD
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     HMODULE * ModuleHandle = (HMODULE *)ImageRvaToVa(NtHeaders, Data, DelayImportDirectory->ModuleHandleRVA, NULL);
-    //Data + DelayImportDirectory->ModuleHandleRVA,Õâ¸öµ¹ÓĞÄÚÈİ¡£
+    //Data + DelayImportDirectory->ModuleHandleRVA,è¿™ä¸ªå€’æœ‰å†…å®¹ã€‚
 
     printf("ModuleHandleRVA:%#010X, %p.\r\n", DelayImportDirectory->ModuleHandleRVA, ModuleHandle);
 
@@ -80,15 +80,15 @@ void PrintOneDelayImport(_In_ PBYTE Data, _In_ DWORD Size, _In_ PIMAGE_DELAYLOAD
 
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    //Çø·Ö32ºÍ64.
+    //åŒºåˆ†32å’Œ64.
     PIMAGE_THUNK_DATA BoundImportAddressTable = (PIMAGE_THUNK_DATA)ImageRvaToVa(NtHeaders, Data, DelayImportDirectory->BoundImportAddressTableRVA, NULL);
-    //Data + DelayImportDirectory->BoundImportAddressTableRVA,Õâ¸öµ¹ÓĞÄÚÈİ¡£
+    //Data + DelayImportDirectory->BoundImportAddressTableRVA,è¿™ä¸ªå€’æœ‰å†…å®¹ã€‚
 
     printf("BoundImportAddressTableRVA:%#010X, %p.\r\n", DelayImportDirectory->BoundImportAddressTableRVA, BoundImportAddressTable);
 
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    //Çø·Ö32ºÍ64.
+    //åŒºåˆ†32å’Œ64.
     PIMAGE_THUNK_DATA UnloadInformationTable = (PIMAGE_THUNK_DATA)ImageRvaToVa(NtHeaders, Data, DelayImportDirectory->UnloadInformationTableRVA, NULL);
 
     printf("UnloadInformationTableRVA:%#010X, %p.\r\n", DelayImportDirectory->UnloadInformationTableRVA, UnloadInformationTable);
@@ -97,7 +97,7 @@ void PrintOneDelayImport(_In_ PBYTE Data, _In_ DWORD Size, _In_ PIMAGE_DELAYLOAD
 
     CHAR TimeDateStamp[MAX_PATH] = {0};
     GetTimeDateStamp(DelayImportDirectory->TimeDateStamp, TimeDateStamp);
-    printf("TimeDateStamp:%d(%#010X), Ê±¼ä´Á£º%s.\r\n", DelayImportDirectory->TimeDateStamp, DelayImportDirectory->TimeDateStamp, TimeDateStamp);
+    printf("TimeDateStamp:%d(%#010X), æ—¶é—´æˆ³ï¼š%s.\r\n", DelayImportDirectory->TimeDateStamp, DelayImportDirectory->TimeDateStamp, TimeDateStamp);
 
     printf("\r\n");
 }
@@ -115,7 +115,7 @@ DWORD DelayImport(_In_ PBYTE Data, _In_ DWORD Size)
     GetDataDirectory(Data, Size, IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT, &DataDirectory);
 
     if (0 == DataDirectory.VirtualAddress) {
-        printf("´ËÎÄ¼şÃ»ÓĞDelayImport.\r\n");
+        printf("æ­¤æ–‡ä»¶æ²¡æœ‰DelayImport.\r\n");
         return ret;
     }
 
@@ -123,7 +123,7 @@ DWORD DelayImport(_In_ PBYTE Data, _In_ DWORD Size)
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
     PIMAGE_DELAYLOAD_DESCRIPTOR DelayImportDirectory = (PIMAGE_DELAYLOAD_DESCRIPTOR)
         ImageDirectoryEntryToDataEx(Data,
-            FALSE,//Ó³Éä£¨MapViewOfFile£©µÄÓÃFALSE£¬Ô­Ê¼¶ÁÈ¡(Èç£ºReadFile)µÄÓÃTRUE¡£ 
+            FALSE,//æ˜ å°„ï¼ˆMapViewOfFileï¼‰çš„ç”¨FALSEï¼ŒåŸå§‹è¯»å–(å¦‚ï¼šReadFile)çš„ç”¨TRUEã€‚ 
             IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT,
             &size, &FoundHeader);
 
@@ -134,7 +134,7 @@ DWORD DelayImport(_In_ PBYTE Data, _In_ DWORD Size)
 
     PIMAGE_DELAYLOAD_DESCRIPTOR temp = (PIMAGE_DELAYLOAD_DESCRIPTOR)DelayImportDirectory;
 
-    //×îºóÒ»¸öÊı¾İÈ«Îª0.
+    //æœ€åä¸€ä¸ªæ•°æ®å…¨ä¸º0.
     DWORD numbers = DataDirectory.Size / sizeof(IMAGE_DELAYLOAD_DESCRIPTOR) - 1;
 
     for (DWORD len = 0; len < numbers; len++) {

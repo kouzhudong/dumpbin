@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #include "pch.h"
 
@@ -8,7 +8,7 @@
 
 typedef BOOL(WINAPI * LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
 
-typedef DWORD(*PeCallBack)(_In_ PBYTE Data, _In_ DWORD Size);//»Øµ÷º¯ÊýµÄÔ­ÐÍ¡£
+typedef DWORD(*PeCallBack)(_In_ PBYTE Data, _In_ DWORD Size);//å›žè°ƒå‡½æ•°çš„åŽŸåž‹ã€‚
 
 DWORD MapFile(_In_ LPCWSTR FileName, _In_opt_ PeCallBack CallBack);
 
