@@ -107,10 +107,7 @@ VOID Usage(TCHAR * exe)
     printf("\r\n");
 
     for (size_t i = 0; i < _countof(g_fileCommandHelp); ++i) {
-        printf("%s：\"%ls\" %ls FileFullPath\r\n",
-               g_fileCommandHelp[i].Description,
-               exe,
-               g_fileCommandHelp[i].Name);
+        printf("%s：\"%ls\" %ls FileFullPath\r\n", g_fileCommandHelp[i].Description, exe, g_fileCommandHelp[i].Name);
     }
 
     printf("View content：\"%ls\" PrintBinary FileFullPath Address(RVA) Length(非负的十进制)\r\n", exe);
