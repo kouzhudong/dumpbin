@@ -80,9 +80,7 @@ static bool IsDebugRawDataInFile(_In_ PIMAGE_DEBUG_DIRECTORY DebugDirectory, _In
 PointerToRawData 是文件偏移，数据必须整个落在文件里才能按结构体去读。
 */
 {
-    return DebugDirectory->PointerToRawData != 0 &&
-           DebugDirectory->PointerToRawData <= Size &&
-           DebugDirectory->SizeOfData <= Size - DebugDirectory->PointerToRawData;
+    return DebugDirectory->PointerToRawData != 0 && DebugDirectory->PointerToRawData <= Size && DebugDirectory->SizeOfData <= Size - DebugDirectory->PointerToRawData;
 }
 
 
@@ -129,8 +127,7 @@ void PrintDebug(_In_ PBYTE Data, _In_ DWORD Size, _In_ PIMAGE_DEBUG_DIRECTORY De
     }
     case IMAGE_DEBUG_TYPE_CODEVIEW:
     {
-        if (!IsDebugRawDataInFile(DebugDirectory, Size) ||
-            DebugDirectory->SizeOfData <= offsetof(CV_INFO_PDB70, PdbFileName)) {
+        if (!IsDebugRawDataInFile(DebugDirectory, Size) || DebugDirectory->SizeOfData <= offsetof(CV_INFO_PDB70, PdbFileName)) {
             LOGA(WARNING_LEVEL, "IMAGE_DEBUG_TYPE_CODEVIEW 数据越界或过短");
             break;
         }
@@ -157,8 +154,7 @@ void PrintDebug(_In_ PBYTE Data, _In_ DWORD Size, _In_ PIMAGE_DEBUG_DIRECTORY De
     case IMAGE_DEBUG_TYPE_FPO:
     {
         //官方定义的数据结构是PFPO_DATA
-        if (!IsDebugRawDataInFile(DebugDirectory, Size) ||
-            DebugDirectory->SizeOfData < sizeof(FPO_DATA)) {
+        if (!IsDebugRawDataInFile(DebugDirectory, Size) || DebugDirectory->SizeOfData < sizeof(FPO_DATA)) {
             LOGA(WARNING_LEVEL, "IMAGE_DEBUG_TYPE_FPO 数据越界或过短");
             break;
         }
@@ -183,8 +179,7 @@ void PrintDebug(_In_ PBYTE Data, _In_ DWORD Size, _In_ PIMAGE_DEBUG_DIRECTORY De
     case IMAGE_DEBUG_TYPE_MISC:
     {
         //官方定义的数据结构是PIMAGE_DEBUG_MISC
-        if (!IsDebugRawDataInFile(DebugDirectory, Size) ||
-            DebugDirectory->SizeOfData < sizeof(IMAGE_DEBUG_MISC)) {
+        if (!IsDebugRawDataInFile(DebugDirectory, Size) || DebugDirectory->SizeOfData < sizeof(IMAGE_DEBUG_MISC)) {
             LOGA(WARNING_LEVEL, "IMAGE_DEBUG_TYPE_MISC 数据越界或过短");
             break;
         }

@@ -94,8 +94,7 @@ DWORD BaseReloc(_In_ PBYTE Data, _In_ DWORD Size)
         PIMAGE_BASE_RELOCATION temp = (PIMAGE_BASE_RELOCATION)((PBYTE)BaseRelocDirectory + offset);
 
         // SizeOfBlock 是块(含头)的总长，必须容得下块头且不越过上界，否则解析会越界或死循环。
-        if (temp->SizeOfBlock < sizeof(IMAGE_BASE_RELOCATION) ||
-            temp->SizeOfBlock > total - offset) {
+        if (temp->SizeOfBlock < sizeof(IMAGE_BASE_RELOCATION) || temp->SizeOfBlock > total - offset) {
             LOGA(ERROR_LEVEL, "SizeOfBlock 非法:%#X, 偏移:%#X", temp->SizeOfBlock, offset);
             break;
         }

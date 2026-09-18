@@ -53,10 +53,7 @@ void LogA(IN LOG_LEVEL Level, IN char const * Format, ...)
     GetLocalTime(&st);
 
     wchar_t time[64] = {0};
-    StringCchPrintfW(time, _countof(time),
-                     L"%04d-%02d-%02d %02d:%02d:%02d:%03d\t",
-                     st.wYear, st.wMonth, st.wDay,
-                     st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+    StringCchPrintfW(time, _countof(time), L"%04d-%02d-%02d %02d:%02d:%02d:%03d\t", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
 
     printf("%ls", time);
     printf("%ls", LogLevelName(Level));
@@ -82,10 +79,7 @@ void LogW(IN LOG_LEVEL Level, IN wchar_t const * Format, ...)
     GetLocalTime(&st);
 
     wchar_t time[64] = {0};
-    StringCchPrintfW(time, _countof(time),
-                     L"%04d-%02d-%02d %02d:%02d:%02d:%03d\t",
-                     st.wYear, st.wMonth, st.wDay,
-                     st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+    StringCchPrintfW(time, _countof(time), L"%04d-%02d-%02d %02d:%02d:%02d:%03d\t", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
 
     wprintf(L"%ls", time);
     wprintf(L"%ls", LogLevelName(Level));

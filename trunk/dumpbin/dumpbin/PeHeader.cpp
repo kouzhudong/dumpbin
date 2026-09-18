@@ -225,8 +225,7 @@ DWORD DataDirectory(_In_ PBYTE Data, _In_ DWORD Size)
         IMAGE_DATA_DIRECTORY Entry = {0};
         GetDataDirectory(Data, Size, i, &Entry);
 
-        printf("%-14s \tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
-               DirectoryNames[i], Entry.VirtualAddress, Entry.Size);
+        printf("%-14s \tVirtualAddress:%#010X, \tSize:%#010X.\r\n", DirectoryNames[i], Entry.VirtualAddress, Entry.Size);
     }
 
     return ret;

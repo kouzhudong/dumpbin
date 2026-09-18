@@ -69,8 +69,7 @@ DWORD Architecture(_In_ PBYTE Data, _In_ DWORD Size)
                 break;
             }
 
-            printf("\tindex:%06u, FixupInstRVA:%#010X, NewInst:%#010X.\r\n",
-                   j, FixupEntry->FixupInstRVA, FixupEntry->NewInst);
+            printf("\tindex:%06u, FixupInstRVA:%#010X, NewInst:%#010X.\r\n", j, FixupEntry->FixupInstRVA, FixupEntry->NewInst);
         }
     }
 

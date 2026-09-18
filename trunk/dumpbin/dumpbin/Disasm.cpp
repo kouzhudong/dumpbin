@@ -44,14 +44,12 @@ void Disasm32(_In_ DWORD runtime_address, _In_ PBYTE data, _In_ const SIZE_T len
     ZydisDecoderInit(&decoder, ZYDIS_MACHINE_MODE_LONG_COMPAT_32, ZYDIS_ADDRESS_WIDTH_32);
     //ZydisDecoderInit(&decoder, ZYDIS_MACHINE_MODE_LEGACY_32, ZYDIS_ADDRESS_WIDTH_32);
 
-    // Initialize formatter. Only required when you actually plan to do instruction
-    // formatting ("disassembling"), like we do here
+    // Initialize formatter. Only required when you actually plan to do instruction formatting ("disassembling"), like we do here
     ZydisFormatter formatter;
     ZydisFormatterInit(&formatter, ZYDIS_FORMATTER_STYLE_INTEL);
 
     // Loop over the instructions in our buffer.
-    // The runtime-address (instruction pointer) is chosen arbitrary here in order to better
-    // visualize relative addressing
+    // The runtime-address (instruction pointer) is chosen arbitrary here in order to better visualize relative addressing
     ZyanUSize offset = 0;
     ZydisDecodedInstruction instruction;
     while (ZYAN_SUCCESS(ZydisDecoderDecodeBuffer(&decoder, data + offset, length - offset, &instruction))) {

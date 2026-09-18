@@ -96,9 +96,7 @@ DWORD TLS(_In_ PBYTE Data, _In_ DWORD Size)
         printf("Alignment:%#010X.\r\n", TLSDirectory64->Alignment);
         printf("Reserved1:%#010X.\r\n", TLSDirectory64->Reserved1);
 
-        PrintTlsCallbacks(Data, Size,
-                          TLSDirectory64->AddressOfCallBacks,
-                          ((PIMAGE_OPTIONAL_HEADER64)&NtHeaders->OptionalHeader)->ImageBase);
+        PrintTlsCallbacks(Data, Size, TLSDirectory64->AddressOfCallBacks, ((PIMAGE_OPTIONAL_HEADER64)&NtHeaders->OptionalHeader)->ImageBase);
     } else {
         PIMAGE_TLS_DIRECTORY32 TLSDirectory32 = (PIMAGE_TLS_DIRECTORY32)TLSDirectory;
 
@@ -115,9 +113,7 @@ DWORD TLS(_In_ PBYTE Data, _In_ DWORD Size)
         printf("Alignment:%#010X.\r\n", TLSDirectory32->Alignment);
         printf("Reserved1:%#010X.\r\n", TLSDirectory32->Reserved1);
 
-        PrintTlsCallbacks(Data, Size,
-                          TLSDirectory32->AddressOfCallBacks,
-                          ((PIMAGE_OPTIONAL_HEADER32)&NtHeaders->OptionalHeader)->ImageBase);
+        PrintTlsCallbacks(Data, Size, TLSDirectory32->AddressOfCallBacks, ((PIMAGE_OPTIONAL_HEADER32)&NtHeaders->OptionalHeader)->ImageBase);
     }
 
     return ret;

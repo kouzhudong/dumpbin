@@ -385,8 +385,7 @@ bool IsValidPE(_In_ PBYTE Data, _In_ DWORD Size)
                 continue;//.bss 这类节没有文件数据。
             }
 
-            if (SectionHeader[i].PointerToRawData > Size ||
-                SectionHeader[i].SizeOfRawData > Size - SectionHeader[i].PointerToRawData) {
+            if (SectionHeader[i].PointerToRawData > Size || SectionHeader[i].SizeOfRawData > Size - SectionHeader[i].PointerToRawData) {
                 LOGA(ERROR_LEVEL, "节数据越界, 第%u节, 偏移:%#X, 大小:%#X, Size:%u",
                      i + 1, SectionHeader[i].PointerToRawData, SectionHeader[i].SizeOfRawData, Size);
                 __leave;

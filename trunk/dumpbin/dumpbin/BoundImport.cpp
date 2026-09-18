@@ -63,9 +63,7 @@ DWORD BoundImport(_In_ PBYTE Data, _In_ DWORD Size)
     for (DWORD walked = 0; walked + sizeof(IMAGE_BOUND_IMPORT_DESCRIPTOR) <= table_bytes; ) {
         PIMAGE_BOUND_IMPORT_DESCRIPTOR Descriptor = (PIMAGE_BOUND_IMPORT_DESCRIPTOR)(TableBase + walked);
 
-        if (Descriptor->TimeDateStamp == 0 &&
-            Descriptor->OffsetModuleName == 0 &&
-            Descriptor->NumberOfModuleForwarderRefs == 0) {
+        if (Descriptor->TimeDateStamp == 0 && Descriptor->OffsetModuleName == 0 && Descriptor->NumberOfModuleForwarderRefs == 0) {
             break;//全 0 项是结束标记。
         }
 

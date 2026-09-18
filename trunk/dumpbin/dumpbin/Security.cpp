@@ -685,8 +685,7 @@ void ParseCertificateInfo3(PIMAGE_DATA_DIRECTORY DataDirectory, LPWIN_CERTIFICAT
 
         LPWIN_CERTIFICATE entry = LPWIN_CERTIFICATE(base + offset);
 
-        if (entry->dwLength < sizeof(WIN_CERTIFICATE) ||
-            entry->dwLength > DataDirectory->Size - offset) {
+        if (entry->dwLength < sizeof(WIN_CERTIFICATE) || entry->dwLength > DataDirectory->Size - offset) {
             break;
         }
 
@@ -955,15 +954,10 @@ DWORD Security(_In_ PBYTE Data, _In_ DWORD Size)
     //ULONG size = 0;
     //PIMAGE_SECTION_HEADER FoundHeader = NULL;
     //LPWIN_CERTIFICATE SecurityDirectory = (LPWIN_CERTIFICATE)
-    //    ImageDirectoryEntryToDataEx(Data,
-    //                                FALSE,//自己映射的用FALSE，操作系统加载的用TRUE。 
-    //                                IMAGE_DIRECTORY_ENTRY_SECURITY,
-    //                                &size,
-    //                                &FoundHeader);
+    //    ImageDirectoryEntryToDataEx(Data, FALSE, IMAGE_DIRECTORY_ENTRY_SECURITY, &size, &FoundHeader);
 
     /*
-    SECURITY 目录的 VirtualAddress 是文件偏移(不是 RVA)。声明的大小可能超出文件，
-    必须收敛到文件范围内，否则后面按 dwLength 读证书会越界。
+    SECURITY 目录的 VirtualAddress 是文件偏移(不是 RVA)。声明的大小可能超出文件，必须收敛到文件范围内，否则后面按 dwLength 读证书会越界。
     */
     DWORD certificate_bytes = DataDirectory.Size;
     if (DataDirectory.VirtualAddress >= Size || certificate_bytes > Size - DataDirectory.VirtualAddress) {
