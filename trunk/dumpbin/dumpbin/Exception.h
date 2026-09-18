@@ -37,9 +37,16 @@ typedef union _UNWIND_CODE {
 } UNWIND_CODE, * PUNWIND_CODE;
 
 
-#ifndef _WIN64
+//SDK 的 winnt.h 里也有这几个宏，32 位构建时不能重复定义。
+#ifndef UNW_FLAG_EHANDLER
 #define UNW_FLAG_EHANDLER  0x01
+#endif
+
+#ifndef UNW_FLAG_UHANDLER
 #define UNW_FLAG_UHANDLER  0x02
+#endif
+
+#ifndef UNW_FLAG_CHAININFO
 #define UNW_FLAG_CHAININFO 0x04
 #endif
 
@@ -67,22 +74,6 @@ typedef struct _RUNTIME_FUNCTION {
     ULONG UnwindData;
 } RUNTIME_FUNCTION, * PRUNTIME_FUNCTION;
 #endif
-
-
-#define GetUnwindCodeEntry(info, index) \
-    ((info)->UnwindCode[index])
-
-#define GetLanguageSpecificDataPtr(info) \
-    ((PVOID)&GetUnwindCodeEntry((info),((info)->CountOfCodes + 1) & ~1))
-
-#define GetExceptionHandler(base, info) \
-    ((PEXCEPTION_HANDLER)((base) + *(PULONG)GetLanguageSpecificDataPtr(info)))
-
-#define GetChainedFunctionEntry(base, info) \
-    ((PRUNTIME_FUNCTION)((base) + *(PULONG)GetLanguageSpecificDataPtr(info)))
-
-#define GetExceptionDataPtr(info) \
-    ((PVOID)((PULONG)GetLanguageSpecificData(info) + 1)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////

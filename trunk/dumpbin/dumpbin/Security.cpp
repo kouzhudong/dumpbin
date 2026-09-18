@@ -34,7 +34,6 @@ static void PrintHexBytes(_In_reads_bytes_(Length) const BYTE * Data, _In_ DWORD
 static void PrintAsn1StringValue(_In_ const asn1_tree * list)
 {
     LPSTR pws = (LPSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (SIZE_T)list->length + 2);
-    _ASSERTE(pws);
     if (pws == NULL) {
         return;
     }
@@ -53,15 +52,6 @@ static DWORD GetCertificateBlobLength(_In_ const WIN_CERTIFICATE * certificate)
     }
 
     return certificate->dwLength - FIELD_OFFSET(WIN_CERTIFICATE, bCertificate);
-}
-
-
-// 当前正在被解析的 PE 文件路径，由 Security(LPCWSTR) 在 MapFile 之前设置。
-static LPCWSTR g_currentFileName = NULL;
-
-static LPCWSTR GetInputFileName()
-{
-    return g_currentFileName;
 }
 
 
@@ -377,17 +367,6 @@ void PrintSecurity(LPWIN_CERTIFICATE SecurityDirectory)
 }
 
 
-BOOL WINAPI DigestFunction(DIGEST_HANDLE refdata, PBYTE pData, DWORD dwLength)
-//这个会被调用多次。
-{
-    UNREFERENCED_PARAMETER(refdata);
-    UNREFERENCED_PARAMETER(pData);
-    UNREFERENCED_PARAMETER(dwLength);
-
-    return true;
-}
-
-
 BOOL VerifyEmbeddedSignature(IN LPCTSTR filename, OUT wchar_t * signer_file, IN size_t signer_file_cch)
 {
     HCATADMIN cat_admin_handle = NULL;
@@ -554,7 +533,7 @@ BOOL GetSignerInfo(IN WCHAR * FileName)
 
 void ParseCertificateInfo1()
 {
-    LPCWSTR FileName = GetInputFileName();
+    LPCWSTR FileName = GetCurrentFileName();
     if (FileName == NULL) {
         return;
     }
@@ -576,7 +555,7 @@ void ParseCertificateInfo2()
 这种方式没有分析PE文件的DataDirectory。
 */
 {
-    LPCWSTR FileName = GetInputFileName();
+    LPCWSTR FileName = GetCurrentFileName();
     if (FileName == NULL) {
         return;
     }
@@ -613,7 +592,6 @@ void ParseCertificateInfo2()
             DWORD RequiredLength = Certificateheader.dwLength;
 
             buffer = (LPWIN_CERTIFICATE)HeapAlloc(GetProcessHeap(), 0, RequiredLength);
-            _ASSERTE(buffer);
             if (buffer == NULL) {
                 PrintWin32Error(FileName, "HeapAlloc");
                 continue;
@@ -670,12 +648,6 @@ void ParseCertificateInfo2()
                 CertCloseStore(hStore, CERT_CLOSE_STORE_FORCE_FLAG);
             } else {
                 _tprintf(_T("CertOpenStore failed with error 0x%.8X\n"), GetLastError());
-            }
-
-            DIGEST_HANDLE DigestHandle = NULL;
-            ret = ImageGetDigestStream(hfile, i, DigestFunction, &DigestHandle);
-            if (!ret) {
-                PrintWin32Error(FileName, "ImageGetDigestStream");
             }
 
             HeapFree(GetProcessHeap(), 0, buffer);
@@ -737,7 +709,11 @@ void ParseCertificateInfo4(PIMAGE_DATA_DIRECTORY DataDirectory, LPWIN_CERTIFICAT
 用openssl解析PE的证书。
 */
 {
-    UNREFERENCED_PARAMETER(DataDirectory);
+    // 第一个证书条目必须整个落在证书数据范围内。
+    if (SecurityDirectory->dwLength > DataDirectory->Size) {
+        LOGA(WARNING_LEVEL, "证书条目越界, dwLength:%#010X, 可用:%#010X", SecurityDirectory->dwLength, DataDirectory->Size);
+        return;
+    }
 
     unsigned char * CertData = (unsigned char *)SecurityDirectory->bCertificate;
     long CertDataLength = GetCertificateBlobLength(SecurityDirectory);
@@ -881,7 +857,11 @@ void ParseCertificateInfo5(PIMAGE_DATA_DIRECTORY DataDirectory, LPWIN_CERTIFICAT
 仅仅测试代码。
 */
 {
-    UNREFERENCED_PARAMETER(DataDirectory);
+    // 第一个证书条目必须整个落在证书数据范围内。
+    if (SecurityDirectory->dwLength > DataDirectory->Size) {
+        LOGA(WARNING_LEVEL, "证书条目越界, dwLength:%#010X, 可用:%#010X", SecurityDirectory->dwLength, DataDirectory->Size);
+        return;
+    }
 
     unsigned char * CertData = (unsigned char *)SecurityDirectory->bCertificate;
     long CertDataLength = GetCertificateBlobLength(SecurityDirectory);
@@ -981,10 +961,26 @@ DWORD Security(_In_ PBYTE Data, _In_ DWORD Size)
     //                                &size,
     //                                &FoundHeader);
 
+    /*
+    SECURITY 目录的 VirtualAddress 是文件偏移(不是 RVA)。声明的大小可能超出文件，
+    必须收敛到文件范围内，否则后面按 dwLength 读证书会越界。
+    */
+    DWORD certificate_bytes = DataDirectory.Size;
+    if (DataDirectory.VirtualAddress >= Size || certificate_bytes > Size - DataDirectory.VirtualAddress) {
+        DWORD available_bytes = (DataDirectory.VirtualAddress < Size) ? (Size - DataDirectory.VirtualAddress) : 0;
+        LOGA(WARNING_LEVEL, "证书数据超出文件范围, 声明:%#010X, 实际:%#010X", certificate_bytes, available_bytes);
+        certificate_bytes = available_bytes;
+    }
+
+    if (certificate_bytes == 0) {
+        printf("证书数据为空.\r\n");
+        return ret;
+    }
+
     LPWIN_CERTIFICATE SecurityDirectory = (LPWIN_CERTIFICATE)(Data + DataDirectory.VirtualAddress);
 
-    PIMAGE_NT_HEADERS NtHeaders = ImageNtHeader(Data);
-    _ASSERTE(NtHeaders);
+    IMAGE_DATA_DIRECTORY CertificateDirectory = DataDirectory;
+    CertificateDirectory.Size = certificate_bytes;
 
     //////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -994,15 +990,15 @@ DWORD Security(_In_ PBYTE Data, _In_ DWORD Size)
 
     printf("----------------------------------------------------------------------------------\n");
     printf("解析方式三：\n");
-    ParseCertificateInfo3(&DataDirectory, SecurityDirectory);
+    ParseCertificateInfo3(&CertificateDirectory, SecurityDirectory);
 
     printf("----------------------------------------------------------------------------------\n");
     printf("解析方式四：\n");
-    ParseCertificateInfo4(&DataDirectory, SecurityDirectory);
+    ParseCertificateInfo4(&CertificateDirectory, SecurityDirectory);
 
     printf("----------------------------------------------------------------------------------\n");
     printf("解析方式五：\n");
-    ParseCertificateInfo5(&DataDirectory, SecurityDirectory);
+    ParseCertificateInfo5(&CertificateDirectory, SecurityDirectory);
 
     //////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1015,8 +1011,6 @@ DWORD Security(_In_ PBYTE Data, _In_ DWORD Size)
 
 DWORD Security(_In_ LPCWSTR FileName)
 {
-    g_currentFileName = FileName;
-    DWORD ret = MapFile(FileName, Security);
-    g_currentFileName = NULL;
-    return ret;
+    //文件名由 MapFile 在调用回调前置好，回调里用 GetCurrentFileName() 取。
+    return MapFile(FileName, Security);
 }

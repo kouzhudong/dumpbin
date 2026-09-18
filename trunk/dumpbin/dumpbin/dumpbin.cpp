@@ -110,9 +110,9 @@ VOID Usage(TCHAR * exe)
         printf("%s：\"%ls\" %ls FileFullPath\r\n", g_fileCommandHelp[i].Description, exe, g_fileCommandHelp[i].Name);
     }
 
-    printf("View content：\"%ls\" PrintBinary FileFullPath Address(RVA) Length(非负的十进制)\r\n", exe);
+    printf("View content：\"%ls\" PrintBinary FileFullPath Address(文件偏移) Length(非负的十进制)\r\n", exe);
     printf("Disassemble(Zydis引擎)：\"%ls\" Disassemble FileFullPath Address(RVA) Length(非负的十进制)\r\n", exe);
-    printf("SaveFile：\"%ls\" SaveFile FileFullPath Address(RVA) Length(非负的十进制) NewFileFullPath\r\n", exe);
+    printf("SaveFile：\"%ls\" SaveFile FileFullPath Address(文件偏移) Length(非负的十进制) NewFileFullPath\r\n", exe);
 
     printf("\r\n");
     printf("Made by correy\r\n");
@@ -134,7 +134,9 @@ static FileCommandFn FindFileCommand(LPCTSTR name)
 
 void Initialize()
 {
-    setlocale(LC_CTYPE, ".936"); // 解决汉字显示的问题。
+    // 源码是 UTF-8(/utf-8)，宽字符输出也让 CRT 转成 UTF-8，避免同一份输出里 GBK 和 UTF-8 混用。
+    setlocale(LC_ALL, ".UTF8");
+    SetConsoleOutputCP(CP_UTF8);
     InitializeCriticalSection(&g_log_cs);
 }
 

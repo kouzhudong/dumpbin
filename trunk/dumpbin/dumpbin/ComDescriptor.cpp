@@ -7,50 +7,57 @@
 
 void MetaData(PVOID Address, DWORD Size)
 {
-
-
+    //元数据的解析待补充。
+    UNREFERENCED_PARAMETER(Address);
+    UNREFERENCED_PARAMETER(Size);
 }
 
 
 void Resources(PVOID Address, DWORD Size)
 {
-
-
+    //元数据里的资源清单，解析待补充。
+    UNREFERENCED_PARAMETER(Address);
+    UNREFERENCED_PARAMETER(Size);
 }
 
 
 void StrongNameSignature(PVOID Address, DWORD Size)
 {
-
-
+    //强名称签名的解析待补充。
+    UNREFERENCED_PARAMETER(Address);
+    UNREFERENCED_PARAMETER(Size);
 }
 
 
 void CodeManagerTable(PVOID Address, DWORD Size)
 {
-
-
+    //CodeManagerTable 一般不存在(保留)。
+    UNREFERENCED_PARAMETER(Address);
+    UNREFERENCED_PARAMETER(Size);
 }
 
 
 void VTableFixups(PVOID Address, DWORD Size)
 {
-
-
+    //VTableFixups 的解析待补充。
+    UNREFERENCED_PARAMETER(Address);
+    UNREFERENCED_PARAMETER(Size);
 }
 
 
 void ExportAddressTableJumps(PVOID Address, DWORD Size)
 {
-
-
+    //ExportAddressTableJumps 的解析待补充。
+    UNREFERENCED_PARAMETER(Address);
+    UNREFERENCED_PARAMETER(Size);
 }
 
 
 void ManagedNativeHeader(PVOID Address, DWORD Size)
 {
-
-
+    //混合模式程序集的 NGEN 头，解析待补充。
+    UNREFERENCED_PARAMETER(Address);
+    UNREFERENCED_PARAMETER(Size);
 }
 
 
@@ -95,19 +102,28 @@ The format of the metadata, method IL, and other things pointed to by the IMAGE_
     }
 
     PIMAGE_NT_HEADERS NtHeaders = ImageNtHeader(Data);
-    _ASSERTE(NtHeaders);
+    if (NtHeaders == NULL) {
+        LOGA(ERROR_LEVEL, "ImageNtHeader 失败");
+        return ret;
+    }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////
 
     ULONG size = 0;
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
     PIMAGE_COR20_HEADER ComDescriptorDirectory = (PIMAGE_COR20_HEADER)ImageDirectoryEntryToDataEx(Data, FALSE, IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, &size, &FoundHeader);
+    if (ComDescriptorDirectory == NULL) {
+        LOGA(ERROR_LEVEL, "ImageDirectoryEntryToDataEx 失败");
+        return ret;
+    }
 
     printf("Com Descriptor Directory Information:\r\n");
     printf("VirtualAddress:%#010X.\r\n", DataDirectory.VirtualAddress);
     printf("Size:%#010X.\r\n", DataDirectory.Size);
     if (FoundHeader) {
-        printf("SectionName:%s.\r\n", FoundHeader->Name);
+        CHAR SectionName[IMAGE_SIZEOF_SHORT_NAME + 1] = {0};
+        GetSectionName(FoundHeader, SectionName);
+        printf("SectionName:%s.\r\n", SectionName);
     }
 
     printf("\r\n");

@@ -3,66 +3,38 @@
 
 
 //
-// 与 LOG_LEVEL 一一对应的描述字符串。
-// 表大小固定为 MAX_LEVEL + 1，避免越界。
+// 与 LOG_LEVEL 一一对应的描述字符串，超出范围的级别用"未定义"。
 //
-static const wchar_t* const g_log_level_w[MAX_LEVEL + 1] = {
+static const wchar_t* const g_log_level_names[] = {
     L"错误信息：",
     L"警告信息：",
     L"重要信息：",
     L"普通信息：",
     L"详细信息：",
     L"跟踪信息：",
-    L"未定义：",
-    L"未定义：",
-    L"未定义：",
-    L"未定义：",
-    L"未定义：",
-    L"未定义：",
-    L"未定义：",
-    L"未定义：",
-    L"未定义：",
-    L"未定义：",
-    L"未定义：",
-    L"未定义：",
-    L"未定义：",
-    L"未定义：",
-    L"未定义：",
-    L"未定义：",
-    L"未定义：",
-    L"未定义：",
-    L"未定义：",
-    L"未定义：",
-    L"未定义：",
-    L"未定义：",
-    L"未定义：",
-    L"未定义：",
-    L"未定义：",
-    L"未定义："
 };
+
+static const wchar_t* LogLevelName(LOG_LEVEL Level)
+{
+    unsigned index = static_cast<unsigned>(Level);
+    if (index >= _countof(g_log_level_names)) {
+        return L"未定义：";
+    }
+
+    return g_log_level_names[index];
+}
 
 
 CRITICAL_SECTION g_log_cs;             // 同步日志输出的对象。
 ULONG g_log_level = DEFAULT_LOG_LEVEL; // 日志开关，按位表示等级。
 
-static LONG g_log_locale_initialized = 0;
-
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-static void EnsureLocale()
-{
-    // 仅设置一次区域，避免每条日志都重新设置带来的开销与副作用。
-    if (InterlockedCompareExchange(&g_log_locale_initialized, 1, 0) == 0) {
-        setlocale(LC_ALL, ".936");
-    }
-}
-
-
 static bool LevelEnabled(LOG_LEVEL Level)
 {
-    if (Level < 0 || Level > MAX_LEVEL) {
+    if (static_cast<unsigned>(Level) > MAX_LEVEL) {
         return false;
     }
     return (g_log_level & (1u << static_cast<unsigned>(Level))) != 0;
@@ -75,7 +47,6 @@ void LogA(IN LOG_LEVEL Level, IN char const * Format, ...)
         return;
     }
 
-    EnsureLocale();
     EnterCriticalSection(&g_log_cs);
 
     SYSTEMTIME st;
@@ -88,7 +59,7 @@ void LogA(IN LOG_LEVEL Level, IN char const * Format, ...)
                      st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
 
     printf("%ls", time);
-    printf("%ls", g_log_level_w[Level]);
+    printf("%ls", LogLevelName(Level));
 
     va_list args;
     va_start(args, Format);
@@ -105,7 +76,6 @@ void LogW(IN LOG_LEVEL Level, IN wchar_t const * Format, ...)
         return;
     }
 
-    EnsureLocale();
     EnterCriticalSection(&g_log_cs);
 
     SYSTEMTIME st;
@@ -118,7 +88,7 @@ void LogW(IN LOG_LEVEL Level, IN wchar_t const * Format, ...)
                      st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
 
     wprintf(L"%ls", time);
-    wprintf(L"%ls", g_log_level_w[Level]);
+    wprintf(L"%ls", LogLevelName(Level));
 
     va_list args;
     va_start(args, Format);

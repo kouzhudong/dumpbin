@@ -75,11 +75,19 @@ PCSTR GetDebugType(_In_ DWORD Type)
 }
 
 
-void PrintDebug(_In_ PBYTE Data, _In_ PIMAGE_DEBUG_DIRECTORY DebugDirectory)
+static bool IsDebugRawDataInFile(_In_ PIMAGE_DEBUG_DIRECTORY DebugDirectory, _In_ DWORD Size)
+/*
+PointerToRawData 是文件偏移，数据必须整个落在文件里才能按结构体去读。
+*/
 {
-    PIMAGE_NT_HEADERS NtHeaders = ImageNtHeader(Data);
-    _ASSERTE(NtHeaders);
+    return DebugDirectory->PointerToRawData != 0 &&
+           DebugDirectory->PointerToRawData <= Size &&
+           DebugDirectory->SizeOfData <= Size - DebugDirectory->PointerToRawData;
+}
 
+
+void PrintDebug(_In_ PBYTE Data, _In_ DWORD Size, _In_ PIMAGE_DEBUG_DIRECTORY DebugDirectory)
+{
     printf("Characteristics:%#010X.\r\n", DebugDirectory->Characteristics);//保留，必须为 0。
 
     CHAR TimeDateStamp[MAX_PATH] = {0};
@@ -91,8 +99,8 @@ void PrintDebug(_In_ PBYTE Data, _In_ PIMAGE_DEBUG_DIRECTORY DebugDirectory)
     printf("Type:%#010X, %s.\r\n", DebugDirectory->Type, GetDebugType(DebugDirectory->Type));
 
     printf("SizeOfData:%#010X.\r\n", DebugDirectory->SizeOfData);
-    printf("AddressOfRawData:%#010X.\r\n", DebugDirectory->AddressOfRawData);//需进一步的解析。
-    printf("PointerToRawData:%#010X.\r\n", DebugDirectory->PointerToRawData);//需进一步的解析。
+    printf("AddressOfRawData:%#010X.\r\n", DebugDirectory->AddressOfRawData);//RVA，需进一步的解析。
+    printf("PointerToRawData:%#010X.\r\n", DebugDirectory->PointerToRawData);//文件偏移，读数据要用这个。
 
     switch (DebugDirectory->Type) {
     case IMAGE_DEBUG_TYPE_UNKNOWN:
@@ -101,6 +109,10 @@ void PrintDebug(_In_ PBYTE Data, _In_ PIMAGE_DEBUG_DIRECTORY DebugDirectory)
     case IMAGE_DEBUG_TYPE_COFF:
     {
         //官方定义的数据结构是PIMAGE_COFF_SYMBOLS_HEADER
+        if (!IsDebugRawDataInFile(DebugDirectory, Size)) {
+            LOGA(WARNING_LEVEL, "IMAGE_DEBUG_TYPE_COFF 数据越界");
+            break;
+        }
 
         PIMAGE_COFF_SYMBOLS_HEADER CoffSymbolsHeader = (PIMAGE_COFF_SYMBOLS_HEADER)(Data + DebugDirectory->PointerToRawData);
 
@@ -117,18 +129,39 @@ void PrintDebug(_In_ PBYTE Data, _In_ PIMAGE_DEBUG_DIRECTORY DebugDirectory)
     }
     case IMAGE_DEBUG_TYPE_CODEVIEW:
     {
-        CV_INFO_PDB70 * temp = (CV_INFO_PDB70 *)(Data + DebugDirectory->AddressOfRawData);//不可访问。
-        CV_INFO_PDB70 * temp2 = (CV_INFO_PDB70 *)(Data + DebugDirectory->PointerToRawData);
+        if (!IsDebugRawDataInFile(DebugDirectory, Size) ||
+            DebugDirectory->SizeOfData <= offsetof(CV_INFO_PDB70, PdbFileName)) {
+            LOGA(WARNING_LEVEL, "IMAGE_DEBUG_TYPE_CODEVIEW 数据越界或过短");
+            break;
+        }
 
-        LPWSTR PdbFileName = UTF8ToWide((PCHAR)temp2->PdbFileName);
-        printf("PdbFileName:%ls.\r\n", PdbFileName);
-        HeapFree(GetProcessHeap(), 0, PdbFileName);
+        CV_INFO_PDB70 * Info = (CV_INFO_PDB70 *)(Data + DebugDirectory->PointerToRawData);
+
+        //PdbFileName 是变长字符串，长度由 SizeOfData 限定，未必以 0 结尾，先拷出来再转换。
+        SIZE_T cchMax = DebugDirectory->SizeOfData - offsetof(CV_INFO_PDB70, PdbFileName);
+        CHAR * PdbFileName = (CHAR *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cchMax + 1);
+        if (PdbFileName != NULL) {
+            RtlCopyMemory(PdbFileName, Info->PdbFileName, cchMax);
+
+            LPWSTR PdbFileNameW = UTF8ToWide(PdbFileName);
+            if (PdbFileNameW != NULL) {
+                printf("PdbFileName:%ls.\r\n", PdbFileNameW);
+                HeapFree(GetProcessHeap(), 0, PdbFileNameW);
+            }
+
+            HeapFree(GetProcessHeap(), 0, PdbFileName);
+        }
 
         break;
     }
     case IMAGE_DEBUG_TYPE_FPO:
     {
         //官方定义的数据结构是PFPO_DATA
+        if (!IsDebugRawDataInFile(DebugDirectory, Size) ||
+            DebugDirectory->SizeOfData < sizeof(FPO_DATA)) {
+            LOGA(WARNING_LEVEL, "IMAGE_DEBUG_TYPE_FPO 数据越界或过短");
+            break;
+        }
 
         PFPO_DATA fpo = (PFPO_DATA)(Data + DebugDirectory->PointerToRawData);
 
@@ -150,6 +183,11 @@ void PrintDebug(_In_ PBYTE Data, _In_ PIMAGE_DEBUG_DIRECTORY DebugDirectory)
     case IMAGE_DEBUG_TYPE_MISC:
     {
         //官方定义的数据结构是PIMAGE_DEBUG_MISC
+        if (!IsDebugRawDataInFile(DebugDirectory, Size) ||
+            DebugDirectory->SizeOfData < sizeof(IMAGE_DEBUG_MISC)) {
+            LOGA(WARNING_LEVEL, "IMAGE_DEBUG_TYPE_MISC 数据越界或过短");
+            break;
+        }
 
         PIMAGE_DEBUG_MISC misc = (PIMAGE_DEBUG_MISC)(Data + DebugDirectory->PointerToRawData);
 
@@ -190,17 +228,9 @@ void PrintDebug(_In_ PBYTE Data, _In_ PIMAGE_DEBUG_DIRECTORY DebugDirectory)
         /*
         * 微软的dumpbin显示的如下：
             5F685417 feat          14 0013C000    E4200    Counts: Pre-VC++ 11.00=0, C/C++=252, /GS=252, /sdl=19, guardN=233
+
+        * 数据在 PointerToRawData 处(AddressOfRawData 是 RVA)，格式未公开，暂不解析。
         */
-
-        PVOID temp = (PVOID)(Data + DebugDirectory->AddressOfRawData);//不可访问。
-        PVOID temp2 = (PVOID)(Data + DebugDirectory->PointerToRawData);
-
-        PVOID temp3 = ImageRvaToVa(NtHeaders, Data, DebugDirectory->AddressOfRawData, NULL);
-        _ASSERTE(temp3 == temp2);//竟然发现这个。
-
-        PVOID temp4 = ImageRvaToVa(NtHeaders, Data, DebugDirectory->PointerToRawData, NULL);//可访问，但不知数据格式。
-
-
         break;
     }
     case IMAGE_DEBUG_TYPE_POGO:
@@ -211,18 +241,6 @@ void PrintDebug(_In_ PBYTE Data, _In_ PIMAGE_DEBUG_DIRECTORY DebugDirectory)
 
         请看官仔细观察下面的几个地址的里的数据，找出数据格式或数据定义。
         */
-
-        PVOID temp = (PVOID)(Data + DebugDirectory->AddressOfRawData);//可访问。
-        PVOID temp2 = (PVOID)(Data + DebugDirectory->PointerToRawData);
-
-        PVOID temp3 = ImageRvaToVa(NtHeaders, Data, DebugDirectory->AddressOfRawData, NULL);
-        _ASSERTE(temp3 == temp2);//竟然发现这个。
-
-        PVOID temp4 = ImageRvaToVa(NtHeaders, Data, DebugDirectory->PointerToRawData, NULL);//可访问，但不知数据格式。
-
-
-
-
         break;
     }
     case IMAGE_DEBUG_TYPE_ILTCG:
@@ -240,28 +258,19 @@ void PrintDebug(_In_ PBYTE Data, _In_ PIMAGE_DEBUG_DIRECTORY DebugDirectory)
 
         请看官仔细观察下面的几个地址的里的数据，找出数据格式或数据定义。
 
-        temp2的数据如下：
+        PointerToRawData 处的数据如下：
         0x02DE0F10  20 00 00 00 c5 55 1f 64 20 92 cc 1d 4f 59 fa cc   ...?U.d ??.OY??
         0x02DE0F20  72 ea 54 da 1a 20 04 75 03 c7 0a e4 cc 5c 9a bb  r?T?. .u.?.??\??
         0x02DE0F30  e9 a2 71 a3 00 00 00 00
         可以看到前面的0x20是长度。
         */
-
-        PVOID temp = (PVOID)(Data + DebugDirectory->AddressOfRawData);//可访问。
-        PVOID temp2 = (PVOID)(Data + DebugDirectory->PointerToRawData);
-
-        PVOID temp3 = ImageRvaToVa(NtHeaders, Data, DebugDirectory->AddressOfRawData, NULL);
-        _ASSERTE(temp3 == temp2);//竟然发现这个。
-
-        PVOID temp4 = ImageRvaToVa(NtHeaders, Data, DebugDirectory->PointerToRawData, NULL);//可访问，但不知数据格式。
-
         break;
     }
     case IMAGE_DEBUG_TYPE_EX_DLLCHARACTERISTICS:
 
         break;
     default:
-        _ASSERTE(FALSE);
+        LOGA(WARNING_LEVEL, "未定义的Debug Type:%#X", DebugDirectory->Type);
         break;
     }
 
@@ -288,13 +297,20 @@ DWORD Debug(_In_ PBYTE Data, _In_ DWORD Size)
     ULONG size = 0;
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
     PIMAGE_DEBUG_DIRECTORY DebugDirectory = (PIMAGE_DEBUG_DIRECTORY)ImageDirectoryEntryToDataEx(Data, FALSE, IMAGE_DIRECTORY_ENTRY_DEBUG, &size, &FoundHeader);
+    if (DebugDirectory == NULL) {
+        LOGA(ERROR_LEVEL, "ImageDirectoryEntryToDataEx 失败");
+        return ret;
+    }
 
     printf("Debug Directory Information:\r\n");
 
-    for (DWORD i = 0; i * sizeof(IMAGE_DEBUG_DIRECTORY) < DataDirectory.Size; i++) {
-        PrintDebug(Data, DebugDirectory);
+    // 数据目录里的 Size 未必和实际长度一致，取小的那个作为遍历上界。
+    DWORD total = (size != 0 && size < DataDirectory.Size) ? size : DataDirectory.Size;
 
-        DebugDirectory++;
+    for (DWORD i = 0; i * sizeof(IMAGE_DEBUG_DIRECTORY) < total; i++, DebugDirectory++) {
+        printf("index:%06u.\r\n", i);
+
+        PrintDebug(Data, Size, DebugDirectory);
     }
 
     return ret;

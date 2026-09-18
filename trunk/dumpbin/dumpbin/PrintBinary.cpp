@@ -20,7 +20,7 @@ void BinaryToStringA(BYTE * lpMapAddress, DWORD dwFileSize)
             return;
         }
 
-        pcchString = pcchString * sizeof(wchar_t);
+        //A 版本的 pcchString 是单字节字符数，直接就是字节数，不用再乘 sizeof(wchar_t)。
         pszString2 = (LPSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, pcchString);
         if (pszString2 == NULL) {
             printf("Failed to allocate on heap.\n");
@@ -82,7 +82,7 @@ void BinaryToStringW(BYTE * lpMapAddress, DWORD dwFileSize)
 
 DWORD PrintBinary(_In_ PBYTE Data, _In_ DWORD Size, _In_ DWORD Address, _In_ DWORD Length)
 /*
-Address应该叫Offset.
+Address是文件偏移(不是RVA)。
 */
 {
     DWORD ret = ERROR_SUCCESS;
@@ -91,26 +91,13 @@ Address应该叫Offset.
         return ret;
     }
 
-    if (Address > Size) {
-        return ret;
+    //整段数据都要落在文件里，Address + Length 不能越过文件尾。
+    if (Address >= Size || Length > Size - Address) {
+        LOGA(ERROR_LEVEL, "地址或长度越界, Address:%u, Length:%u, Size:%u", Address, Length, Size);
+        return ERROR_INVALID_PARAMETER;
     }
-
-    if (Length > Size) {
-        return ret;
-    }
-
-    //反正是在异常处理里的，都不检查了。
 
     BinaryToStringA(Data + Address, Length);
-
-#if 0
-    PIMAGE_NT_HEADERS NtHeaders = ImageNtHeader(Data);
-    _ASSERTE(NtHeaders);
-
-    PBYTE start = (PBYTE)ImageRvaToVa(NtHeaders, Data, Address, NULL);
-
-    BinaryToStringA(start, Length);
-#endif
 
     return ret;
 }
@@ -119,92 +106,21 @@ Address应该叫Offset.
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+//PeCallBack 只有 (Data, Size)，命令行参数通过文件级变量带进回调(命令行工具是单线程的)。
+static DWORD g_print_binary_address = 0;
+static DWORD g_print_binary_length = 0;
+
+
+static DWORD PrintBinaryCallback(_In_ PBYTE Data, _In_ DWORD Size)
+{
+    return PrintBinary(Data, Size, g_print_binary_address, g_print_binary_length);
+}
+
+
 DWORD PrintBinary(_In_ LPCWSTR FileName, _In_ LPCWSTR AddressString, _In_ LPCWSTR LengthString)
 {
-    DWORD Address = _wtoi(AddressString);
-    DWORD Length = _wtoi(LengthString);
+    g_print_binary_address = _wtoi(AddressString);
+    g_print_binary_length = _wtoi(LengthString);
 
-    //////////////////////////////////////////////////////////////////////////////////////////////
-
-    DWORD LastError = ERROR_SUCCESS;
-    HANDLE hFile = INVALID_HANDLE_VALUE;
-    HANDLE hMapFile = NULL;
-    PBYTE FileContent = NULL;
-
-    if (IsWow64()) {//在wow64下关闭文件重定向。
-        BOOLEAN bRet = Wow64EnableWow64FsRedirection(FALSE);
-        _ASSERTE(bRet);
-    }
-
-    __try {
-        hFile = CreateFile(FileName, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-        if (hFile == INVALID_HANDLE_VALUE) {
-            LastError = GetLastError();
-            LOGA(ERROR_LEVEL, "LastError:%#d", LastError);
-            LogApiErrMsg("CreateFile");
-            __leave;
-        }
-
-        LARGE_INTEGER FileSize = {0};
-        if (0 == GetFileSizeEx(hFile, &FileSize)) {
-            LastError = GetLastError();
-            LOGA(ERROR_LEVEL, "LastError:%#d", LastError);
-            LogApiErrMsg("GetFileSizeEx");
-            __leave;
-        }
-
-        if (0 == FileSize.QuadPart) {//如果文件大小为0.
-            LastError = ERROR_EMPTY;
-            LOGA(ERROR_LEVEL, "LastError:%#d", LastError);
-            __leave;
-        }
-
-        if (FileSize.HighPart) {//暂时不支持大于4G的文件。
-            LastError = ERROR_EMPTY;
-            LOGA(ERROR_LEVEL, "LastError:%#d", LastError);
-            __leave;
-        }
-
-        hMapFile = CreateFileMapping(hFile, NULL, PAGE_READONLY, NULL, NULL, NULL); /* 空文件则返回失败 */
-        if (hMapFile == NULL) {
-            LastError = GetLastError();
-            LOGA(ERROR_LEVEL, "LastError:%#d", LastError);
-            LogApiErrMsg("CreateFileMapping");
-            __leave;
-        }
-
-        FileContent = (PBYTE)MapViewOfFile(hMapFile, SECTION_MAP_READ, NULL, NULL, 0/*映射所有*/);
-        if (FileContent == NULL) {
-            LastError = GetLastError();
-            LOGA(ERROR_LEVEL, "LastError:%#d", LastError);
-            LogApiErrMsg("CreateFileMapping");
-            __leave;
-        }
-
-        __try {
-            LastError = PrintBinary(FileContent, FileSize.LowPart, Address, Length);
-        } __except (EXCEPTION_EXECUTE_HANDLER) {
-            LastError = GetExceptionCode();
-            LOGA(ERROR_LEVEL, "ExceptionCode:%#x", LastError);
-        }
-    } __finally {
-        if (FileContent) {
-            UnmapViewOfFile(FileContent);
-        }
-
-        if (hMapFile) {
-            CloseHandle(hMapFile);
-        }
-
-        if (INVALID_HANDLE_VALUE != hFile) {
-            CloseHandle(hFile);
-        }
-    }
-
-    if (IsWow64()) {
-        BOOLEAN bRet = Wow64EnableWow64FsRedirection(TRUE);//Enable WOW64 file system redirection. 
-        _ASSERTE(bRet);
-    }
-
-    return LastError;
+    return MapFile(FileName, PrintBinaryCallback);
 }

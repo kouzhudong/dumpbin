@@ -1,5 +1,6 @@
 ﻿#include "pch.h"
 #include "openssl.h"
+#include <vector>
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -57,7 +58,8 @@ void DumpX509(X509 * x509)
         if (name.length()) {
             name += ", ";
         }
-        name += (char *)data->data;
+        //ASN1 字符串不保证以 0 结尾，必须按长度取。
+        name.append((const char *)ASN1_STRING_get0_data(data), ASN1_STRING_length(data));
     }
     printf("颁发者:%s.\n", name.c_str());
     name.clear();
@@ -70,22 +72,26 @@ void DumpX509(X509 * x509)
         if (name.length()) {
             name += ", ";
         }
-        name += (char *)data->data;
+        name.append((const char *)ASN1_STRING_get0_data(data), ASN1_STRING_length(data));
     }
     printf("使用者:%s.\n", name.c_str());//这是UTF8编码。汉字会显示乱码，需转换。
 
+    struct tm tm = {0};
     const ASN1_TIME * notBefore = X509_get0_notBefore(x509);
-    struct tm tm;
-    int ret = ASN1_TIME_to_tm(notBefore, &tm);
-    printf("有效期从：%04d年%02d月%02d日 %02d:%02d:%02d.\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+    if (ASN1_TIME_to_tm(notBefore, &tm) == 1) {
+        printf("有效期从：%04d年%02d月%02d日 %02d:%02d:%02d.\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+    } else {
+        printf("有效期从：无法解析.\n");
+    }
 
     const ASN1_TIME * notAfter = X509_get0_notAfter(x509);
-    ret = ASN1_TIME_to_tm(notAfter, &tm);
-    printf("到：%04d年%02d月%02d日 %02d:%02d:%02d.\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+    if (ASN1_TIME_to_tm(notAfter, &tm) == 1) {
+        printf("到：%04d年%02d月%02d日 %02d:%02d:%02d.\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+    } else {
+        printf("到：无法解析.\n");
+    }
 
     //////////////////////////////////////////////////////////////////////////////////////////////
-
-    int signature_type = X509_get_signature_type(x509);
 
     int secbits;
     int nid; //取值，如：NID_md5WithRSAEncryption
@@ -116,11 +122,15 @@ void DumpX509(X509 * x509)
     AUTHORITY_KEYID * akeyid = NULL;
     akeyid = (AUTHORITY_KEYID *)X509_get_ext_d2i(x509, NID_authority_key_identifier, &crit, NULL);
     if (akeyid) {
-        printf("授权密钥标识符:");
-        for (int i = 0; i < akeyid->keyid->length; i++) {
-            printf("%02x", akeyid->keyid->data[i]);
+        if (akeyid->keyid != NULL) {
+            printf("授权密钥标识符:");
+            for (int i = 0; i < akeyid->keyid->length; i++) {
+                printf("%02x", akeyid->keyid->data[i]);
+            }
+            printf("\n");
         }
-        printf("\n");
+
+        AUTHORITY_KEYID_free(akeyid);
     }
 
     ASN1_OCTET_STRING * skid = NULL;
@@ -131,9 +141,11 @@ void DumpX509(X509 * x509)
             printf("%02x", skid->data[i]);
         }
         printf("\n");
+
+        ASN1_OCTET_STRING_free(skid);
     }
 
-    BASIC_CONSTRAINTS * bc;
+    BASIC_CONSTRAINTS * bc = NULL;
     bc = (BASIC_CONSTRAINTS *)X509_get_ext_d2i(x509, NID_basic_constraints, NULL, NULL);
     if (bc) {
         printf("基本约束：Subject Type=%d.", bc->ca);//这个数具体代表啥定义，有待深入。
@@ -146,6 +158,8 @@ void DumpX509(X509 * x509)
         } else {
             printf("Path Length Constraint=None.\n");
         }
+
+        BASIC_CONSTRAINTS_free(bc);
     }
 
     //NID_key_usage.密钥用途。
@@ -168,14 +182,13 @@ void DumpX509(X509 * x509)
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     X509_PUBKEY * PUBKEY = X509_get_X509_PUBKEY(x509);
-    //EVP_PKEY * X509_get_pubkey(X509 * x509);
-    ASN1_BIT_STRING * pubkey_bitstr = X509_get0_pubkey_bitstr(x509);
+    EVP_PKEY * pkey = X509_get0_pubkey(x509);//借用的引用，不需要释放。
+    if (pkey == NULL) {
+        printf("公钥无效.\n");
+        return;
+    }
 
-    size_t          publen = 0;
-    unsigned char * pub = NULL;
-    EVP_PKEY * pkey = X509_get0_pubkey(x509);
-    int keyid = EVP_PKEY_id(pkey); //EVP_PKEY_RSA
-
+    int keyid = EVP_PKEY_id(pkey);//EVP_PKEY_RSA
     switch (keyid) {
     case EVP_PKEY_RSA:
         printf("公钥类型:RSA\n");
@@ -190,67 +203,80 @@ void DumpX509(X509 * x509)
 
     printf("公钥长度:%d bits\n", EVP_PKEY_bits(pkey));
 
+    //i2d_X509_PUBKEY 会自己分配内存(结果要用 OPENSSL_free 释放)，先算长度只是为了确认能编码。
     int len = i2d_X509_PUBKEY(PUBKEY, NULL);
-    //char * key = (char *)HeapAlloc(GetProcessHeap(), 0, len);
-    //char * key = new char[len]();
-    char * key = NULL;//这里获取的内容好像不对。
-    len = i2d_X509_PUBKEY(PUBKEY, (unsigned char **)&key);
+    if (len > 0) {
+        unsigned char * key = NULL;
+        len = i2d_X509_PUBKEY(PUBKEY, &key);
+        if (len > 0) {
+            printf("公钥(X509_PUBKEY):");
+            for (int i = 0; i < len; i++) {
+                printf("%02x", key[i]);
+            }
+            printf("\n");
+        }
+
+        OPENSSL_free(key);
+    }
 
     const unsigned char * pp = NULL;
-    int pklen;
-    //EC_KEY * eckey = NULL;
-    X509_ALGOR * palg;
-    const void * pval;
-    int ptype;
+    int pklen = 0;
+    X509_ALGOR * palg = NULL;
+    const void * pval = NULL;
+    int ptype = 0;
 
     X509_PUBKEY_get0_param(NULL, &pp, &pklen, &palg, PUBKEY);
-    X509_ALGOR_get0(NULL, &ptype, &pval, palg);
+    if (palg != NULL) {
+        X509_ALGOR_get0(NULL, &ptype, &pval, palg);
+    }
     //d2i_X509_ALGOR(&palg, &pp, pklen);//这个会导致进程退出异常。
 
     //printf("公钥参数:%d.\n", ptype);//这个值的字节序好像不对。
 
-    //HeapFree(GetProcessHeap(), 0, key);
-    //delete [] key;
-    OPENSSL_free(key);
+    //////////////////////////////////////////////////////////////////////////////////////////////
 
-    //////////////////////////////////////////////////////////////////////////////////////////////    
-
-    EVP_PKEY * pubkey = X509_get_pubkey(x509);
-    unsigned char tem[1024] = {0};
-    unsigned char * p = tem;
-    len = i2d_PublicKey(pubkey, &p);
-
-    printf("公钥:");
-    for (int i = 0; i < len; i++) {
-        unsigned char t = tem[i];
-        printf("%02x", t);
+    //公钥的 DER 长度事先不知道(RSA 8192 位就超过 1KB)，必须先取长度再分配，不能用固定大小的栈数组。
+    len = i2d_PublicKey(pkey, NULL);
+    if (len > 0) {
+        std::vector<unsigned char> buffer((SIZE_T)len, 0);
+        unsigned char * p = buffer.data();
+        int written = i2d_PublicKey(pkey, &p);
+        if (written > 0 && written <= len) {
+            printf("公钥:");
+            for (int i = 0; i < written; i++) {
+                printf("%02x", buffer[(SIZE_T)i]);
+            }
+            printf("\n");
+        }
     }
-    printf("\n");
 
-    BIGNUM * n = NULL, * e = NULL;  // 根据需要取
-    EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_N, &n);
-    EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_E, &e);
+    if (keyid == EVP_PKEY_RSA) {
+        BIGNUM * n = NULL;
+        BIGNUM * e = NULL;
+        if (EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_N, &n) == 1 && n != NULL) {
+            char * Modulus = BN_bn2hex(n);
+            printf("Modulus:%s\n", Modulus != NULL ? Modulus : "(无)");
+            OPENSSL_free(Modulus);
+        }
 
-    printf("Modulus:%s\n", BN_bn2hex(n));
-    printf("Exponent:%s\n", BN_bn2hex(e));
+        if (EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_E, &e) == 1 && e != NULL) {
+            char * Exponent = BN_bn2hex(e);
+            printf("Exponent:%s\n", Exponent != NULL ? Exponent : "(无)");
+            OPENSSL_free(Exponent);
+        }
+
+        BN_free(n);
+        BN_free(e);
+    }
 
     //printf("公钥长度:%d bits\n", RSA_size(rsa) * 8);
-
-    //废弃的用法：#pragma warning(disable:4996)
-    //RSA * rsa = EVP_PKEY_get1_RSA(pubkey);
-    //char * Modulus = BN_bn2hex(RSA_get0_n(rsa));
-    //char * Exponent = BN_bn2hex(RSA_get0_e(rsa));
-    ////...
-    //OPENSSL_free(Modulus);
-    //OPENSSL_free(Exponent);
-    //RSA_free(rsa);
 }
 
 
 void DumpPKCS7(PKCS7 * pkcs7)
 {
-    char       name[10000];
-    int ret = OBJ_obj2txt(name, 1000, pkcs7->type, 0);
+    char name[10000] = {0};
+    OBJ_obj2txt(name, _countof(name), pkcs7->type, 0);
     printf("type : %s \n", name);
 
     int type = OBJ_obj2nid(pkcs7->type);

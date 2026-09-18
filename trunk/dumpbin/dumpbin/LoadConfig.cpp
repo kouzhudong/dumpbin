@@ -6,131 +6,165 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-void PrintLoadConfig64(_In_ PIMAGE_LOAD_CONFIG_DIRECTORY64 LoadConfigDirectory64)
+/*
+LoadConfigDirectory->Size 说明该结构在文件里实际有多少字节。老文件的结构可能比当前 SDK 的短，
+超出部分不存在，不能按结构体偏移去读，所以逐域判断后再打印。
+*/
+#define LC_FIELD_PRESENT(Type, dir, AvailableSize, field) \
+    (offsetof(Type, field) + sizeof((dir)->field) <= (AvailableSize))
+
+#define PRINT_LC_FIELD(Type, dir, AvailableSize, field, format) \
+    do { \
+        if (LC_FIELD_PRESENT(Type, dir, AvailableSize, field)) { \
+            printf(#field ":" format ".\r\n", (dir)->field); \
+        } \
+    } while (0)
+
+#define PRINT_LC_SUBFIELD(Type, dir, AvailableSize, sub, field, format) \
+    do { \
+        if (offsetof(Type, sub) + sizeof((dir)->sub.field) <= (AvailableSize)) { \
+            printf(#sub "." #field ":" format ".\r\n", (dir)->sub.field); \
+        } \
+    } while (0)
+
+
+void PrintLoadConfig64(_In_ PIMAGE_LOAD_CONFIG_DIRECTORY64 LoadConfigDirectory64, _In_ DWORD AvailableSize)
 {
-    printf("Size:%#010X.\r\n", LoadConfigDirectory64->Size);
-    CHAR TimeDateStamp[MAX_PATH] = {0};
-    GetTimeDateStamp(LoadConfigDirectory64->TimeDateStamp, TimeDateStamp);
-    printf("TimeDateStamp:%d(%#010X), 时间戳：%s.\r\n", LoadConfigDirectory64->TimeDateStamp, LoadConfigDirectory64->TimeDateStamp, TimeDateStamp);
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, Size, "%#010X");
 
-    printf("Version:%d.%d.\r\n", LoadConfigDirectory64->MajorVersion, LoadConfigDirectory64->MinorVersion);
+    if (LC_FIELD_PRESENT(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, TimeDateStamp)) {
+        CHAR TimeDateStamp[MAX_PATH] = {0};
+        GetTimeDateStamp(LoadConfigDirectory64->TimeDateStamp, TimeDateStamp);
+        printf("TimeDateStamp:%d(%#010X), 时间戳：%s.\r\n", LoadConfigDirectory64->TimeDateStamp, LoadConfigDirectory64->TimeDateStamp, TimeDateStamp);
+    }
 
-    printf("GlobalFlagsClear:%#010X.\r\n", LoadConfigDirectory64->GlobalFlagsClear);
-    printf("GlobalFlagsSet:%#010X.\r\n", LoadConfigDirectory64->GlobalFlagsSet);
-    printf("CriticalSectionDefaultTimeout:%#010X.\r\n", LoadConfigDirectory64->CriticalSectionDefaultTimeout);
+    if (LC_FIELD_PRESENT(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, MajorVersion) &&
+        LC_FIELD_PRESENT(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, MinorVersion)) {
+        printf("Version:%d.%d.\r\n", LoadConfigDirectory64->MajorVersion, LoadConfigDirectory64->MinorVersion);
+    }
 
-    printf("DeCommitFreeBlockThreshold:%#016llX.\r\n", LoadConfigDirectory64->DeCommitFreeBlockThreshold);
-    printf("DeCommitTotalFreeThreshold:%#016llX.\r\n", LoadConfigDirectory64->DeCommitTotalFreeThreshold);
-    printf("LockPrefixTable:%#016llX.\r\n", LoadConfigDirectory64->LockPrefixTable);
-    printf("MaximumAllocationSize:%#016llX.\r\n", LoadConfigDirectory64->MaximumAllocationSize);
-    printf("VirtualMemoryThreshold:%#016llX.\r\n", LoadConfigDirectory64->VirtualMemoryThreshold);
-    printf("ProcessAffinityMask:%#016llX.\r\n", LoadConfigDirectory64->ProcessAffinityMask);
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, GlobalFlagsClear, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, GlobalFlagsSet, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, CriticalSectionDefaultTimeout, "%#010X");
 
-    printf("ProcessHeapFlags:%#010X.\r\n", LoadConfigDirectory64->ProcessHeapFlags);
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, DeCommitFreeBlockThreshold, "%#016llX");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, DeCommitTotalFreeThreshold, "%#016llX");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, LockPrefixTable, "%#016llX");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, MaximumAllocationSize, "%#016llX");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, VirtualMemoryThreshold, "%#016llX");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, ProcessAffinityMask, "%#016llX");
 
-    printf("CSDVersion:%#06X.\r\n", LoadConfigDirectory64->CSDVersion);
-    printf("DependentLoadFlags:%#06X.\r\n", LoadConfigDirectory64->DependentLoadFlags);
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, ProcessHeapFlags, "%#010X");
 
-    printf("EditList:%#016llX.\r\n", LoadConfigDirectory64->EditList);
-    printf("SecurityCookie:%#016llX.\r\n", LoadConfigDirectory64->SecurityCookie);
-    printf("SEHandlerTable:%#016llX.\r\n", LoadConfigDirectory64->SEHandlerTable);
-    printf("SEHandlerCount:%#016llX.\r\n", LoadConfigDirectory64->SEHandlerCount);
-    printf("GuardCFCheckFunctionPointer:%#016llX.\r\n", LoadConfigDirectory64->GuardCFCheckFunctionPointer);
-    printf("GuardCFDispatchFunctionPointer:%#016llX.\r\n", LoadConfigDirectory64->GuardCFDispatchFunctionPointer);
-    printf("GuardCFFunctionTable:%#016llX.\r\n", LoadConfigDirectory64->GuardCFFunctionTable);
-    printf("GuardCFFunctionCount:%#016llX.\r\n", LoadConfigDirectory64->GuardCFFunctionCount);
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, CSDVersion, "%#06X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, DependentLoadFlags, "%#06X");
 
-    printf("GuardFlags:%#010X.\r\n", LoadConfigDirectory64->GuardFlags);
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, EditList, "%#016llX");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, SecurityCookie, "%#016llX");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, SEHandlerTable, "%#016llX");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, SEHandlerCount, "%#016llX");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, GuardCFCheckFunctionPointer, "%#016llX");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, GuardCFDispatchFunctionPointer, "%#016llX");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, GuardCFFunctionTable, "%#016llX");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, GuardCFFunctionCount, "%#016llX");
 
-    printf("CodeIntegrity.Flags:%#06X.\r\n", LoadConfigDirectory64->CodeIntegrity.Flags);
-    printf("CodeIntegrity.Catalog:%#06X.\r\n", LoadConfigDirectory64->CodeIntegrity.Catalog);
-    printf("CodeIntegrity.CatalogOffset:%#010X.\r\n", LoadConfigDirectory64->CodeIntegrity.CatalogOffset);
-    printf("CodeIntegrity.Reserved:%#010X.\r\n", LoadConfigDirectory64->CodeIntegrity.Reserved);
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, GuardFlags, "%#010X");
 
-    printf("GuardAddressTakenIatEntryTable:%#016llX.\r\n", LoadConfigDirectory64->GuardAddressTakenIatEntryTable);
-    printf("GuardAddressTakenIatEntryCount:%#016llX.\r\n", LoadConfigDirectory64->GuardAddressTakenIatEntryCount);
-    printf("GuardLongJumpTargetTable:%#016llX.\r\n", LoadConfigDirectory64->GuardLongJumpTargetTable);
-    printf("GuardLongJumpTargetCount:%#016llX.\r\n", LoadConfigDirectory64->GuardLongJumpTargetCount);
-    printf("DynamicValueRelocTable:%#016llX.\r\n", LoadConfigDirectory64->DynamicValueRelocTable);
-    printf("CHPEMetadataPointer:%#016llX.\r\n", LoadConfigDirectory64->CHPEMetadataPointer);
-    printf("GuardRFFailureRoutine:%#016llX.\r\n", LoadConfigDirectory64->GuardRFFailureRoutine);
-    printf("GuardRFFailureRoutineFunctionPointer:%#016llX.\r\n", LoadConfigDirectory64->GuardRFFailureRoutineFunctionPointer);
+    PRINT_LC_SUBFIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, CodeIntegrity, Flags, "%#06X");
+    PRINT_LC_SUBFIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, CodeIntegrity, Catalog, "%#06X");
+    PRINT_LC_SUBFIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, CodeIntegrity, CatalogOffset, "%#010X");
+    PRINT_LC_SUBFIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, CodeIntegrity, Reserved, "%#010X");
 
-    printf("DynamicValueRelocTableOffset:%#010X.\r\n", LoadConfigDirectory64->DynamicValueRelocTableOffset);
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, GuardAddressTakenIatEntryTable, "%#016llX");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, GuardAddressTakenIatEntryCount, "%#016llX");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, GuardLongJumpTargetTable, "%#016llX");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, GuardLongJumpTargetCount, "%#016llX");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, DynamicValueRelocTable, "%#016llX");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, CHPEMetadataPointer, "%#016llX");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, GuardRFFailureRoutine, "%#016llX");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, GuardRFFailureRoutineFunctionPointer, "%#016llX");
 
-    printf("DynamicValueRelocTableSection:%#06X.\r\n", LoadConfigDirectory64->DynamicValueRelocTableSection);
-    printf("Reserved2:%#06X.\r\n", LoadConfigDirectory64->Reserved2);
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, DynamicValueRelocTableOffset, "%#010X");
 
-    printf("GuardRFVerifyStackPointerFunctionPointer:%#016llX.\r\n", LoadConfigDirectory64->GuardRFVerifyStackPointerFunctionPointer);
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, DynamicValueRelocTableSection, "%#06X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, Reserved2, "%#06X");
 
-    printf("HotPatchTableOffset:%#010X.\r\n", LoadConfigDirectory64->HotPatchTableOffset);
-    printf("Reserved3:%#010X.\r\n", LoadConfigDirectory64->Reserved3);
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, GuardRFVerifyStackPointerFunctionPointer, "%#016llX");
 
-    printf("EnclaveConfigurationPointer:%#016llX.\r\n", LoadConfigDirectory64->EnclaveConfigurationPointer);
-    printf("VolatileMetadataPointer:%#016llX.\r\n", LoadConfigDirectory64->VolatileMetadataPointer);
-    printf("GuardEHContinuationTable:%#016llX.\r\n", LoadConfigDirectory64->GuardEHContinuationTable);
-    printf("GuardEHContinuationCount:%#016llX.\r\n", LoadConfigDirectory64->GuardEHContinuationCount);
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, HotPatchTableOffset, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, Reserved3, "%#010X");
+
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, EnclaveConfigurationPointer, "%#016llX");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, VolatileMetadataPointer, "%#016llX");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, GuardEHContinuationTable, "%#016llX");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY64, LoadConfigDirectory64, AvailableSize, GuardEHContinuationCount, "%#016llX");
 }
 
 
-void PrintLoadConfig32(_In_ PIMAGE_LOAD_CONFIG_DIRECTORY32 LoadConfigDirectory32)
+void PrintLoadConfig32(_In_ PIMAGE_LOAD_CONFIG_DIRECTORY32 LoadConfigDirectory32, _In_ DWORD AvailableSize)
 {
-    printf("Size:%#010X.\r\n", LoadConfigDirectory32->Size);
-    CHAR TimeDateStamp[MAX_PATH] = {0};
-    GetTimeDateStamp(LoadConfigDirectory32->TimeDateStamp, TimeDateStamp);
-    printf("TimeDateStamp:%d(%#010X), 时间戳：%s.\r\n", LoadConfigDirectory32->TimeDateStamp, LoadConfigDirectory32->TimeDateStamp, TimeDateStamp);
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, Size, "%#010X");
 
-    printf("Version:%d.%d.\r\n", LoadConfigDirectory32->MajorVersion, LoadConfigDirectory32->MinorVersion);
+    if (LC_FIELD_PRESENT(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, TimeDateStamp)) {
+        CHAR TimeDateStamp[MAX_PATH] = {0};
+        GetTimeDateStamp(LoadConfigDirectory32->TimeDateStamp, TimeDateStamp);
+        printf("TimeDateStamp:%d(%#010X), 时间戳：%s.\r\n", LoadConfigDirectory32->TimeDateStamp, LoadConfigDirectory32->TimeDateStamp, TimeDateStamp);
+    }
 
-    printf("GlobalFlagsClear:%#010X.\r\n", LoadConfigDirectory32->GlobalFlagsClear);
-    printf("GlobalFlagsSet:%#010X.\r\n", LoadConfigDirectory32->GlobalFlagsSet);
-    printf("CriticalSectionDefaultTimeout:%#010X.\r\n", LoadConfigDirectory32->CriticalSectionDefaultTimeout);
-    printf("DeCommitFreeBlockThreshold:%#010X.\r\n", LoadConfigDirectory32->DeCommitFreeBlockThreshold);
-    printf("DeCommitTotalFreeThreshold:%#010X.\r\n", LoadConfigDirectory32->DeCommitTotalFreeThreshold);
-    printf("LockPrefixTable:%#010X.\r\n", LoadConfigDirectory32->LockPrefixTable);
-    printf("MaximumAllocationSize:%#010X.\r\n", LoadConfigDirectory32->MaximumAllocationSize);
-    printf("VirtualMemoryThreshold:%#010X.\r\n", LoadConfigDirectory32->VirtualMemoryThreshold);
-    printf("ProcessHeapFlags:%#010X.\r\n", LoadConfigDirectory32->ProcessHeapFlags);
-    printf("ProcessAffinityMask:%#010X.\r\n", LoadConfigDirectory32->ProcessAffinityMask);
+    if (LC_FIELD_PRESENT(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, MajorVersion) &&
+        LC_FIELD_PRESENT(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, MinorVersion)) {
+        printf("Version:%d.%d.\r\n", LoadConfigDirectory32->MajorVersion, LoadConfigDirectory32->MinorVersion);
+    }
 
-    printf("CSDVersion:%#06X.\r\n", LoadConfigDirectory32->CSDVersion);
-    printf("DependentLoadFlags:%#06X.\r\n", LoadConfigDirectory32->DependentLoadFlags);
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, GlobalFlagsClear, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, GlobalFlagsSet, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, CriticalSectionDefaultTimeout, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, DeCommitFreeBlockThreshold, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, DeCommitTotalFreeThreshold, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, LockPrefixTable, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, MaximumAllocationSize, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, VirtualMemoryThreshold, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, ProcessHeapFlags, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, ProcessAffinityMask, "%#010X");
 
-    printf("EditList:%#010X.\r\n", LoadConfigDirectory32->EditList);
-    printf("SecurityCookie:%#010X.\r\n", LoadConfigDirectory32->SecurityCookie);
-    printf("SEHandlerTable:%#010X.\r\n", LoadConfigDirectory32->SEHandlerTable);
-    printf("SEHandlerCount:%#010X.\r\n", LoadConfigDirectory32->SEHandlerCount);
-    printf("GuardCFCheckFunctionPointer:%#010X.\r\n", LoadConfigDirectory32->GuardCFCheckFunctionPointer);
-    printf("GuardCFDispatchFunctionPointer:%#010X.\r\n", LoadConfigDirectory32->GuardCFDispatchFunctionPointer);
-    printf("GuardCFFunctionTable:%#010X.\r\n", LoadConfigDirectory32->GuardCFFunctionTable);
-    printf("GuardCFFunctionCount:%#010X.\r\n", LoadConfigDirectory32->GuardCFFunctionCount);
-    printf("GuardFlags:%#010X.\r\n", LoadConfigDirectory32->GuardFlags);
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, CSDVersion, "%#06X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, DependentLoadFlags, "%#06X");
 
-    printf("CodeIntegrity.Flags:%#06X.\r\n", LoadConfigDirectory32->CodeIntegrity.Flags);
-    printf("CodeIntegrity.Catalog:%#06X.\r\n", LoadConfigDirectory32->CodeIntegrity.Catalog);
-    printf("CodeIntegrity.CatalogOffset:%#010X.\r\n", LoadConfigDirectory32->CodeIntegrity.CatalogOffset);
-    printf("CodeIntegrity.Reserved:%#010X.\r\n", LoadConfigDirectory32->CodeIntegrity.Reserved);
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, EditList, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, SecurityCookie, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, SEHandlerTable, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, SEHandlerCount, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, GuardCFCheckFunctionPointer, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, GuardCFDispatchFunctionPointer, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, GuardCFFunctionTable, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, GuardCFFunctionCount, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, GuardFlags, "%#010X");
 
-    printf("GuardAddressTakenIatEntryTable:%#010X.\r\n", LoadConfigDirectory32->GuardAddressTakenIatEntryTable);
-    printf("GuardAddressTakenIatEntryCount:%#010X.\r\n", LoadConfigDirectory32->GuardAddressTakenIatEntryCount);
-    printf("GuardLongJumpTargetTable:%#010X.\r\n", LoadConfigDirectory32->GuardLongJumpTargetTable);
-    printf("GuardLongJumpTargetCount:%#010X.\r\n", LoadConfigDirectory32->GuardLongJumpTargetCount);
-    printf("DynamicValueRelocTable:%#010X.\r\n", LoadConfigDirectory32->DynamicValueRelocTable);
-    printf("CHPEMetadataPointer:%#010X.\r\n", LoadConfigDirectory32->CHPEMetadataPointer);
-    printf("GuardRFFailureRoutine:%#010X.\r\n", LoadConfigDirectory32->GuardRFFailureRoutine);
-    printf("GuardRFFailureRoutineFunctionPointer:%#010X.\r\n", LoadConfigDirectory32->GuardRFFailureRoutineFunctionPointer);
-    printf("DynamicValueRelocTableOffset:%#010X.\r\n", LoadConfigDirectory32->DynamicValueRelocTableOffset);
+    PRINT_LC_SUBFIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, CodeIntegrity, Flags, "%#06X");
+    PRINT_LC_SUBFIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, CodeIntegrity, Catalog, "%#06X");
+    PRINT_LC_SUBFIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, CodeIntegrity, CatalogOffset, "%#010X");
+    PRINT_LC_SUBFIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, CodeIntegrity, Reserved, "%#010X");
 
-    printf("DynamicValueRelocTableSection:%#06X.\r\n", LoadConfigDirectory32->DynamicValueRelocTableSection);
-    printf("Reserved2:%#06X.\r\n", LoadConfigDirectory32->Reserved2);
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, GuardAddressTakenIatEntryTable, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, GuardAddressTakenIatEntryCount, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, GuardLongJumpTargetTable, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, GuardLongJumpTargetCount, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, DynamicValueRelocTable, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, CHPEMetadataPointer, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, GuardRFFailureRoutine, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, GuardRFFailureRoutineFunctionPointer, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, DynamicValueRelocTableOffset, "%#010X");
 
-    printf("GuardRFVerifyStackPointerFunctionPointer:%#010X.\r\n", LoadConfigDirectory32->GuardRFVerifyStackPointerFunctionPointer);
-    printf("HotPatchTableOffset:%#010X.\r\n", LoadConfigDirectory32->HotPatchTableOffset);
-    printf("Reserved3:%#010X.\r\n", LoadConfigDirectory32->Reserved3);
-    printf("EnclaveConfigurationPointer:%#010X.\r\n", LoadConfigDirectory32->EnclaveConfigurationPointer);
-    printf("VolatileMetadataPointer:%#010X.\r\n", LoadConfigDirectory32->VolatileMetadataPointer);
-    printf("GuardEHContinuationTable:%#010X.\r\n", LoadConfigDirectory32->GuardEHContinuationTable);
-    printf("GuardEHContinuationCount:%#010X.\r\n", LoadConfigDirectory32->GuardEHContinuationCount);
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, DynamicValueRelocTableSection, "%#06X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, Reserved2, "%#06X");
+
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, GuardRFVerifyStackPointerFunctionPointer, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, HotPatchTableOffset, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, Reserved3, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, EnclaveConfigurationPointer, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, VolatileMetadataPointer, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, GuardEHContinuationTable, "%#010X");
+    PRINT_LC_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY32, LoadConfigDirectory32, AvailableSize, GuardEHContinuationCount, "%#010X");
 }
 
 
@@ -154,31 +188,42 @@ DWORD LoadConfig(_In_ PBYTE Data, _In_ DWORD Size)
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
     PIMAGE_LOAD_CONFIG_DIRECTORY LoadConfigDirectory = (PIMAGE_LOAD_CONFIG_DIRECTORY)
         ImageDirectoryEntryToDataEx(Data, FALSE, IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG, &size, &FoundHeader);
+    if (LoadConfigDirectory == NULL) {
+        LOGA(ERROR_LEVEL, "ImageDirectoryEntryToDataEx 失败");
+        return ret;
+    }
 
-    PIMAGE_NT_HEADERS NtHeaders = ImageNtHeader(Data);
-    _ASSERTE(NtHeaders);
+    /*
+    可读取的范围：
+    1. 结构体自己的 Size 是权威值(加载器也用它判断结构版本)，它可能比当前 SDK 的结构短(老链接器)，
+       数据目录里的 Size 反而可能是陈旧的(实测有 Size=0xC0 而数据目录只写 0x40 的文件)；
+    2. 但无论如何不能越过所在节的原始数据或文件本身。
+    */
+    DWORD struct_offset = (DWORD)((PBYTE)LoadConfigDirectory - Data);
+    DWORD available = Size - struct_offset;
+    if (FoundHeader) {
+        DWORD section_end = FoundHeader->PointerToRawData + FoundHeader->SizeOfRawData;
+        if (section_end > struct_offset && section_end - struct_offset < available) {
+            available = section_end - struct_offset;
+        }
+    }
+
+    if (LoadConfigDirectory->Size != 0 && LoadConfigDirectory->Size < available) {
+        available = LoadConfigDirectory->Size;
+    }
 
     printf("Load Config Directory Information:\r\n");
     printf("VirtualAddress:%#010X.\r\n", DataDirectory.VirtualAddress);
     printf("Size:%#010X.\r\n", DataDirectory.Size);
+    printf("文件中的结构大小:%#010X.\r\n", available);
     printf("\r\n");
 
     //一下数据的有些成员是链表/数组，有待进一步的解析。
 
     if (IsPE32Ex(Data, Size)) {
-        PIMAGE_LOAD_CONFIG_DIRECTORY64 LoadConfigDirectory64 = (PIMAGE_LOAD_CONFIG_DIRECTORY64)LoadConfigDirectory;
-
-        _ASSERTE(sizeof(IMAGE_LOAD_CONFIG_DIRECTORY64) == DataDirectory.Size);
-        _ASSERTE(LoadConfigDirectory64->Size == DataDirectory.Size);
-
-        PrintLoadConfig64(LoadConfigDirectory64);
+        PrintLoadConfig64((PIMAGE_LOAD_CONFIG_DIRECTORY64)LoadConfigDirectory, available);
     } else {
-        PIMAGE_LOAD_CONFIG_DIRECTORY32 LoadConfigDirectory32 = (PIMAGE_LOAD_CONFIG_DIRECTORY32)LoadConfigDirectory;
-
-        _ASSERTE(sizeof(IMAGE_LOAD_CONFIG_DIRECTORY32) == DataDirectory.Size);
-        _ASSERTE(LoadConfigDirectory32->Size == DataDirectory.Size);
-
-        PrintLoadConfig32(LoadConfigDirectory32);
+        PrintLoadConfig32((PIMAGE_LOAD_CONFIG_DIRECTORY32)LoadConfigDirectory, available);
     }
 
     return ret;

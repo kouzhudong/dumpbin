@@ -84,20 +84,26 @@ const char * GetResourceTypeString(_In_ WORD Id)
 
 void PrintNameString(_In_ PIMAGE_RESOURCE_DIRECTORY ResourceDirectory, _In_ PIMAGE_RESOURCE_DIRECTORY_ENTRY ResourceDirectoryEntry)
 {
-    if (ResourceDirectoryEntry->NameIsString) {
-        auto ResourceNameString = (PIMAGE_RESOURCE_DIR_STRING_U)((PCHAR)ResourceDirectory + ResourceDirectoryEntry->NameOffset);
-
-        WCHAR * buf = (WCHAR *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ResourceNameString->Length + sizeof(WCHAR));
-        if (buf) {
-            RtlCopyMemory(buf, ResourceNameString->NameString, ResourceNameString->Length);
-
-            printf("NameString:%ls.\r\n", buf);
-
-            HeapFree(GetProcessHeap(), 0, buf);
-        } else {
-            _ASSERTE(false);
-        }
+    if (!ResourceDirectoryEntry->NameIsString) {
+        return;
     }
+
+    auto ResourceNameString = (PIMAGE_RESOURCE_DIR_STRING_U)((PCHAR)ResourceDirectory + ResourceDirectoryEntry->NameOffset);
+
+    // Length 是字符数(不是字节数)，缓冲区要按 WCHAR 计算，否则名字会少一半。
+    SIZE_T cbName = (SIZE_T)ResourceNameString->Length * sizeof(WCHAR);
+
+    WCHAR * buf = (WCHAR *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cbName + sizeof(WCHAR));
+    if (buf == NULL) {
+        LOGA(ERROR_LEVEL, "HeapAlloc 失败, Length:%u", ResourceNameString->Length);
+        return;
+    }
+
+    RtlCopyMemory(buf, ResourceNameString->NameString, cbName);
+
+    printf("NameString:%ls.\r\n", buf);
+
+    HeapFree(GetProcessHeap(), 0, buf);
 }
 
 
@@ -137,8 +143,15 @@ pchunter64的资源类型超出系统定义的范围(但不是RCDATA)，
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
     PIMAGE_RESOURCE_DIRECTORY ResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)
         ImageDirectoryEntryToDataEx(Data, FALSE, IMAGE_DIRECTORY_ENTRY_RESOURCE, &size, &FoundHeader);
+    if (ResourceDirectory == NULL) {
+        LOGA(ERROR_LEVEL, "ImageDirectoryEntryToDataEx 失败");
+        return ret;
+    }
+
     if (FoundHeader) {
-        printf("SectionName:%s.\r\n", FoundHeader->Name);
+        CHAR SectionName[IMAGE_SIZEOF_SHORT_NAME + 1] = {0};
+        GetSectionName(FoundHeader, SectionName);
+        printf("SectionName:%s.\r\n", SectionName);
     }
 
     printf("Characteristics:%#010X.\r\n", ResourceDirectory->Characteristics);
@@ -160,7 +173,10 @@ pchunter64的资源类型超出系统定义的范围(但不是RCDATA)，
     auto ResourceDirectoryEntry = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)((PCHAR)ResourceDirectory + sizeof(IMAGE_RESOURCE_DIRECTORY));
 
     PIMAGE_NT_HEADERS NtHeaders = ImageNtHeader(Data);
-    _ASSERTE(NtHeaders);
+    if (NtHeaders == NULL) {
+        LOGA(ERROR_LEVEL, "ImageNtHeader 失败");
+        return ret;
+    }
 
     printf("以下是资源的详细信息：\r\n");
     printf("\r\n");
@@ -179,18 +195,19 @@ pchunter64的资源类型超出系统定义的范围(但不是RCDATA)，
 
                     for (int k = 0; k < NumberOfEntries3; k++) {//三级处理：处理资源语言
                         if (ResourceDirectoryEntry3->DataIsDirectory) {
-                            _ASSERTE(false);
+                            printf("这是第四层，本程序只解析到这里。\r\n");
                         } else {
                             auto DataEntry = (PIMAGE_RESOURCE_DATA_ENTRY)((PCHAR)ResourceDirectory + ResourceDirectoryEntry3->OffsetToData);
-
-                            PCHAR OffsetToData = (PCHAR)ImageRvaToVa(NtHeaders, Data, DataEntry->OffsetToData, NULL);
 
                             PrintNameString(ResourceDirectory, ResourceDirectoryEntry);
                             PrintNameString(ResourceDirectory, ResourceDirectoryEntry2);
                             PrintNameString(ResourceDirectory, ResourceDirectoryEntry3);
 
+                            // 命名类型时 Id 字段无效，不能当类型号去解释。
+                            PCSTR TypeString = ResourceDirectoryEntry->NameIsString ? "命名类型" : GetResourceTypeString(ResourceDirectoryEntry->Id);
+
                             printf("类型：%12s, 名称：%#06X, 语言：%#06X, OffsetToData:%#010X, Size:%#010X(%d).\r\n",
-                                GetResourceTypeString(ResourceDirectoryEntry->Id),
+                                TypeString,
                                 ResourceDirectoryEntry2->Id,
                                 ResourceDirectoryEntry3->Id,
                                 DataEntry->OffsetToData,
@@ -203,15 +220,13 @@ pchunter64的资源类型超出系统定义的范围(但不是RCDATA)，
                         ResourceDirectoryEntry3++;
                     }
                 } else {
-                    printf("这是个叶子。\r\n");//这里不应该发生
-                    _ASSERTE(false);
+                    printf("第二层就是叶子，不符合资源目录的一般结构。\r\n");
                 }
 
                 ResourceDirectoryEntry2++;
             }
         } else {
-            printf("这是个叶子。\r\n");//这里不应该发生
-            _ASSERTE(false);
+            printf("第一层就是叶子，不符合资源目录的一般结构。\r\n");
         }
 
         ResourceDirectoryEntry++;

@@ -38,8 +38,10 @@ LPWSTR UTF8ToWide(IN PCHAR utf8)
         return NULL;
     }
 
-    int ret = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, pws, cchWideChar);//utf8->Unicode
-    _ASSERTE(ret);
+    if (MultiByteToWideChar(CP_UTF8, 0, utf8, -1, pws, cchWideChar) == 0) {//utf8->Unicode
+        HeapFree(GetProcessHeap(), 0, pws);
+        return NULL;
+    }
 
     return pws;
 }
@@ -50,12 +52,12 @@ void GetDataDirectory(_In_ PBYTE Data, _In_ DWORD Size, _In_ BYTE index, _Out_ P
     DataDirectory->VirtualAddress = 0;
     DataDirectory->Size = 0;
 
-    if (!IsValidPE(Data, Size)) {
+    if (index >= IMAGE_NUMBEROF_DIRECTORY_ENTRIES) {
+        LOGA(ERROR_LEVEL, "DataDirectory index out of range: %u", index);
         return;
     }
 
-    if (index >= IMAGE_NUMBEROF_DIRECTORY_ENTRIES) {
-        LOGA(ERROR_LEVEL, "DataDirectory index out of range: %u", index);
+    if (!IsValidPE(Data, Size)) {
         return;
     }
 
@@ -64,45 +66,33 @@ void GetDataDirectory(_In_ PBYTE Data, _In_ DWORD Size, _In_ BYTE index, _Out_ P
         return;
     }
 
-    PIMAGE_DATA_DIRECTORY directory_entry = NULL;
-    DWORD numberOfRvaAndSizes = 0;
+    DWORD data_directory_offset = 0;
+    DWORD number_of_rva_and_sizes = 0;
     if (IsPE32Ex(Data, Size)) {
         PIMAGE_OPTIONAL_HEADER64 opt = (PIMAGE_OPTIONAL_HEADER64)&NtHeader->OptionalHeader;
-        numberOfRvaAndSizes = opt->NumberOfRvaAndSizes;
-        directory_entry = opt->DataDirectory;
+        data_directory_offset = offsetof(IMAGE_OPTIONAL_HEADER64, DataDirectory);
+        number_of_rva_and_sizes = opt->NumberOfRvaAndSizes;
     } else {
         PIMAGE_OPTIONAL_HEADER32 opt = (PIMAGE_OPTIONAL_HEADER32)&NtHeader->OptionalHeader;
-        numberOfRvaAndSizes = opt->NumberOfRvaAndSizes;
-        directory_entry = opt->DataDirectory;
+        data_directory_offset = offsetof(IMAGE_OPTIONAL_HEADER32, DataDirectory);
+        number_of_rva_and_sizes = opt->NumberOfRvaAndSizes;
     }
 
-    // PE 规范允许 NumberOfRvaAndSizes 小于 16，需要做边界检查。
-    if (index >= numberOfRvaAndSizes) {
+    // NumberOfRvaAndSizes 只是"声明"的项数，还要受可选头实际长度的约束。
+    DWORD size_of_optional_header = NtHeader->FileHeader.SizeOfOptionalHeader;
+    if (size_of_optional_header < data_directory_offset) {
+        LOGA(ERROR_LEVEL, "SizeOfOptionalHeader 过短:%#X", size_of_optional_header);
         return;
     }
 
-    *DataDirectory = directory_entry[index];
-}
-
-
-UINT Rva2Va(_In_ PBYTE Data, _In_ UINT rva)
-/*
-返回0表示失败，其他的是在文件中的偏移。
-*/
-{
-    PIMAGE_NT_HEADERS NtHeader = ImageNtHeader(Data);
-    _ASSERTE(NtHeader);
-
-    PIMAGE_SECTION_HEADER SectionHeader = IMAGE_FIRST_SECTION(NtHeader);
-    WORD NumberOfSections = NtHeader->FileHeader.NumberOfSections;
-
-    for (WORD i = 0; i < NumberOfSections; i++) {
-        if (rva >= SectionHeader[i].VirtualAddress && rva < SectionHeader[i].VirtualAddress + SectionHeader[i].Misc.VirtualSize) {
-            return rva - SectionHeader[i].VirtualAddress + SectionHeader[i].PointerToRawData;
-        }
+    DWORD max_entries = (size_of_optional_header - data_directory_offset) / sizeof(IMAGE_DATA_DIRECTORY);
+    if (index >= number_of_rva_and_sizes || index >= max_entries) {
+        return;
     }
 
-    return 0;
+    PIMAGE_DATA_DIRECTORY directory_entry = (PIMAGE_DATA_DIRECTORY)((PBYTE)&NtHeader->OptionalHeader + data_directory_offset);
+
+    *DataDirectory = directory_entry[index];
 }
 
 
@@ -236,21 +226,20 @@ void FileTimeToLocalTimeA(PFILETIME ft, char * time)
 把FileTime转换为本地时间打印。
 */
 {
-    FILETIME lft;
-    BOOL B = FileTimeToLocalFileTime(ft, &lft);
-    _ASSERTE(B);
+    if (ft == NULL || time == NULL) {
+        return;
+    }
 
-    SYSTEMTIME st;
-    //GetLocalTime(&st);
-    B = FileTimeToSystemTime(&lft, &st);
-    _ASSERTE(B);
+    FILETIME lft = {0};
+    SYSTEMTIME st = {0};
 
-    //SystemTimeToTzSpecificLocalTime
+    if (!FileTimeToLocalFileTime(ft, &lft) || !FileTimeToSystemTime(&lft, &st)) {
+        StringCchCopyA(time, MAX_PATH, "未知");
+        return;
+    }
 
-    //格式：2016-07-11 17:35:54      
+    //格式：2016-07-11 17:35:54
     wsprintfA(time, "%04d-%02d-%02d %02d:%02d:%02d", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
-
-    //size_t cb = lstrlen(time) * sizeof(wchar_t);
 }
 
 
@@ -361,14 +350,47 @@ bool IsValidPE(_In_ PBYTE Data, _In_ DWORD Size)
     bool ret = false;
 
     __try {
-        PIMAGE_DOS_HEADER DosHeader = (PIMAGE_DOS_HEADER)Data;
-        if (IMAGE_DOS_SIGNATURE != DosHeader->e_magic) {
+        if (Data == NULL || Size < sizeof(IMAGE_DOS_HEADER)) {
+            LOGA(ERROR_LEVEL, "文件过小或数据为空, Size:%u", Size);
             __leave;
         }
 
-        PIMAGE_NT_HEADERS NtHeader = ImageNtHeader(Data);
-        if (NtHeader == NULL) {
+        PIMAGE_DOS_HEADER DosHeader = (PIMAGE_DOS_HEADER)Data;
+        if (IMAGE_DOS_SIGNATURE != DosHeader->e_magic) {
+            LOGA(ERROR_LEVEL, "e_magic:%#X, 不是有效的DOS头", DosHeader->e_magic);
             __leave;
+        }
+
+        // e_lfanew 是 NT 头相对文件起始的偏移，必须落在文件内。
+        if (DosHeader->e_lfanew < 0 ||
+            (DWORD)DosHeader->e_lfanew > Size - sizeof(DWORD) - sizeof(IMAGE_FILE_HEADER)) {
+            LOGA(ERROR_LEVEL, "e_lfanew 越界:%#X, Size:%u", DosHeader->e_lfanew, Size);
+            __leave;
+        }
+
+        PIMAGE_NT_HEADERS NtHeader = (PIMAGE_NT_HEADERS)(Data + DosHeader->e_lfanew);
+
+        // 可选头和节表也必须在文件内，否则后续按结构体偏移读取会越界。
+        DWORD section_table_offset = (DWORD)DosHeader->e_lfanew + sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER) + NtHeader->FileHeader.SizeOfOptionalHeader;
+        if (section_table_offset > Size ||
+            Size - section_table_offset < (DWORD)NtHeader->FileHeader.NumberOfSections * sizeof(IMAGE_SECTION_HEADER)) {
+            LOGA(ERROR_LEVEL, "节表越界, 偏移:%#X, 节数:%u, Size:%u", section_table_offset, NtHeader->FileHeader.NumberOfSections, Size);
+            __leave;
+        }
+
+        // 每个节的原始数据也要落在文件内，否则按 RVA 换算出的偏移会越过文件尾(截断的文件会命中这里)。
+        PIMAGE_SECTION_HEADER SectionHeader = (PIMAGE_SECTION_HEADER)(Data + section_table_offset);
+        for (WORD i = 0; i < NtHeader->FileHeader.NumberOfSections; i++) {
+            if (SectionHeader[i].SizeOfRawData == 0) {
+                continue;//.bss 这类节没有文件数据。
+            }
+
+            if (SectionHeader[i].PointerToRawData > Size ||
+                SectionHeader[i].SizeOfRawData > Size - SectionHeader[i].PointerToRawData) {
+                LOGA(ERROR_LEVEL, "节数据越界, 第%u节, 偏移:%#X, 大小:%#X, Size:%u",
+                     i + 1, SectionHeader[i].PointerToRawData, SectionHeader[i].SizeOfRawData, Size);
+                __leave;
+            }
         }
 
         switch (NtHeader->Signature) {
@@ -379,33 +401,29 @@ bool IsValidPE(_In_ PBYTE Data, _In_ DWORD Size)
             LOGA(ERROR_LEVEL, "恭喜你:发现一个LE文件!");
             break;
         case IMAGE_NT_SIGNATURE:
-            ret = true;
+            // 可选头必须存在才能读 Magic，且 Magic 必须是 PE32/PE32+，否则后面的按位解析全是错的。
+            if (NtHeader->FileHeader.SizeOfOptionalHeader < sizeof(WORD)) {
+                LOGA(ERROR_LEVEL, "SizeOfOptionalHeader 过短:%#X", NtHeader->FileHeader.SizeOfOptionalHeader);
+                break;
+            }
+
+            switch (((PIMAGE_OPTIONAL_HEADER)&NtHeader->OptionalHeader)->Magic) {
+            case IMAGE_ROM_OPTIONAL_HDR_MAGIC:
+                LOGA(ERROR_LEVEL, "恭喜你:发现一个ROM映像!");
+                break;
+            case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
+            case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
+                ret = true;
+                break;
+            default:
+                LOGA(ERROR_LEVEL, "Magic:%#X!", ((PIMAGE_OPTIONAL_HEADER)&NtHeader->OptionalHeader)->Magic);
+                break;
+            }
             break;
         default:
-            //LOGA(ERROR_LEVEL, "Signature:%X", nt_headers->Signature);
+            LOGA(ERROR_LEVEL, "Signature:%#X", NtHeader->Signature);
             break;
         }
-
-#if 0
-        ULONG  ntSignature = (ULONG)dos_header + dos_header->e_lfanew;
-        unsigned short int other = *(unsigned short int *)ntSignature;
-        ntSignature = *(ULONG *)ntSignature;
-
-        if (IMAGE_OS2_SIGNATURE == other) {
-            LOGA(ERROR_LEVEL, "恭喜你:发现一个NE文件!");
-            __leave;
-        }
-
-        if (IMAGE_OS2_SIGNATURE_LE == other) //IMAGE_VXD_SIGNATURE
-        {
-            LOGA(ERROR_LEVEL, "恭喜你:发现一个LE文件!");
-            __leave;
-        }
-
-        if (IMAGE_NT_SIGNATURE == ntSignature) {
-            ret = true;
-        }
-#endif // 0
     } __except (EXCEPTION_EXECUTE_HANDLER) {
         DWORD ExceptionCode = GetExceptionCode();
         LOGA(ERROR_LEVEL, "ExceptionCode:%#x", ExceptionCode);
@@ -424,38 +442,37 @@ bool IsPE32Ex(_In_ PBYTE Data, _In_ DWORD Size)
         return ret;
     }
 
-    __try {
-        PIMAGE_DOS_HEADER DosHeader = (PIMAGE_DOS_HEADER)Data;
-        _ASSERTE(IMAGE_DOS_SIGNATURE == DosHeader->e_magic);
+    PIMAGE_NT_HEADERS NtHeader = ImageNtHeader(Data);
+    if (NtHeader == NULL) {
+        return ret;
+    }
 
-        PIMAGE_NT_HEADERS NtHeader = ImageNtHeader(Data);
-        _ASSERTE(NtHeader);
-
-        /*
-        对于可选头的标准域(排除最后一个BaseOfData)来说，是32位的可选头和64位的可选头无所谓，因为偏移都是一样的。
-        */
-        PIMAGE_OPTIONAL_HEADER OptionalHeader = (PIMAGE_OPTIONAL_HEADER)&NtHeader->OptionalHeader;
-        switch (OptionalHeader->Magic) {
-        case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
-            //这是一个普通的PE文件
-            break;
-        case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
-            ret = true;//这是一个的PE32+文件
-            break;
-        case IMAGE_ROM_OPTIONAL_HDR_MAGIC:
-            LOGA(ERROR_LEVEL, "恭喜你:发现一个ROM映像!");
-            break;
-        default:
-            LOGA(ERROR_LEVEL, "Magic:%#X!", OptionalHeader->Magic);
-            break;
-        }
-    } __except (EXCEPTION_EXECUTE_HANDLER) {
-        DWORD ExceptionCode = GetExceptionCode();
-        LOGA(ERROR_LEVEL, "ExceptionCode:%#x", ExceptionCode);
-        ret = false;
+    /*
+    对于可选头的标准域(排除最后一个BaseOfData)来说，是32位的可选头和64位的可选头无所谓，因为偏移都是一样的。
+    */
+    PIMAGE_OPTIONAL_HEADER OptionalHeader = (PIMAGE_OPTIONAL_HEADER)&NtHeader->OptionalHeader;
+    if (IMAGE_NT_OPTIONAL_HDR64_MAGIC == OptionalHeader->Magic) {
+        ret = true;//这是一个的PE32+文件
     }
 
     return ret;
+}
+
+
+void GetSectionName(_In_ PIMAGE_SECTION_HEADER SectionHeader, _Out_writes_(IMAGE_SIZEOF_SHORT_NAME + 1) PCHAR String)
+{
+    CopyMemory(String, SectionHeader->Name, IMAGE_SIZEOF_SHORT_NAME);
+    String[IMAGE_SIZEOF_SHORT_NAME] = '\0';
+}
+
+
+// 当前正在解析的文件名，供回调函数取用（见 GetCurrentFileName）。
+static thread_local LPCWSTR g_current_file_name = NULL;
+
+
+LPCWSTR GetCurrentFileName()
+{
+    return g_current_file_name;
 }
 
 
@@ -473,8 +490,8 @@ DWORD MapFile(_In_ LPCWSTR FileName, _In_opt_ PeCallBack CallBack)
     }
 
     if (IsWow64()) {//在wow64下关闭文件重定向。
+        //失败也没关系，只是继续走重定向而已。
         Wow64FsRedirectionDisabled = Wow64DisableWow64FsRedirection(&Wow64OldValue);
-        _ASSERTE(Wow64FsRedirectionDisabled);
     }
 
     __try {
@@ -523,6 +540,7 @@ DWORD MapFile(_In_ LPCWSTR FileName, _In_opt_ PeCallBack CallBack)
         }
 
         if (CallBack) {
+            g_current_file_name = FileName;
             __try {
                 LastError = CallBack(FileContent, FileSize.LowPart);
             } __except (EXCEPTION_EXECUTE_HANDLER) {
@@ -531,6 +549,8 @@ DWORD MapFile(_In_ LPCWSTR FileName, _In_opt_ PeCallBack CallBack)
             }
         }
     } __finally {
+        g_current_file_name = NULL;
+
         if (FileContent) {
             UnmapViewOfFile(FileContent);
         }

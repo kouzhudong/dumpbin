@@ -14,8 +14,7 @@ DWORD DosHeader(_In_ PBYTE Data, _In_ DWORD Size)
     }
 
     PIMAGE_DOS_HEADER DosHeader = (PIMAGE_DOS_HEADER)Data;
-    _ASSERTE(IMAGE_DOS_SIGNATURE == DosHeader->e_magic);
-    _ASSERTE(Size >= sizeof(IMAGE_DOS_HEADER));
+    //IsValidPE 已经保证 e_magic 和文件长度，这里不再断言。
 
     printf("Dos Header Information:\r\n");
 
@@ -64,7 +63,11 @@ DWORD FileHeader(_In_ PBYTE Data, _In_ DWORD Size)
     }
 
     PIMAGE_NT_HEADERS NtHeader = ImageNtHeader(Data);
-    _ASSERTE(NtHeader);
+    if (NtHeader == NULL) {
+        LOGA(ERROR_LEVEL, "ImageNtHeader 失败");
+        return ret;
+    }
+
     PIMAGE_FILE_HEADER FileHeader = (PIMAGE_FILE_HEADER)&NtHeader->FileHeader;
 
     printf("File Header Information:\r\n");
@@ -98,7 +101,10 @@ DWORD OptionalHeader(_In_ PBYTE Data, _In_ DWORD Size)
     }
 
     PIMAGE_NT_HEADERS NtHeader = ImageNtHeader(Data);
-    _ASSERTE(NtHeader);
+    if (NtHeader == NULL) {
+        LOGA(ERROR_LEVEL, "ImageNtHeader 失败");
+        return ret;
+    }
 
     printf("Optional Header Information:\r\n");
 
@@ -107,6 +113,11 @@ DWORD OptionalHeader(_In_ PBYTE Data, _In_ DWORD Size)
     switch (NtHeader->OptionalHeader.Magic) {
     case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
     {
+        if (NtHeader->FileHeader.SizeOfOptionalHeader < sizeof(IMAGE_OPTIONAL_HEADER32)) {
+            LOGA(ERROR_LEVEL, "SizeOfOptionalHeader 过短:%#X", NtHeader->FileHeader.SizeOfOptionalHeader);
+            break;
+        }
+
         PIMAGE_OPTIONAL_HEADER32 OptionalHeader = (PIMAGE_OPTIONAL_HEADER32)&NtHeader->OptionalHeader;
 
         printf("Magic:%#06X.\r\n", OptionalHeader->Magic);
@@ -144,6 +155,11 @@ DWORD OptionalHeader(_In_ PBYTE Data, _In_ DWORD Size)
     }
     case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
     {
+        if (NtHeader->FileHeader.SizeOfOptionalHeader < sizeof(IMAGE_OPTIONAL_HEADER64)) {
+            LOGA(ERROR_LEVEL, "SizeOfOptionalHeader 过短:%#X", NtHeader->FileHeader.SizeOfOptionalHeader);
+            break;
+        }
+
         PIMAGE_OPTIONAL_HEADER64 OptionalHeader = (PIMAGE_OPTIONAL_HEADER64)&NtHeader->OptionalHeader;
 
         printf("Magic:%#06X.\r\n", OptionalHeader->Magic);
@@ -197,92 +213,21 @@ DWORD DataDirectory(_In_ PBYTE Data, _In_ DWORD Size)
         return ret;
     }
 
-    PIMAGE_NT_HEADERS NtHeader = ImageNtHeader(Data);
-    _ASSERTE(NtHeader);
-
-    PIMAGE_DATA_DIRECTORY data_directory = NULL;
-
-    bool IsPe64 = IsPE32Ex(Data, Size);
-    if (IsPe64) {
-        PIMAGE_OPTIONAL_HEADER64 OptionalHeader = (PIMAGE_OPTIONAL_HEADER64)&NtHeader->OptionalHeader;
-
-        data_directory = &OptionalHeader->DataDirectory[0];
-
-        _ASSERTE(IMAGE_NUMBEROF_DIRECTORY_ENTRIES == OptionalHeader->NumberOfRvaAndSizes);
-    } else {
-        PIMAGE_OPTIONAL_HEADER32 OptionalHeader = (PIMAGE_OPTIONAL_HEADER32)&NtHeader->OptionalHeader;
-
-        data_directory = &OptionalHeader->DataDirectory[0];
-
-        _ASSERTE(IMAGE_NUMBEROF_DIRECTORY_ENTRIES == OptionalHeader->NumberOfRvaAndSizes);
-    }
+    static const PCSTR DirectoryNames[IMAGE_NUMBEROF_DIRECTORY_ENTRIES] = {
+        "EXPORT:", "IMPORT:", "RESOURCE:", "EXCEPTION:", "SECURITY:", "BASERELOC:", "DEBUG:", "ARCHITECTURE:",
+        "GLOBALPTR:", "TLS:", "LOAD_CONFIG:", "BOUND_IMPORT:", "IAT:", "DELAY_IMPORT:", "COM_DESCRIPTOR:", "RESERVED:",
+    };
 
     printf("Data Directory Information:\r\n");
 
-    //for (int i = 0; i < IMAGE_NUMBEROF_DIRECTORY_ENTRIES; i++) {
-    //    PIMAGE_DATA_DIRECTORY temp = &data_directory[i];
-    //    printf("index:%d, \tVirtualAddress:%#010X, \tSize:%#010X.\r\n", i, temp->VirtualAddress, temp->Size);
-    //}
+    // NumberOfRvaAndSizes 可能小于 16，必须走带边界检查的 GetDataDirectory，不能直接按数组下标取。
+    for (BYTE i = 0; i < IMAGE_NUMBEROF_DIRECTORY_ENTRIES; i++) {
+        IMAGE_DATA_DIRECTORY Entry = {0};
+        GetDataDirectory(Data, Size, i, &Entry);
 
-    printf("EXPORT: \t\tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
-        data_directory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress,
-        data_directory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size);
-
-    printf("IMPORT: \t\tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
-        data_directory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress,
-        data_directory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size);
-
-    printf("RESOURCE: \t\tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
-        data_directory[IMAGE_DIRECTORY_ENTRY_RESOURCE].VirtualAddress,
-        data_directory[IMAGE_DIRECTORY_ENTRY_RESOURCE].Size);
-
-    printf("EXCEPTION: \t\tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
-        data_directory[IMAGE_DIRECTORY_ENTRY_EXCEPTION].VirtualAddress,
-        data_directory[IMAGE_DIRECTORY_ENTRY_EXCEPTION].Size);
-
-    printf("SECURITY: \t\tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
-        data_directory[IMAGE_DIRECTORY_ENTRY_SECURITY].VirtualAddress,
-        data_directory[IMAGE_DIRECTORY_ENTRY_SECURITY].Size);
-
-    printf("BASERELOC: \t\tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
-        data_directory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress,
-        data_directory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size);
-
-    printf("DEBUG: \t\t\tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
-        data_directory[IMAGE_DIRECTORY_ENTRY_DEBUG].VirtualAddress,
-        data_directory[IMAGE_DIRECTORY_ENTRY_DEBUG].Size);
-
-    printf("ARCHITECTURE: \t\tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
-        data_directory[IMAGE_DIRECTORY_ENTRY_ARCHITECTURE].VirtualAddress,
-        data_directory[IMAGE_DIRECTORY_ENTRY_ARCHITECTURE].Size);
-
-    printf("GLOBALPTR: \t\tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
-        data_directory[IMAGE_DIRECTORY_ENTRY_GLOBALPTR].VirtualAddress,
-        data_directory[IMAGE_DIRECTORY_ENTRY_GLOBALPTR].Size);
-
-    printf("TLS: \t\t\tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
-        data_directory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress,
-        data_directory[IMAGE_DIRECTORY_ENTRY_TLS].Size);
-
-    printf("LOAD_CONFIG: \t\tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
-        data_directory[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].VirtualAddress,
-        data_directory[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].Size);
-
-    printf("BOUND_IMPORT: \t\tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
-        data_directory[IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT].VirtualAddress,
-        data_directory[IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT].Size);
-
-    printf("IAT: \t\t\tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
-        data_directory[IMAGE_DIRECTORY_ENTRY_IAT].VirtualAddress,
-        data_directory[IMAGE_DIRECTORY_ENTRY_IAT].Size);
-
-    printf("DELAY_IMPORT: \t\tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
-        data_directory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT].VirtualAddress,
-        data_directory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT].Size);
-
-    printf("COM_DESCRIPTOR: \tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
-        data_directory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress,
-        data_directory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].Size);
+        printf("%-14s \tVirtualAddress:%#010X, \tSize:%#010X.\r\n",
+               DirectoryNames[i], Entry.VirtualAddress, Entry.Size);
+    }
 
     return ret;
 }
@@ -297,7 +242,11 @@ DWORD SectionHeader(_In_ PBYTE Data, _In_ DWORD Size)
     }
 
     PIMAGE_NT_HEADERS NtHeader = ImageNtHeader(Data);
-    _ASSERTE(NtHeader);
+    if (NtHeader == NULL) {
+        LOGA(ERROR_LEVEL, "ImageNtHeader 失败");
+        return ret;
+    }
+
     PIMAGE_FILE_HEADER FileHeader = (PIMAGE_FILE_HEADER)&NtHeader->FileHeader;
     PIMAGE_OPTIONAL_HEADER OptionalHeader = (PIMAGE_OPTIONAL_HEADER)&NtHeader->OptionalHeader;
     PIMAGE_SECTION_HEADER SectionHeader = (PIMAGE_SECTION_HEADER)((PBYTE)OptionalHeader + FileHeader->SizeOfOptionalHeader);//必须加(ULONG),不然出错.
@@ -308,9 +257,12 @@ DWORD SectionHeader(_In_ PBYTE Data, _In_ DWORD Size)
 
     for (int i = 0; i < FileHeader->NumberOfSections; i++) {
         CHAR SectionCharacteristics[MAX_PATH] = {0};
+        CHAR SectionName[IMAGE_SIZEOF_SHORT_NAME + 1] = {0};
+
+        GetSectionName(&SectionHeader[i], SectionName);
 
         printf("index:%d.\r\n", i + 1);
-        printf("Name:%s.\r\n", SectionHeader[i].Name);
+        printf("Name:%s.\r\n", SectionName);
         printf("VirtualSize:%#010X.\r\n", SectionHeader[i].Misc.VirtualSize);
         printf("VirtualAddress:%#010X.\r\n", SectionHeader[i].VirtualAddress);
         printf("SizeOfRawData:%#010X.\r\n", SectionHeader[i].SizeOfRawData);

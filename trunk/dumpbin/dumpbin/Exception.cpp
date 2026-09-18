@@ -1,34 +1,35 @@
 ﻿#include "pch.h"
 #include "Exception.h"
 #include "Public.h"
+#include "log.h"
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-PCSTR GetUnwFlag(_In_ BYTE Flags)
+void GetUnwFlag(_In_ BYTE Flags, _Out_writes_(cchDest) PCHAR String, _In_ size_t cchDest)
+/*
+Flags 是 5 位，EHANDLER/UHANDLER/CHAININFO 可能同时出现(如 1|4)，所以要按位拼接。
+*/
 {
-    PCSTR FlagsString = NULL;
+    String[0] = '\0';
 
-    switch (Flags) {
-    case 0:
-        FlagsString = "None";//微软的dumpbin显示的是这个。
-        break;
-    case UNW_FLAG_EHANDLER:
-        FlagsString = "EHANDLER";
-        break;
-    case UNW_FLAG_UHANDLER:
-        FlagsString = "UHANDLER";
-        break;
-    case UNW_FLAG_CHAININFO:
-        FlagsString = "CHAININFO";
-        break;
-    default:
-        FlagsString = "未知";
-        break;
+    if (0 == Flags) {
+        StringCchCopyA(String, cchDest, "None");//微软的dumpbin显示的是这个。
+        return;
     }
 
-    return FlagsString;
+    if (Flags & UNW_FLAG_EHANDLER) {
+        StringCchCatA(String, cchDest, "EHANDLER ");
+    }
+
+    if (Flags & UNW_FLAG_UHANDLER) {
+        StringCchCatA(String, cchDest, "UHANDLER ");
+    }
+
+    if (Flags & UNW_FLAG_CHAININFO) {
+        StringCchCatA(String, cchDest, "CHAININFO ");
+    }
 }
 
 
@@ -164,37 +165,58 @@ DWORD Exception(_In_ PBYTE Data, _In_ DWORD Size)
     //PRUNTIME_FUNCTION
     PIMAGE_RUNTIME_FUNCTION_ENTRY ExceptionDirectory = (PIMAGE_RUNTIME_FUNCTION_ENTRY)
         ImageDirectoryEntryToDataEx(Data, FALSE, IMAGE_DIRECTORY_ENTRY_EXCEPTION, &size, &FoundHeader);
+    if (ExceptionDirectory == NULL) {
+        LOGA(ERROR_LEVEL, "ImageDirectoryEntryToDataEx 失败");
+        return ret;
+    }
 
     PIMAGE_NT_HEADERS NtHeaders = ImageNtHeader(Data);
-    _ASSERTE(NtHeaders);
+    if (NtHeaders == NULL) {
+        LOGA(ERROR_LEVEL, "ImageNtHeader 失败");
+        return ret;
+    }
 
     printf("Exception Directory Information:\r\n");
 
-    printf("Exception Function Numbers:%zd.\r\n", DataDirectory.Size / sizeof(_IMAGE_RUNTIME_FUNCTION_ENTRY));
+    // 数据目录里的 Size 未必和实际长度一致，取小的那个作为遍历上界。
+    DWORD total = (size != 0 && size < DataDirectory.Size) ? size : DataDirectory.Size;
+
+    printf("Exception Function Numbers:%zu.\r\n", total / sizeof(_IMAGE_RUNTIME_FUNCTION_ENTRY));
 
     printf("\r\n");
 
-    for (DWORD i = 0; i * sizeof(_IMAGE_RUNTIME_FUNCTION_ENTRY) < DataDirectory.Size; i++) {
-        printf("index:%06d.\r\n", i);
+    for (DWORD i = 0; i * sizeof(_IMAGE_RUNTIME_FUNCTION_ENTRY) < total; i++, ExceptionDirectory++) {
+        printf("index:%06u.\r\n", i);
 
         printf("BeginAddress:%#010X.\r\n", ExceptionDirectory->BeginAddress);
         printf("EndAddress:%#010X.\r\n", ExceptionDirectory->EndAddress);
         printf("UnwindInfoAddress:%#010X.\r\n", ExceptionDirectory->UnwindInfoAddress);
 
         PUNWIND_INFO UnwindInfoAddress = (PUNWIND_INFO)ImageRvaToVa(NtHeaders, Data, ExceptionDirectory->UnwindInfoAddress, NULL);
+        if (UnwindInfoAddress == NULL) {
+            // 调试版 PE 是增量链接的，.pdata 里存在全 0 的表项(UnwindInfoAddress 也为 0)，此时转换不出地址。
+            printf("\tUnwindInfo 无效(RVA:%#010X).\r\n", ExceptionDirectory->UnwindInfoAddress);
+            printf("\r\n");
+            continue;
+        }
+
+        CHAR Flags[MAX_PATH] = {0};
+        GetUnwFlag(UnwindInfoAddress->Flags, Flags, _countof(Flags));
 
         printf("\tVersion:%d.\r\n", UnwindInfoAddress->Version);
-        printf("\tFlags:%d, %s.\r\n", UnwindInfoAddress->Flags, GetUnwFlag(UnwindInfoAddress->Flags));
+        printf("\tFlags:%d, %s.\r\n", UnwindInfoAddress->Flags, Flags);
         printf("\tSizeOfProlog:%d.\r\n", UnwindInfoAddress->SizeOfProlog);
         printf("\tCountOfCodes:%d.\r\n", UnwindInfoAddress->CountOfCodes);
-        printf("\tFrameRegister:%d, %s.\r\n", UnwindInfoAddress->FrameRegister, GetRegister(UnwindInfoAddress->FrameRegister));
+        // FrameRegister 为 0 表示没有帧寄存器，此时不该按 RAX 去解释。
+        printf("\tFrameRegister:%d, %s.\r\n", UnwindInfoAddress->FrameRegister,
+               UnwindInfoAddress->FrameRegister ? GetRegister(UnwindInfoAddress->FrameRegister) : "None");
         printf("\tFrameOffset:%d.\r\n", UnwindInfoAddress->FrameOffset);
 
         PUNWIND_CODE temp = UnwindInfoAddress->UnwindCode;
 
-        for (char i = 0; i < UnwindInfoAddress->CountOfCodes; i++) {
+        for (BYTE j = 0; j < UnwindInfoAddress->CountOfCodes; j++) {
             printf("\t\tindex:%d, CodeOffset:%d, UnwindOp:%d(%s), OpInfo:%d, FrameOffset:%d.\r\n",
-                i + 1,
+                j + 1,
                 temp->CodeOffset,
                 temp->UnwindOp,
                 GetUnwOpCodes(temp->UnwindOp),
@@ -205,8 +227,6 @@ DWORD Exception(_In_ PBYTE Data, _In_ DWORD Size)
         }
 
         printf("\r\n");
-
-        ExceptionDirectory++;
     }
 
     return ret;
