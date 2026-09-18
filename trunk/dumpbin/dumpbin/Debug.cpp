@@ -287,11 +287,7 @@ DWORD Debug(_In_ PBYTE Data, _In_ DWORD Size)
 
     ULONG size = 0;
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
-    PIMAGE_DEBUG_DIRECTORY DebugDirectory = (PIMAGE_DEBUG_DIRECTORY)
-        ImageDirectoryEntryToDataEx(Data,
-            FALSE,//映射（MapViewOfFile）的用FALSE，原始读取(如：ReadFile)的用TRUE。 
-            IMAGE_DIRECTORY_ENTRY_DEBUG,
-            &size, &FoundHeader);
+    PIMAGE_DEBUG_DIRECTORY DebugDirectory = (PIMAGE_DEBUG_DIRECTORY)ImageDirectoryEntryToDataEx(Data, FALSE, IMAGE_DIRECTORY_ENTRY_DEBUG, &size, &FoundHeader);
 
     printf("Debug Directory Information:\r\n");
 

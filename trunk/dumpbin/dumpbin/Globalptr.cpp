@@ -30,11 +30,7 @@ DWORD Globalptr(_In_ PBYTE Data, _In_ DWORD Size)
 
     ULONG size = 0;
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
-    LONG_PTR GlobalptrDirectory = (LONG_PTR)
-        ImageDirectoryEntryToDataEx(Data,
-                                    FALSE,//映射（MapViewOfFile）的用FALSE，原始读取(如：ReadFile)的用TRUE。 
-                                    IMAGE_DIRECTORY_ENTRY_GLOBALPTR,
-                                    &size, &FoundHeader);
+    LONG_PTR GlobalptrDirectory = (LONG_PTR)ImageDirectoryEntryToDataEx(Data, FALSE, IMAGE_DIRECTORY_ENTRY_GLOBALPTR, &size, &FoundHeader);
 
     printf("Globalptr Directory Information:\r\n");
     printf("VirtualAddress:%#010X.\r\n", DataDirectory.VirtualAddress);

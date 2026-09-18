@@ -30,10 +30,7 @@ DWORD Export(_In_ PBYTE Data, _In_ DWORD Size)
     ULONG size = 0;
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
     PIMAGE_EXPORT_DIRECTORY ExportDirectory2 = (PIMAGE_EXPORT_DIRECTORY)
-        ImageDirectoryEntryToDataEx(Data,
-            FALSE,//映射（MapViewOfFile）的用FALSE，原始读取(如：ReadFile)的用TRUE。 
-            IMAGE_DIRECTORY_ENTRY_EXPORT,
-            &size, &FoundHeader);
+        ImageDirectoryEntryToDataEx(Data, FALSE, IMAGE_DIRECTORY_ENTRY_EXPORT, &size, &FoundHeader);
     _ASSERTE(ExportDirectory == ExportDirectory2);
     _ASSERTE(size == DataDirectory.Size);
 

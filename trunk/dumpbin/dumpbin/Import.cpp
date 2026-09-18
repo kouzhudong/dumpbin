@@ -82,11 +82,7 @@ DWORD Import(_In_ PBYTE Data, _In_ DWORD Size)
 
     ULONG size = 0;
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
-    PIMAGE_IMPORT_DESCRIPTOR ImportDirectory = (PIMAGE_IMPORT_DESCRIPTOR)
-        ImageDirectoryEntryToDataEx(Data,
-            FALSE,//映射（MapViewOfFile）的用FALSE，原始读取(如：ReadFile)的用TRUE。 
-            IMAGE_DIRECTORY_ENTRY_IMPORT,
-            &size, &FoundHeader);
+    PIMAGE_IMPORT_DESCRIPTOR ImportDirectory = (PIMAGE_IMPORT_DESCRIPTOR)ImageDirectoryEntryToDataEx(Data, FALSE, IMAGE_DIRECTORY_ENTRY_IMPORT, &size, &FoundHeader);
 
 
 

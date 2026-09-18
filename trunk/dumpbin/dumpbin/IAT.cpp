@@ -24,11 +24,7 @@ DWORD IAT(_In_ PBYTE Data, _In_ DWORD Size)
 
     ULONG size = 0;
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
-    PULONG_PTR IATBase = (PULONG_PTR)
-        ImageDirectoryEntryToDataEx(Data,
-                                    FALSE,//映射（MapViewOfFile）的用FALSE，原始读取(如：ReadFile)的用TRUE。 
-                                    IMAGE_DIRECTORY_ENTRY_IAT,
-                                    &size, &FoundHeader);
+    PULONG_PTR IATBase = (PULONG_PTR)ImageDirectoryEntryToDataEx(Data, FALSE, IMAGE_DIRECTORY_ENTRY_IAT, &size, &FoundHeader);
 
     PIMAGE_NT_HEADERS NtHeaders = ImageNtHeader(Data);
     _ASSERTE(NtHeaders);

@@ -101,11 +101,7 @@ The format of the metadata, method IL, and other things pointed to by the IMAGE_
 
     ULONG size = 0;
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
-    PIMAGE_COR20_HEADER ComDescriptorDirectory = (PIMAGE_COR20_HEADER)
-        ImageDirectoryEntryToDataEx(Data,
-                                    FALSE,//映射（MapViewOfFile）的用FALSE，原始读取(如：ReadFile)的用TRUE。 
-                                    IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR,
-                                    &size, &FoundHeader);
+    PIMAGE_COR20_HEADER ComDescriptorDirectory = (PIMAGE_COR20_HEADER)ImageDirectoryEntryToDataEx(Data, FALSE, IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, &size, &FoundHeader);
 
     printf("Com Descriptor Directory Information:\r\n");
     printf("VirtualAddress:%#010X.\r\n", DataDirectory.VirtualAddress);

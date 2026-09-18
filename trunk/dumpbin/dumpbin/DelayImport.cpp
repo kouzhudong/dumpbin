@@ -122,10 +122,7 @@ DWORD DelayImport(_In_ PBYTE Data, _In_ DWORD Size)
     ULONG size = 0;
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
     PIMAGE_DELAYLOAD_DESCRIPTOR DelayImportDirectory = (PIMAGE_DELAYLOAD_DESCRIPTOR)
-        ImageDirectoryEntryToDataEx(Data,
-            FALSE,//映射（MapViewOfFile）的用FALSE，原始读取(如：ReadFile)的用TRUE。 
-            IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT,
-            &size, &FoundHeader);
+        ImageDirectoryEntryToDataEx(Data, FALSE, IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT, &size, &FoundHeader);
 
     printf("Delay Import Directory Information:\r\n");
     printf("VirtualAddress:%#010X.\r\n", DataDirectory.VirtualAddress);

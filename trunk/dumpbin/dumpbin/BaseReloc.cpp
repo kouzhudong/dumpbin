@@ -72,11 +72,7 @@ DWORD BaseReloc(_In_ PBYTE Data, _In_ DWORD Size)
 
     ULONG size = 0;
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
-    PIMAGE_BASE_RELOCATION BaseRelocDirectory = (PIMAGE_BASE_RELOCATION)
-        ImageDirectoryEntryToDataEx(Data,
-                                    FALSE,//映射（MapViewOfFile）的用FALSE，原始读取(如：ReadFile)的用TRUE。 
-                                    IMAGE_DIRECTORY_ENTRY_BASERELOC,
-                                    &size, &FoundHeader);
+    PIMAGE_BASE_RELOCATION BaseRelocDirectory = (PIMAGE_BASE_RELOCATION)ImageDirectoryEntryToDataEx(Data, FALSE, IMAGE_DIRECTORY_ENTRY_BASERELOC, &size, &FoundHeader);
 
     PIMAGE_NT_HEADERS NtHeaders = ImageNtHeader(Data);
     _ASSERTE(NtHeaders);

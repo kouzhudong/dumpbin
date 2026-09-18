@@ -153,10 +153,7 @@ DWORD LoadConfig(_In_ PBYTE Data, _In_ DWORD Size)
     ULONG size = 0;
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
     PIMAGE_LOAD_CONFIG_DIRECTORY LoadConfigDirectory = (PIMAGE_LOAD_CONFIG_DIRECTORY)
-        ImageDirectoryEntryToDataEx(Data,
-            FALSE,//映射（MapViewOfFile）的用FALSE，原始读取(如：ReadFile)的用TRUE。 
-            IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG,
-            &size, &FoundHeader);
+        ImageDirectoryEntryToDataEx(Data, FALSE, IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG, &size, &FoundHeader);
 
     PIMAGE_NT_HEADERS NtHeaders = ImageNtHeader(Data);
     _ASSERTE(NtHeaders);

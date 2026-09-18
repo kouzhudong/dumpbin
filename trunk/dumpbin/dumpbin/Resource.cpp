@@ -136,10 +136,7 @@ pchunter64的资源类型超出系统定义的范围(但不是RCDATA)，
     ULONG size = 0;
     PIMAGE_SECTION_HEADER FoundHeader = NULL;
     PIMAGE_RESOURCE_DIRECTORY ResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)
-        ImageDirectoryEntryToDataEx(Data,
-            FALSE,//映射（MapViewOfFile）的用FALSE，原始读取(如：ReadFile)的用TRUE。 
-            IMAGE_DIRECTORY_ENTRY_RESOURCE,
-            &size, &FoundHeader);
+        ImageDirectoryEntryToDataEx(Data, FALSE, IMAGE_DIRECTORY_ENTRY_RESOURCE, &size, &FoundHeader);
     if (FoundHeader) {
         printf("SectionName:%s.\r\n", FoundHeader->Name);
     }
